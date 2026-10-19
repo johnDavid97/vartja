@@ -1,7 +1,12 @@
 import type { NextConfig } from "next";
+import { withPayload } from "@payloadcms/next/withPayload";
 
 const nextConfig: NextConfig = {
   /* config options here */
+  output: "standalone",
+  async redirects() {
+    return [{ source: "/tidsplan", destination: "/news", permanent: true }];
+  },
   experimental: {
     agentFeedback: true,
   },
@@ -17,4 +22,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withPayload(nextConfig);

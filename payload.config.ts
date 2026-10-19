@@ -1,0 +1,35 @@
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { postgresAdapter } from "@payloadcms/db-postgres";
+import { lexicalEditor } from "@payloadcms/richtext-lexical";
+import { buildConfig } from "payload";
+import { Users } from "./collections/Users";
+import { Posts } from "./collections/Posts";
+import { Media } from "./collections/Media";
+import sharp from "sharp";
+import { Wedding } from "./globals/Wedding";
+
+const directory = path.dirname(fileURLToPath(import.meta.url));
+
+export default buildConfig({
+  secret: process.env.PAYLOAD_SECRET || "",
+  admin: {
+    user: Users.slug,
+    importMap: { baseDir: directory },
+    meta: { titleSuffix: "— Andrea & Martin" },
+    components: {
+      beforeDashboard: ["/components/admin/Welcome#default"],
+      graphics: { Logo: "/components/admin/Logo#default" },
+    },
+  },
+  collections: [Users, Posts, Media],
+  sharp,
+  upload: { limits: { fileSize: 10 * 1024 * 1024 } },
+  globals: [Wedding],
+  editor: lexicalEditor(),
+  db: postgresAdapter({
+    pool: { connectionString: process.env.DATABASE_URL },
+    migrationDir: path.resolve(directory, "migrations"),
+  }),
+  typescript: { outputFile: path.resolve(directory, "payload-types.ts") },
+});

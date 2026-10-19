@@ -1,0 +1,55 @@
+.wedding-admin-logo {
+  font-family: Georgia, serif;
+  font-size: clamp(1.5rem, 4vw, 2.5rem);
+  text-align: center;
+}
+
+.wedding-dashboard {
+  margin-bottom: 2rem;
+  padding: clamp(1.25rem, 4vw, 2.5rem);
+  border: 1px solid var(--theme-elevation-150);
+  border-radius: 1rem;
+  background: var(--theme-elevation-50);
+}
+
+.wedding-dashboard h1 {
+  font-family: Georgia, serif;
+  font-size: clamp(1.75rem, 4vw, 2.75rem);
+  font-weight: normal;
+}
+
+.wedding-dashboard__eyebrow {
+  font-size: 0.8rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.wedding-dashboard__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin: 1.5rem 0;
+}
+
+.wedding-dashboard__actions a {
+  padding: 0.8rem 1.1rem;
+  border: 1px solid var(--theme-elevation-250);
+  border-radius: 0.5rem;
+  text-decoration: none;
+}
+
+.wedding-dashboard__actions a:first-child {
+  background: #854d59;
+  border-color: #854d59;
+  color: white;
+}
+
+.wedding-dashboard__actions a:hover {
+  text-decoration: underline;
+}
+
+.wedding-dashboard__hint {
+  max-width: 65ch;
+  color: var(--theme-elevation-700);
+  line-height: 1.6;
+}
