@@ -99,7 +99,7 @@ Comments and likes will be separate bottom-of-article features, not reorderable 
 - `components/Poll.tsx` — guest voting and results.
 - `components/PostContent.tsx` — rich-text rendering with legacy fallback.
 - `components/PostRichText.tsx` — public headings, formatting, font sizes and photos.
-- `components/admin/editor/` — sidebar, drag/drop bridge, direct file upload and editor styling.
+- `components/admin/editor/` — sidebar, drag/drop bridge, direct file upload and editor styling. The poll card uses compact, accessible question/answer fields and shared admin buttons; Payload row operations preserve answer IDs and enforce 2–10 choices. Open/closed voting and voting limitations remain under “Avstemningsinnstillinger”.
 - `lib/legacy-post-editor.ts` — non-destructive conversion of old posts on read.
 - `lib/editor-text-sizes.ts` — shared editor/website size presets.
 - `lib/post-content.ts` — legacy fallback and paragraph handling.
