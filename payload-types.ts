@@ -153,7 +153,7 @@ export interface User {
   collection: 'users';
 }
 /**
- * Skriv en oppdatering til gjestene. Lagre som utkast, eller publiser på forsiden.
+ * Små og store oppdateringer til gjestene deres.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "posts".
@@ -162,28 +162,16 @@ export interface Post {
   id: number;
   title: string;
   authorName?: string | null;
-  /**
-   * Private innlegg kan kun leses av innloggede redaktører i admin. Bilder i mediebiblioteket er fortsatt offentlige. Lagre/publiser for å aktivere endringen.
-   */
   visibility: 'public' | 'private';
   /**
-   * Etiketten som vises på innlegget, for eksempel Reise eller Praktisk info.
+   * Etiketten som vises på innlegget.
    */
   theme?: string | null;
-  /**
-   * Settes ved første publisering. For eldre innlegg kan dere velge riktig dato her.
-   */
   publishedAt?: string | null;
-  /**
-   * En kort introduksjon som vises på innleggskortene, ikke i artikkelteksten.
-   */
   description: string;
-  /**
-   * Vises på innleggskortene. Bilder i selve artikkelen legges til i redigeringsområdet nedenfor.
-   */
   photo?: (number | null) | Media;
   /**
-   * Skriv direkte her og bruk verktøylinjen for formatering. Dra byggeklosser fra sidepanelet inn i artikkelen, eller klikk for å sette dem inn etter valgt avsnitt. Bruk håndtaket til venstre for å flytte innhold.
+   * Bruk verktøylinjen for tekst og håndtaket til venstre for å flytte innhold.
    */
   body?: {
     root: {

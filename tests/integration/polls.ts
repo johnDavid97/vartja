@@ -39,7 +39,7 @@ try {
   await answers.nth(1).fill("Vegetar");
   await page.waitForTimeout(650); // Payload's idle-time form serialization.
   const draftSaved = page.waitForResponse((response) => response.url().includes(`/api/posts/${postId}`) && response.request().method() === "PATCH");
-  await page.getByRole("button", { name: "Save Draft", exact: true }).click();
+  await page.getByRole("button", { name: "Lagre utkast", exact: true }).click();
   assert((await draftSaved).ok());
   const draft = await payload.findByID({ collection: "posts", id: postId, draft: true });
   const draftPoll = getPolls(draft.body)[0];
@@ -50,7 +50,7 @@ try {
   assert.equal((await beforePublication.request.post(draftEndpoint, { headers: { Origin: baseURL }, data: { optionId: draftPoll.options[0].id } })).status(), 404);
   await beforePublication.close();
   const saved = page.waitForResponse((response) => response.url().includes(`/api/posts/${postId}`) && response.request().method() === "PATCH");
-  await page.getByRole("button", { name: "Publish changes", exact: true }).click();
+  await page.getByRole("button", { name: "Publiser endringer", exact: true }).click();
   assert((await saved).ok());
   const post = await payload.findByID({ collection: "posts", id: postId });
   const poll = getPolls(post.body)[0];

@@ -12,8 +12,8 @@ export default function Welcome() {
         <a href="/" target="_blank" rel="noopener noreferrer">Se nettsiden ↗</a>
       </div>
       <p className="wedding-dashboard__hint">
-        Innlegg: fyll inn tittel og beskrivelse, legg til et bilde om dere vil, og trykk Publish.
-        Save Draft lagrer uten å vise innlegget til gjestene.
+        Innlegg: fyll inn tittel og beskrivelse, legg til et bilde om dere vil, og trykk Publiser endringer.
+        Lagre utkast lagrer uten å vise innlegget til gjestene.
         Publiserte endringer vises når nettsiden åpnes eller oppdateres.
       </p>
     </section>
