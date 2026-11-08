@@ -6,6 +6,7 @@ import { FieldError, useConfig, useField, useForm, useListDrawer } from "@payloa
 import { ImageIcon, X } from "lucide-react";
 import type { UploadFieldClientComponent } from "payload";
 import type { Media } from "@/payload-types";
+import { AdminButton } from "../AdminButton";
 
 export const CoverImage: UploadFieldClientComponent = ({ path, readOnly, field }) => {
   const { config } = useConfig();
@@ -67,9 +68,9 @@ export const CoverImage: UploadFieldClientComponent = ({ path, readOnly, field }
       <div className={`wedding-cover__dropzone${image ? " wedding-cover__dropzone--filled" : ""}`} onDragOver={(event) => { if (!locked && !uploading) event.preventDefault(); }} onDrop={(event) => { event.preventDefault(); const file = event.dataTransfer.files[0]; if (file) void upload(file); }}>
         {image?.url ? <Image src={image.url} alt={image.alt} width={image.width || 800} height={image.height || 400} unoptimized className="wedding-cover__preview" /> : <span className="wedding-cover__icon"><ImageIcon size={26} aria-hidden="true" /></span>}
         <div className="wedding-cover__copy"><strong>{uploading ? "Laster opp …" : imageId ? image?.filename || "Henter bilde …" : "Dra et bilde hit"}</strong><small>JPG, PNG eller WebP. Maks 10 MB.</small></div>
-        <button type="button" className="wedding-button wedding-button--secondary" disabled={locked || uploading} onClick={() => input.current?.click()}>{imageId ? "Bytt bilde" : "Last opp bilde"}</button>
-        <button type="button" className="wedding-cover__library" disabled={locked || uploading} onClick={() => openDrawer()}>Velg fra biblioteket</button>
-        {imageId && <button type="button" className="wedding-icon-button" aria-label="Fjern forsidebilde" disabled={locked || uploading} onClick={() => { setValue(null); setPreview(null); setError(""); }}><X size={18} /></button>}
+        <AdminButton variant="secondary" size="sm" disabled={locked} loading={uploading} onClick={() => input.current?.click()}>{imageId ? "Bytt bilde" : "Last opp bilde"}</AdminButton>
+        <AdminButton variant="ghost" size="sm" disabled={locked || uploading} onClick={() => openDrawer()}>Velg fra biblioteket</AdminButton>
+        {imageId && <AdminButton variant="ghost" size="icon-sm" aria-label="Fjern forsidebilde" disabled={locked || uploading} onClick={() => { setValue(null); setPreview(null); setError(""); }}><X size={18} /></AdminButton>}
       </div>
       {error && <p className="wedding-field-error" role="alert">{error}</p>}
       <ListDrawer onSelect={({ doc }) => { if (!locked && !uploading) { setPreview(doc as Media); setValue(doc.id); setError(""); } closeDrawer(); }} />

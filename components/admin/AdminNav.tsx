@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth, useNav } from "@payloadcms/ui";
+import { AdminButton, adminButtonStyles } from "./AdminButton";
 import { BarChart3, Clock3, ExternalLink, FileText, ImageIcon, LogOut, MessageCircle, Settings2, Users, X } from "lucide-react";
 
 export default function AdminNav() {
@@ -19,9 +20,9 @@ export default function AdminNav() {
     </Link>
   );
   const planned = (label: string, Icon: typeof FileText) => (
-    <button type="button" className="wedding-nav__item wedding-nav__planned" disabled>
+    <AdminButton variant="plain" className="wedding-nav__item wedding-nav__planned" disabled>
       <Icon size={20} aria-hidden="true" /><span>{label}</span><small>Kommer</small>
-    </button>
+    </AdminButton>
   );
 
   return (
@@ -35,7 +36,7 @@ export default function AdminNav() {
         <span className="wedding-monogram">A&amp;M</span>
         <span><strong>Andrea &amp; Martin</strong><small>Bryllupsside · admin</small></span>
       </Link>
-      <button className="wedding-nav__close wedding-icon-button" type="button" aria-label="Lukk meny" onClick={() => setNavOpen(false)}><X size={20} /></button>
+      <AdminButton variant="ghost" size="icon-sm" className="wedding-nav__close" aria-label="Lukk meny" onClick={() => setNavOpen(false)}><X size={20} /></AdminButton>
       <nav aria-label="Administrasjon" className="wedding-nav__links">
         {link("/admin/collections/users", "Brukere og admin", Users)}
         <h2>Sider</h2>
@@ -48,10 +49,10 @@ export default function AdminNav() {
         <div className="wedding-nav__settings">{link("/admin/globals/wedding", "Innstillinger", Settings2)}</div>
       </nav>
       <footer className="wedding-nav__footer">
-        <a className="wedding-nav__website" href="/" target="_blank" rel="noopener noreferrer"><ExternalLink size={18} aria-hidden="true" />Se nettsiden</a>
+        <a className={adminButtonStyles({ variant: "secondary", className: "wedding-nav__website" })} href="/" target="_blank" rel="noopener noreferrer"><ExternalLink size={18} aria-hidden="true" />Se nettsiden</a>
         <div className="wedding-nav__account">
           <Link href="/admin/account" onClick={closeOnMobile}><span className="wedding-avatar">{initials}</span><span><strong>{name}</strong><small>Redaktør</small></span></Link>
-          <Link className="wedding-icon-button" href="/admin/logout" aria-label="Logg ut" title="Logg ut"><LogOut size={19} /></Link>
+          <Link className={adminButtonStyles({ variant: "ghost", size: "icon-sm" })} href="/admin/logout" aria-label="Logg ut" title="Logg ut"><LogOut size={19} /></Link>
         </div>
       </footer>
     </aside>

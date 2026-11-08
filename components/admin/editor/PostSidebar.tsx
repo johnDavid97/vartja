@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef } from "react";
+import { AdminButton } from "../AdminButton";
 import { ImageIcon, GripVertical, ChartNoAxesColumn, Minus } from "lucide-react";
 import { getSelectionTarget, insertSidebarBlock } from "./insert-block";
 import { POST_BLOCK_MIME, usePostEditor, type InsertTarget } from "./PostEditorProvider";
@@ -21,9 +22,9 @@ export function PostSidebar() {
       <p>Dra en kloss inn i artikkelen. På mobil kan du plassere markøren og trykke på klossen.</p>
       <div className="post-builder__blocks">
         {blocks.map(({ kind, label, Icon }) => (
-          <button
+          <AdminButton
             key={kind}
-            type="button"
+            variant="plain"
             className="post-builder__block"
             draggable={Boolean(editor?.isEditable())}
             disabled={!editor?.isEditable()}
@@ -42,7 +43,7 @@ export function PostSidebar() {
             <Icon size={20} aria-hidden="true" />
             <span>{label}</span>
             <GripVertical size={16} aria-hidden="true" />
-          </button>
+          </AdminButton>
         ))}
       </div>
     </section>
