@@ -1,0 +1,30 @@
+.wedding-admin .post-poll-block { margin-block: 20px; padding: 20px; border: 1px solid #dfe3de; border-radius: 15px; background: #fafbf9; color: #252927; }
+.post-poll-block__header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+.post-poll-block__header strong { display: flex; align-items: center; gap: 14px; font-size: 19px; line-height: 1.3; font-weight: 700; }
+.post-poll-block__icon { display: grid; place-items: center; width: 42px; height: 42px; flex-shrink: 0; border-radius: 13px; background: #f2edf8; color: #77519d; }
+.wedding-admin .post-poll-block__header > .admin-button { width: 36px; min-height: 36px; padding: 8px; margin: 0; color: #697178; }
+.wedding-admin .post-poll-block .field-type { margin-bottom: 0; }
+.wedding-admin .post-poll-block .post-poll-block__question { margin-bottom: 12px; }
+.wedding-admin .post-poll-block .field-type input:not([type="checkbox"]):not([type="hidden"]) { width: 100%; min-width: 0; min-height: 50px; padding: 13px 16px; border: 1px solid #cfd5cd; border-radius: 12px; background: #fff; font-size: 16px; line-height: 1.4; color: #252927; }
+.wedding-admin .post-poll-block .post-poll-block__question input { font-weight: 600; }
+.post-poll-block .field-type input::placeholder { color: #777c7a; opacity: 1; font-size: inherit; font-weight: inherit; }
+/* Keep real labels for screen readers; placeholders are visual guidance only. */
+.post-poll-block__question .field-label,
+.post-poll-options .field-label { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+.post-poll-options { display: flex; flex-direction: column; gap: 12px; }
+.post-poll-options__row { position: relative; min-width: 0; }
+.wedding-admin .post-poll-block .post-poll-options__row:has(button) .field-type input:not([type="hidden"]) { padding-right: 48px; }
+.wedding-admin .post-poll-options__remove { position: absolute; right: 7px; top: 7px; }
+.wedding-admin .post-poll-options__add { align-self: flex-start; margin-top: 4px; padding-inline: 4px; font-size: 15px; font-weight: 650; }
+.post-poll-block__settings { margin-top: 10px; }
+.post-poll-block__settings > summary { list-style: none; }
+.post-poll-block__settings > summary::-webkit-details-marker { display: none; }
+.post-poll-block__settings[open] { padding-top: 10px; border-top: 1px solid #e2e7e0; }
+.post-poll-block__settings[open] > summary { margin-bottom: 12px; }
+.post-poll-block__hint { margin: 8px 0 0; color: #6a736d; font-size: 12px; line-height: 1.5; }
+.post-poll-block .field-error { position: static; margin-top: 6px; }
+@media (max-width: 600px) {
+  .wedding-admin .post-poll-block { padding: 14px; border-radius: 12px; }
+  .post-poll-block__header strong { font-size: 17px; gap: 10px; }
+  .post-poll-block__icon { width: 36px; height: 36px; border-radius: 10px; }
+}
