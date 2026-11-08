@@ -28,16 +28,50 @@ with the same permissions; do not create guest accounts here.
 
 - **Bryllupsinformasjon**: names, date and welcome text are connected to the homepage.
   Schedule and travel fields are saved but their dedicated public pages are not connected yet.
-- **Innlegg**: enter a title and description, optionally choose/upload a photo.
-  **Save Draft** keeps the post private. **Publish** makes it appear under **Nytt fra oss**
-  on the homepage. The homepage shows the 12 most recently created published posts.
+- **Innlegg**: enter a title, short description and optional cover photo for the cards.
+  Write the article in the single **Artikkel** visual editor. Select text and use the fixed
+  toolbar for bold, italic, lists, alignment, headings and **Liten / Normal / Stor** text sizes.
+  There are no blue insert lines, `/` insertion menu or toolbar Add button. Text and headings
+  stay in the editor/toolbar. Add photos, polls and **Skillelinje** (horizontal rules) from
+  the sidebar by dragging them into the article, or tapping them on mobile.
+  Under **Byggeklosser**, drag **Bilde** into the article to add a coloured placeholder.
+  Click the placeholder to open your computer's file picker directly (no media-library drawer).
+  After uploading, edit the accessible description and optional caption below the photo.
+  On mobile/keyboard, place the cursor in the editor and click **Bilde** instead of dragging.
+  Drag the handle on the left of existing content to reorder it. The `/` menu remains available.
+  Drag **Avstemning** into the editor to add a poll: enter a question, 2–10 different answers,
+  and publish. Guests can choose one answer and see the results. Turn off **Åpen for stemmer**
+  and publish to close voting while keeping results visible. After the first vote, question
+  and answer edits are blocked; make a new poll instead. Reordering answers/the poll is fine.
+  **Innstillinger** contains visibility, theme and publication date; comments/likes remain
+  clearly marked as planned, without nonfunctional on/off switches.
+  Existing descriptions, cover photos and old blocks are adapted into the visual editor
+  when opened, without changing their stored data until saved. Old block fields are retained
+  for compatibility but hidden in the editor. Once saved, the visual document is authoritative;
+  deliberately clearing it does not bring old content back.
+  New drafts are not public. **Publish** shows public posts under **Nytt fra oss** and `/news`.
+  Saving a draft of an already-published post leaves its last published version visible.
+  Set **Synlighet → Privat** and publish that change to hide it from public pages and API reads.
+  Private posts remain accessible to signed-in editors in Payload (not a guest invitation system).
+  This does not protect media URLs: uploaded images remain public. Never upload confidential files.
+  The homepage shows the 12 most recently created published public posts.
 - **Bilder**: upload JPEG, PNG or WebP images up to 10 MB. Add a short image description.
   All uploaded files are public, even when attached to a draft. Do not upload sensitive files.
 - **Redaktører**, under settings: accounts for trusted editors only.
 
 Visitors see saved/published changes when they open or refresh the homepage.
 This is not live push updating of an already-open browser tab.
-Polls, RSVP, invitation sending, and password-reset email are not configured.
+Comments, likes, RSVP, invitation sending, and password-reset email are not configured.
+
+Polls use a signed HttpOnly browser cookie (one-year lifetime) and a unique database key to
+prevent repeated/concurrent votes from the same browser. Clearing cookies, using another browser
+or automating new browser identities bypasses this limit: this is not one-vote-per-person security.
+No guest names or IP addresses are stored with votes. Only aggregate counts and the current
+browser's choice are returned; raw ballots are not accessible through public CRUD endpoints.
+Draft/private/missing/closed polls reject voting. Results refresh on page load or after voting.
+Add reverse-proxy request rate limiting before exposing polls widely; invitations/authentication
+would be needed for stronger voter identity. Keep PAYLOAD_SECRET stable to preserve cookie validity.
+Comments and likes will be separate bottom-of-article features, not reorderable content blocks.
 
 ## Files
 
@@ -47,6 +81,18 @@ Polls, RSVP, invitation sending, and password-reset email are not configured.
 - `collections/Users.ts` — editor accounts and access rules.
 - `globals/Wedding.ts` — editable wedding details and schedule.
 - `collections/Posts.ts` — draft/published guest updates.
+- `blocks/postBlocks.ts` — legacy text/photo block schemas.
+- `blocks/ArticlePhoto.ts` — visual photo placeholder schema.
+- `blocks/ArticlePoll.ts` — poll question, choices and open/closed setting.
+- `collections/PollVotes.ts` — private ballots and unique vote keys.
+- `lib/poll-endpoints.ts` — validated voting and aggregate-result endpoints.
+- `components/Poll.tsx` — guest voting and results.
+- `components/PostContent.tsx` — rich-text rendering with legacy fallback.
+- `components/PostRichText.tsx` — public headings, formatting, font sizes and photos.
+- `components/admin/editor/` — sidebar, drag/drop bridge, direct file upload and editor styling.
+- `lib/legacy-post-editor.ts` — non-destructive conversion of old posts on read.
+- `lib/editor-text-sizes.ts` — shared editor/website size presets.
+- `lib/post-content.ts` — legacy fallback and paragraph handling.
 - `collections/Media.ts` — public photo uploads.
 - `components/admin/` — dashboard welcome panel and branding.
 - `app/(payload)/custom.css` — admin-only styling.
@@ -61,7 +107,23 @@ npm run generate:types       # After changing the CMS schema
 npm run generate:importmap   # After adding custom admin components
 npm run lint
 npx tsc --noEmit
+npm test                     # Unit tests: block order, legacy fallback, image handling
+npx playwright install chromium  # First-time browser setup
+npm run test:e2e              # Read-only desktop/mobile checks; requires npm run dev
+npm run test:editor           # Local editor/publishing integration check; see below
+npm run test:polls            # Local poll editor/voting/privacy integration check
 ```
+
+Browser tests use `http://localhost:3000` by default (override with `TEST_BASE_URL`).
+The published-article test skips if the database has no published posts. Browser smoke tests
+never edit existing content; block rendering/order is additionally covered by unit tests.
+`test:editor` requires `.env`, a localhost database, and the development server on port 3000.
+It creates temporary editor/post/photo fixtures; tests native sidebar drag/drop, the direct
+file picker/upload, formatting, publishing, private-post access and mobile layout; and removes
+its fixtures afterward.
+`test:polls` likewise creates/removes local fixtures and checks actual browser voting,
+concurrent duplicates, immutable answers, private/closed polls and responsive results.
+Do not run these fixture tests against production.
 
 Database data persists in the `sammen_postgres_data` Docker volume.
 **Do not run `docker compose down -v` unless you intend to delete the database.**

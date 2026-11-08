@@ -5,7 +5,7 @@ import { Suspense } from "react";
 import NewsCards from "@/components/NewsCards";
 import { getPayload } from "payload";
 import config from "@payload-config";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const metadata: Metadata = {
@@ -47,9 +47,9 @@ async function Posts({ searchParams }: Props) {
         </CardHeader>
         <CardContent>
           {page > 1 ? (
-            <Button variant="outline" render={<Link href="/news" />}>
+            <Link href="/news" className={buttonVariants({ variant: "outline" })}>
               Til første side
-            </Button>
+            </Link>
           ) : (
             <p className="text-stone-600">Her deler vi oppdateringer frem mot den store dagen.</p>
           )}
@@ -65,15 +65,15 @@ async function Posts({ searchParams }: Props) {
       {posts.totalPages > 1 && (
         <nav aria-label="Innleggssider" className="mt-12 flex flex-wrap items-center justify-center gap-4">
           {posts.hasPrevPage && (
-            <Button variant="outline" render={<Link href={`/news?page=${page - 1}`} />}>
+            <Link href={`/news?page=${page - 1}`} className={buttonVariants({ variant: "outline" })}>
               Forrige
-            </Button>
+            </Link>
           )}
           <p className="text-sm text-stone-600">Side {page} av {posts.totalPages}</p>
           {posts.hasNextPage && (
-            <Button variant="outline" render={<Link href={`/news?page=${page + 1}`} />}>
+            <Link href={`/news?page=${page + 1}`} className={buttonVariants({ variant: "outline" })}>
               Neste
-            </Button>
+            </Link>
           )}
         </nav>
       )}
