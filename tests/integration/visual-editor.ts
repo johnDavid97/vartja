@@ -122,7 +122,7 @@ try {
   assert(!(await anonymousBeforePublish.request.get(`/api/posts/${postId}`)).ok(), "Drafts must remain private");
   await anonymousBeforePublish.close();
   const save = page.waitForResponse((response) => response.url().includes(`/api/posts/${postId}`) && response.request().method() === "PATCH");
-  await page.getByRole("button", { name: "Publish changes", exact: true }).click();
+  await page.getByRole("button", { name: "Publiser endringer", exact: true }).click();
   const saved = await save;
   assert(saved.ok(), "Editor changes must save successfully");
   const guest = await browser.newContext({ baseURL });

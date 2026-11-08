@@ -9,16 +9,21 @@ import { Media } from "./collections/Media";
 import { PollVotes } from "./collections/PollVotes";
 import sharp from "sharp";
 import { Wedding } from "./globals/Wedding";
+import { nb } from "@payloadcms/translations/languages/nb";
 
 const directory = path.dirname(fileURLToPath(import.meta.url));
 
 export default buildConfig({
   secret: process.env.PAYLOAD_SECRET || "",
+  i18n: { supportedLanguages: { nb }, fallbackLanguage: "nb" },
   admin: {
+    theme: "light",
+    dateFormat: "dd.MM.yyyy HH:mm",
     user: Users.slug,
     importMap: { baseDir: directory },
     meta: { titleSuffix: "— Andrea & Martin" },
     components: {
+      Nav: "/components/admin/AdminNav#default",
       providers: ["/components/admin/editor/PostEditorProvider#default"],
       beforeDashboard: ["/components/admin/Welcome#default"],
       graphics: { Logo: "/components/admin/Logo#default" },

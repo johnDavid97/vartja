@@ -1,0 +1,56 @@
+/* Shared collection list/table presentation. Native Payload behavior stays intact. */
+.wedding-admin .admin-list { min-width: 0; }
+.wedding-admin .admin-list .list-header { display: flex; align-items: center; gap: 12px; padding-block: 28px 0; margin-bottom: 26px; }
+.wedding-admin .admin-list .list-header__content,
+.wedding-admin .admin-list .list-header__title-and-actions { display: contents; }
+.wedding-admin .admin-list .list-header__title { order: 1; }
+.wedding-admin .admin-list .list-header__after-header-content { order: 2; width: auto; }
+.wedding-admin .admin-list .collection-list__sub-header { padding: 0; margin: 0; }
+.wedding-admin .admin-list .list-header__title-actions { order: 3; margin-left: auto; }
+.wedding-admin .admin-list .list-header__actions { order: 4; flex-basis: 100%; }
+.wedding-admin .admin-list .list-header__actions:empty { display: none; }
+.admin-list__count { color: #626970; font-size: 14px; white-space: nowrap; }
+.wedding-admin .admin-list .list-controls { margin-bottom: 22px; }
+.wedding-admin .admin-list .search-bar { background: transparent; column-gap: 10px; }
+.wedding-admin .admin-list .search-filter { border: 1px solid #ccd2cc; border-radius: 11px; background: #fff; min-height: 46px; }
+.wedding-admin .admin-list .search-filter input { min-height: 46px; font-size: 14px; }
+.wedding-admin .admin-list .search-filter:focus-within { border-color: #2f5e52; box-shadow: 0 0 0 3px #2f5e5214; }
+.wedding-admin .admin-list .search-bar__actions { padding: 0; gap: 8px; }
+.wedding-admin .admin-list .search-bar__actions > button.pill { min-height: 46px; background: #fff; }
+.wedding-admin .admin-list .search-bar__actions > button.pill[aria-expanded="true"] { background: #edf3f0; }
+.wedding-admin .admin-list .search-bar__actions > button.pill:hover { background: #edf3f0; }
+.wedding-admin .admin-table { width: 100%; max-width: 100%; overflow-x: auto; border: 1px solid #dfe3de; border-radius: 16px; background: #fff; overscroll-behavior-x: contain; }
+.wedding-admin .admin-table:focus-visible { outline: 3px solid #83aa9a; outline-offset: 3px; }
+.wedding-admin .admin-table .table { position: static; display: block; left: auto; width: 100%; max-width: none; margin: 0; padding: 0; border: 0; border-radius: 0; overflow: visible; }
+.wedding-admin .admin-table .table::after { display: none; }
+.wedding-admin .admin-table table { width: 100%; min-width: 720px; border-collapse: collapse; }
+.wedding-admin .admin-table :is(th, td) { padding: 18px 22px; text-align: left; vertical-align: middle; border-bottom: 1px solid #e9ece8; }
+.wedding-admin .admin-table th { padding-block: 13px; background: #fafbf9; color: #61666c; font-size: 11px; font-weight: 650; text-transform: uppercase; letter-spacing: .07em; }
+.wedding-admin .admin-table td { background: #fff; color: #4c5157; font-size: 14px; }
+.wedding-admin .admin-table tbody tr:last-child td { border-bottom: 0; }
+.wedding-admin .admin-table tbody tr:has(a[href]) { cursor: pointer; }
+.wedding-admin .admin-table tbody tr:hover td { background: #f7faf7; }
+.wedding-admin .admin-table tbody tr:has(input[type="checkbox"]:checked) td { background: #edf4ef; }
+.wedding-admin .admin-table :is(#heading-_select, .cell-_select) { width: 48px; min-width: 48px; padding-right: 0; }
+.wedding-admin .admin-table :is(.cell-title, .cell-name) { width: 46%; min-width: 260px; }
+.wedding-admin .admin-table :is(.cell-_status, .cell-publishedAt, .cell-updatedAt) { white-space: nowrap; }
+.wedding-admin .admin-table td:last-child { padding-right: 38px; position: relative; }
+.wedding-admin .admin-table tbody tr:has(a[href]) td:last-child::after { content: "›"; position: absolute; right: 16px; top: 50%; transform: translateY(-50%); font-size: 23px; color: #959da2; }
+.wedding-admin .admin-table a { text-decoration: none; }
+.wedding-admin .admin-table a:hover { text-decoration: underline; }
+.wedding-admin .admin-table-title > :is(a, button, span):first-child { color: #242927; font-size: 15px; font-weight: 650; line-height: 1.4; text-align: left; }
+.wedding-admin .admin-table-title > button { border: 0; padding: 0; background: none; cursor: pointer; }
+.admin-table-title__description { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-top: 2px; color: #626970; font-size: 13px; line-height: 1.45; overflow-wrap: anywhere; }
+.wedding-admin .admin-table .admin-table-status { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 99px; font-size: 12px; line-height: 1.4; font-weight: 650; white-space: nowrap; }
+.admin-table-status::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.admin-table-status--published { background: #edf3f0; color: #2f5e52; }
+.admin-table-status--draft { background: #fff4e5; color: #985500; }
+.admin-table-status--private { background: #f0f1ef; color: #60656b; }
+.wedding-admin .admin-list .admin-list__hint { margin: 18px 0 0; color: #626970; font-size: 13px; line-height: 1.5; }
+@media (max-width: 600px) {
+  .wedding-admin .admin-list .list-header { padding-top: 22px; gap: 10px; }
+  .wedding-admin .admin-list .list-header__title-actions { flex-wrap: wrap; }
+  .wedding-admin .admin-list .search-bar__actions { flex-wrap: wrap; }
+  .wedding-admin .admin-table :is(th, td) { padding-inline: 16px; }
+  .wedding-admin .admin-table :is(.cell-title, .cell-name) { min-width: 240px; }
+}

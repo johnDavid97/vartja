@@ -26,6 +26,14 @@ with the same permissions; do not create guest accounts here.
 
 ## Editing the website
 
+The admin uses a Norwegian, light green-and-white design with a responsive sidebar.
+Program, poll overview and comment overview entries are disabled **Kommer** placeholders;
+existing poll blocks still work. Preview is likewise marked as not yet available.
+Publishing remains immediate: the date picker changes the displayed date, not scheduling.
+It uses Europe/Oslo time, supports quick dates, cancellation and **Sett automatisk**.
+Automatic dates are assigned when publishing. The description counter recommends 160
+characters but does not truncate or reject older, longer descriptions.
+
 - **Bryllupsinformasjon**: names, date and welcome text are connected to the homepage.
   Schedule and travel fields are saved but their dedicated public pages are not connected yet.
 - **Innlegg**: enter a title, short description and optional cover photo for the cards.
@@ -36,20 +44,20 @@ with the same permissions; do not create guest accounts here.
   the sidebar by dragging them into the article, or tapping them on mobile.
   Under **Byggeklosser**, drag **Bilde** into the article to add a coloured placeholder.
   Click the placeholder to open your computer's file picker directly (no media-library drawer).
-  After uploading, edit the accessible description and optional caption below the photo.
+  After uploading, use the settings icon on the photo to edit its accessible description and optional caption.
   On mobile/keyboard, place the cursor in the editor and click **Bilde** instead of dragging.
-  Drag the handle on the left of existing content to reorder it. The `/` menu remains available.
+  Drag the handle on the left of existing content to reorder it.
   Drag **Avstemning** into the editor to add a poll: enter a question, 2–10 different answers,
   and publish. Guests can choose one answer and see the results. Turn off **Åpen for stemmer**
   and publish to close voting while keeping results visible. After the first vote, question
   and answer edits are blocked; make a new poll instead. Reordering answers/the poll is fine.
-  **Innstillinger** contains visibility, theme and publication date; comments/likes remain
+  **Publisering** contains visibility, theme and publication date; comments/likes remain
   clearly marked as planned, without nonfunctional on/off switches.
   Existing descriptions, cover photos and old blocks are adapted into the visual editor
   when opened, without changing their stored data until saved. Old block fields are retained
   for compatibility but hidden in the editor. Once saved, the visual document is authoritative;
   deliberately clearing it does not bring old content back.
-  New drafts are not public. **Publish** shows public posts under **Nytt fra oss** and `/news`.
+  New drafts are not public. **Publiser endringer** shows public posts under **Nytt fra oss** and `/news`.
   Saving a draft of an already-published post leaves its last published version visible.
   Set **Synlighet → Privat** and publish that change to hide it from public pages and API reads.
   Private posts remain accessible to signed-in editors in Payload (not a guest invitation system).
@@ -57,7 +65,9 @@ with the same permissions; do not create guest accounts here.
   The homepage shows the 12 most recently created published public posts.
 - **Bilder**: upload JPEG, PNG or WebP images up to 10 MB. Add a short image description.
   All uploaded files are public, even when attached to a draft. Do not upload sensitive files.
-- **Redaktører**, under settings: accounts for trusted editors only.
+- **Brukere og admin**: accounts for trusted editors only.
+- Cover images support native file selection, drag/drop and selection from the media library.
+  Removing a cover image does not delete the media file. Edit image descriptions in **Bilder**.
 
 Visitors see saved/published changes when they open or refresh the homepage.
 This is not live push updating of an already-open browser tab.
@@ -89,12 +99,16 @@ Comments and likes will be separate bottom-of-article features, not reorderable 
 - `components/Poll.tsx` — guest voting and results.
 - `components/PostContent.tsx` — rich-text rendering with legacy fallback.
 - `components/PostRichText.tsx` — public headings, formatting, font sizes and photos.
-- `components/admin/editor/` — sidebar, drag/drop bridge, direct file upload and editor styling.
+- `components/admin/editor/` — sidebar, drag/drop bridge, direct file upload and editor styling. The poll card uses compact, accessible question/answer fields and shared admin buttons; Payload row operations preserve answer IDs and enforce 2–10 choices. Open/closed voting and voting limitations remain under “Avstemningsinnstillinger”.
 - `lib/legacy-post-editor.ts` — non-destructive conversion of old posts on read.
 - `lib/editor-text-sizes.ts` — shared editor/website size presets.
 - `lib/post-content.ts` — legacy fallback and paragraph handling.
 - `collections/Media.ts` — public photo uploads.
-- `components/admin/` — dashboard welcome panel and branding.
+- `components/admin/` — navigation, dashboard, status header and branding.
+- `components/admin/fields/` — publication calendar, visibility cards, cover upload and description.
+- `components/admin/tables/` — shared list/table adapter for posts, media, users and their selection drawers. Payload retains permissions, queries, sorting, column preferences, bulk actions and pagination. Mobile tables scroll within their frame; rows retain real keyboard-accessible links/buttons.
+- Post lists show descriptions, themes, actual draft/private/published states and Oslo publication dates. Search matches titles and themes; counts reflect the current query. Existing saved column preferences are respected.
+- `lib/publication-date.ts` — timezone-safe publication date conversion.
 - `app/(payload)/custom.css` — admin-only styling.
 - `compose.yaml` — local PostgreSQL, bound to localhost port 5433.
 
@@ -112,6 +126,7 @@ npx playwright install chromium  # First-time browser setup
 npm run test:e2e              # Read-only desktop/mobile checks; requires npm run dev
 npm run test:editor           # Local editor/publishing integration check; see below
 npm run test:polls            # Local poll editor/voting/privacy integration check
+npm run test:admin            # Local admin design, date picker and upload integration check
 ```
 
 Browser tests use `http://localhost:3000` by default (override with `TEST_BASE_URL`).
@@ -123,6 +138,11 @@ file picker/upload, formatting, publishing, private-post access and mobile layou
 its fixtures afterward.
 `test:polls` likewise creates/removes local fixtures and checks actual browser voting,
 concurrent duplicates, immutable answers, private/closed polls and responsive results.
+`test:admin` checks all admin sections, cover upload, visibility, date persistence/cancellation,
+Norwegian dates in a different browser timezone, automatic publication dates and mobile navigation.
+It also checks shared tables, live counts, theme search, status badges, sorting, pagination,
+row selection/navigation, media-library selection and mobile table overflow.
+It saves review screenshots to `/tmp/sammen-admin-*.png` and removes its fixture records.
 Do not run these fixture tests against production.
 
 Database data persists in the `sammen_postgres_data` Docker volume.
