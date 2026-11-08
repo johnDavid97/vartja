@@ -1,4 +1,7 @@
+import { TitleCell as TitleCell_fd632f21ba984e4333d52fc06b4e62be } from '../../../components/admin/tables/Cells'
+import { default as default_97c46a597f3e8b4db92ba571cd7acb34 } from '../../../components/admin/tables/AdminList'
 import { Visibility as Visibility_008009b24e2dc72f814377d0317ca6d4 } from '../../../components/admin/fields/Visibility'
+import { PublicationCell as PublicationCell_fd632f21ba984e4333d52fc06b4e62be } from '../../../components/admin/tables/Cells'
 import { PublicationDate as PublicationDate_073b301bda9c44f77b023b22aa2b50f6 } from '../../../components/admin/fields/PublicationDate'
 import { PostSidebar as PostSidebar_2b9a24be4824c1b42edd03e79beb22f2 } from '../../../components/admin/editor/PostSidebar'
 import { PostDescription as PostDescription_e98180dc4cb6030d8c3bd48ccd323775 } from '../../../components/admin/fields/PostDescription'
@@ -27,6 +30,7 @@ import { LinkFeatureClient as LinkFeatureClient_e70f5e05f09f93e00b997edb1ef0c864
 import { BlockquoteFeatureClient as BlockquoteFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { HorizontalRuleFeatureClient as HorizontalRuleFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { SidebarBlocksFeatureClient as SidebarBlocksFeatureClient_6556cd5a1e1f542585e7174c3eb4642f } from '../../../components/admin/editor/SidebarBlocksFeature.client'
+import { PostStatusCell as PostStatusCell_fd632f21ba984e4333d52fc06b4e62be } from '../../../components/admin/tables/Cells'
 import { default as default_8c6fec1c371dda0dd69cbb7b7fc5d9ab } from '../../../components/admin/PostHeading'
 import { InlineToolbarFeatureClient as InlineToolbarFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { RelationshipFeatureClient as RelationshipFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
@@ -41,7 +45,10 @@ import { CollectionCards as CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1 } f
 
 /** @type import('payload').ImportMap */
 export const importMap = {
+  "/components/admin/tables/Cells#TitleCell": TitleCell_fd632f21ba984e4333d52fc06b4e62be,
+  "/components/admin/tables/AdminList#default": default_97c46a597f3e8b4db92ba571cd7acb34,
   "/components/admin/fields/Visibility#Visibility": Visibility_008009b24e2dc72f814377d0317ca6d4,
+  "/components/admin/tables/Cells#PublicationCell": PublicationCell_fd632f21ba984e4333d52fc06b4e62be,
   "/components/admin/fields/PublicationDate#PublicationDate": PublicationDate_073b301bda9c44f77b023b22aa2b50f6,
   "/components/admin/editor/PostSidebar#PostSidebar": PostSidebar_2b9a24be4824c1b42edd03e79beb22f2,
   "/components/admin/fields/PostDescription#PostDescription": PostDescription_e98180dc4cb6030d8c3bd48ccd323775,
@@ -70,6 +77,7 @@ export const importMap = {
   "@payloadcms/richtext-lexical/client#BlockquoteFeatureClient": BlockquoteFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "@payloadcms/richtext-lexical/client#HorizontalRuleFeatureClient": HorizontalRuleFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "/components/admin/editor/SidebarBlocksFeature.client#SidebarBlocksFeatureClient": SidebarBlocksFeatureClient_6556cd5a1e1f542585e7174c3eb4642f,
+  "/components/admin/tables/Cells#PostStatusCell": PostStatusCell_fd632f21ba984e4333d52fc06b4e62be,
   "/components/admin/PostHeading#default": default_8c6fec1c371dda0dd69cbb7b7fc5d9ab,
   "@payloadcms/richtext-lexical/client#InlineToolbarFeatureClient": InlineToolbarFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "@payloadcms/richtext-lexical/client#RelationshipFeatureClient": RelationshipFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
