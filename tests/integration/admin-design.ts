@@ -115,6 +115,20 @@ try {
     await page.goto(route);
     await page.waitForLoadState("networkidle");
     assert(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), `${route} must fit the screen`);
+    if (route.includes("/collections/")) {
+      const header = await page.locator(".list-header").boundingBox();
+      const action = page.locator(".list-header__title-actions .btn").first();
+      const actionBox = await action.boundingBox();
+      assert(header && actionBox && actionBox.y >= header.y + 20, `${route}: create button needs space below breadcrumbs`);
+      await expect(action).toHaveCSS("background-color", "rgb(47, 94, 82)");
+      await action.hover();
+      await expect(action).toHaveCSS("background-color", "rgb(35, 74, 64)");
+      await page.mouse.move(0, 0);
+      const filterButton = page.getByRole("button", { name: "Filter", exact: true });
+      await expect(filterButton).toHaveCSS("border-radius", "10px");
+      const filterBox = await filterButton.boundingBox();
+      assert(filterBox && filterBox.height >= 36, `${route}: native filter actions must use the shared button sizing`);
+    }
     await page.screenshot({ path: `/tmp/sammen-admin-${screenshot}.png`, fullPage: true });
   }
   assert.equal(errors.length, 0, errors.join("\n"));
