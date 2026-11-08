@@ -126,13 +126,13 @@ button, input, textarea, select { font: inherit; }
 /* Main editor and right-hand cards. */
 .document-fields:has(.post-visual-editor) { --doc-sidebar-width: 310px; --sidebar-gutter-h-left: 0px; --sidebar-gutter-h-right: 0px; align-items: flex-start; gap: 28px; padding: 30px var(--gutter-h) 64px; }
 .document-fields:has(.post-visual-editor) .document-fields__main { padding: 0; min-width: 0; }
-.document-fields:has(.post-visual-editor) .document-fields__edit { padding: 0; border: 0; }
+.document-fields:has(.post-visual-editor) .document-fields__edit { padding: 28px; border: 1px solid var(--wedding-border); border-radius: 16px; background: #fff; }
 .document-fields:has(.post-visual-editor) .document-fields__fields { padding: 0; }
 .post-visual-editor .ContentEditable__root, .post-visual-editor .ContentEditable__placeholder { font-family: var(--font-body); }
 .document-fields:has(.post-visual-editor) .document-fields__sidebar-wrap { width: 30%; min-width: 310px; position: static; height: auto; }
 .document-fields:has(.post-visual-editor) .document-fields__sidebar { border: 0; background: transparent; height: auto; overflow: visible; padding: 0; }
 .document-fields:has(.post-visual-editor) .document-fields__sidebar-fields { padding: 0; }
-.document-fields:has(.post-visual-editor) .document-fields__sidebar-fields > .render-fields { row-gap: 22px; }
+.document-fields:has(.post-visual-editor) .document-fields__sidebar-fields > .render-fields { display: flex; flex-direction: column; gap: 22px; }
 .wedding-post-title #field-title { min-height: 54px; font-size: 18px; font-weight: 550; }
 .wedding-description__label { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
 .wedding-description__label > span { font-size: 12px; color: var(--wedding-muted); font-variant-numeric: tabular-nums; }
@@ -163,6 +163,7 @@ button, input, textarea, select { font: inherit; }
 .wedding-cover__copy small { display: block; margin-top: 4px; color: var(--wedding-muted); font-size: 12px; }
 .wedding-cover__preview { width: 80px; height: 64px; object-fit: cover; border-radius: 8px; }
 .post-visual-editor .rich-text-lexical__wrap { border: 1px solid #cfd4cd; border-radius: 12px; background: #fff; }
+.post-visual-editor .rich-text-lexical__wrap > .field-description { margin: 0; padding: 12px 20px 16px; border-top: 1px solid #edf0eb; overflow-wrap: anywhere; }
 .post-visual-editor .editor-container { border-radius: 0 0 12px 12px; background: #fff; }
 .post-visual-editor .toolbar-popup { z-index: 40; }
 .post-visual-editor .fixed-toolbar { border-bottom: 1px solid #e5e8e3; border-radius: 12px 12px 0 0; background: #fafbf9; padding: 8px 12px; }
@@ -255,6 +256,8 @@ button, input, textarea, select { font: inherit; }
 @media (max-width: 600px) {
   :root, html[data-theme="light"] { --gutter-h: 16px; }
   .document-fields:has(.post-visual-editor) { padding-top: 22px; }
+  .document-fields:has(.post-visual-editor) .document-fields__edit { padding: 16px; }
+  .post-visual-editor .rich-text-lexical__wrap > .field-description { padding: 12px; }
   .document-fields:has(.post-visual-editor) .document-fields__sidebar-fields > .render-fields { display: flex; flex-direction: column; }
   .document-fields:has(.post-visual-editor) .document-fields__sidebar-fields > .render-fields > * { width: 100%; }
   .doc-controls:has(.wedding-post-heading) .doc-controls__controls { flex-wrap: wrap; gap: 8px; }

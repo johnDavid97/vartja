@@ -41,6 +41,22 @@ try {
   const editorBox = await page.locator('.post-visual-editor').boundingBox();
   const publishingBox = await page.locator('.wedding-publishing').boundingBox();
   assert(editorBox && publishingBox && publishingBox.x >= editorBox.x + editorBox.width + 15, "Publishing card must not overlap the editor");
+  const mainCard = page.locator(".document-fields__edit");
+  await expect(mainCard).toHaveCSS("background-color", "rgb(255, 255, 255)");
+  await expect(mainCard).toHaveCSS("border-radius", "16px");
+  const cardBox = await mainCard.boundingBox();
+  assert(cardBox);
+  for (const selector of [".wedding-post-title", ".wedding-description", ".wedding-cover", ".post-visual-editor"]) {
+    const fieldBox = await mainCard.locator(selector).boundingBox();
+    assert(fieldBox && fieldBox.x >= cardBox.x + 20 && fieldBox.x + fieldBox.width <= cardBox.x + cardBox.width - 20, `${selector} must sit inside the shared padded card`);
+  }
+  const blocksBox = await page.locator(".post-builder").boundingBox();
+  assert(publishingBox && blocksBox && blocksBox.y >= publishingBox.y + publishingBox.height + 20, "Publishing and building-block cards need a visible gap");
+  const editorHint = page.locator(".post-visual-editor .rich-text-lexical__wrap > .field-description");
+  await expect(editorHint).toHaveCSS("padding-left", "20px");
+  const hintBox = await editorHint.boundingBox();
+  const editorFrame = await page.locator(".post-visual-editor .rich-text-lexical__wrap").boundingBox();
+  assert(hintBox && editorFrame && hintBox.y + hintBox.height <= editorFrame.y + editorFrame.height, "Editor help must stay inside its frame");
   await page.screenshot({ path: "/tmp/sammen-admin-desktop.png", fullPage: true });
   await page.goto(`/admin/collections/posts/${postId}`);
   await page.getByRole("radio", { name: /^Privat/ }).check();
@@ -108,6 +124,11 @@ try {
   await expect(page.getByRole("button", { name: "Lukk meny", exact: true })).toBeHidden();
   await expect(page.getByRole("button", { name: "Legg til skillelinje", exact: true })).toBeVisible();
   assert(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), "Mobile page must not overflow");
+  await expect(mainCard).toHaveCSS("padding-left", "16px");
+  await expect(editorHint).toHaveCSS("padding-left", "12px");
+  const mobilePublishing = await page.locator(".wedding-publishing").boundingBox();
+  const mobileBlocks = await page.locator(".post-builder").boundingBox();
+  assert(mobilePublishing && mobileBlocks && mobileBlocks.y >= mobilePublishing.y + mobilePublishing.height + 20, "Mobile sidebar cards need separation too");
   await trigger.click();
   await expect(dialog).toBeVisible();
   const box = await dialog.boundingBox();
