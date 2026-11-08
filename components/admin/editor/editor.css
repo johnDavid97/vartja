@@ -113,13 +113,6 @@
 }
 .post-photo-block__error { color: var(--theme-error-600); }
 
-.post-poll-block {
-  margin-block: 1.5rem; padding: 1.25rem;
-  border: 1px solid var(--theme-elevation-200); border-radius: 0.75rem;
-  background: var(--theme-elevation-50);
-}
-.post-poll-block__header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1.25rem; }
-.post-poll-block__header strong { display: flex; align-items: center; gap: 0.5rem; }
-.post-poll-block > p { font-size: 0.8rem; line-height: 1.5; color: var(--theme-elevation-600); }
+/* Poll layout is owned by poll.css, loaded after the shared admin field styles. */
 
 

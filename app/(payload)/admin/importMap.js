@@ -13,6 +13,8 @@ import { TextStateFeatureClient as TextStateFeatureClient_e70f5e05f09f93e00b997e
 import { FixedToolbarFeatureClient as FixedToolbarFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { BlocksFeatureClient as BlocksFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { PhotoBlock as PhotoBlock_1e3c95468369a68ba7b5f428d51c3472 } from '../../../components/admin/editor/PhotoBlock'
+import { PollTextField as PollTextField_c3e52d35592f4c454b80ed6f569ceacb } from '../../../components/admin/editor/PollTextField'
+import { PollOptionsField as PollOptionsField_af6b4e5d6367a06377ad9230a01f2ebd } from '../../../components/admin/editor/PollOptionsField'
 import { PollBlock as PollBlock_8fa16604dc2e30e4b574bd29dd8eb970 } from '../../../components/admin/editor/PollBlock'
 import { UploadFeatureClient as UploadFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { HeadingFeatureClient as HeadingFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
@@ -60,6 +62,8 @@ export const importMap = {
   "@payloadcms/richtext-lexical/client#FixedToolbarFeatureClient": FixedToolbarFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "@payloadcms/richtext-lexical/client#BlocksFeatureClient": BlocksFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "/components/admin/editor/PhotoBlock#PhotoBlock": PhotoBlock_1e3c95468369a68ba7b5f428d51c3472,
+  "/components/admin/editor/PollTextField#PollTextField": PollTextField_c3e52d35592f4c454b80ed6f569ceacb,
+  "/components/admin/editor/PollOptionsField#PollOptionsField": PollOptionsField_af6b4e5d6367a06377ad9230a01f2ebd,
   "/components/admin/editor/PollBlock#PollBlock": PollBlock_8fa16604dc2e30e4b574bd29dd8eb970,
   "@payloadcms/richtext-lexical/client#UploadFeatureClient": UploadFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "@payloadcms/richtext-lexical/client#HeadingFeatureClient": HeadingFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
