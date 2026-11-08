@@ -6,6 +6,7 @@ import { DatePicker, FieldError, useField } from "@payloadcms/ui";
 import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import type { DateFieldClientComponent, Validate } from "payload";
 import { publicationISO, publicationLabel, publicationParts } from "@/lib/publication-date";
+import { AdminButton } from "../AdminButton";
 
 function calendarDate(day: string) {
   const [year, month, date] = day.split("-").map(Number);
@@ -45,7 +46,7 @@ export const PublicationDate: DateFieldClientComponent = ({ path, readOnly, fiel
       <label id={`${id}-label`}>Publiseringsdato</label>
       <FieldError path={path} />
       <Popover.Root open={open} onOpenChange={changeOpen}>
-        <Popover.Trigger className="wedding-date-trigger" disabled={locked} aria-labelledby={`${id}-label ${id}-value`}>
+        <Popover.Trigger render={<AdminButton variant="plain" />} className="wedding-date-trigger" disabled={locked} aria-labelledby={`${id}-label ${id}-value`}>
           <CalendarDays size={20} aria-hidden="true" />
           <span id={`${id}-value`}>{value ? publicationLabel(value) : "Settes ved publisering"}</span>
           <ChevronDown size={17} aria-hidden="true" />
@@ -55,9 +56,9 @@ export const PublicationDate: DateFieldClientComponent = ({ path, readOnly, fiel
             <Popover.Popup className="wedding-date-popup">
               <Popover.Title className="wedding-sr-only">Velg publiseringsdato</Popover.Title>
               <div className="wedding-date-shortcuts">
-                <button type="button" onClick={() => shortcut(0)}>I dag</button>
-                <button type="button" onClick={() => shortcut(1)}>I går</button>
-                <button type="button" onClick={() => shortcut(7)}>For en uke siden</button>
+                <AdminButton variant="secondary" size="sm" shape="pill" onClick={() => shortcut(0)}>I dag</AdminButton>
+                <AdminButton variant="secondary" size="sm" shape="pill" onClick={() => shortcut(1)}>I går</AdminButton>
+                <AdminButton variant="secondary" size="sm" shape="pill" onClick={() => shortcut(7)}>For en uke siden</AdminButton>
               </div>
               {day && <DatePicker value={calendarDate(day)} pickerAppearance="dayOnly" overrides={{
                 inline: true,
@@ -65,9 +66,9 @@ export const PublicationDate: DateFieldClientComponent = ({ path, readOnly, fiel
                 onChange: (date: Date | null) => { if (date) { setDay(calendarDay(date)); setError(""); } },
                 renderCustomHeader: ({ date, decreaseMonth, increaseMonth }) => (
                   <div className="wedding-calendar-header">
-                    <button type="button" aria-label="Forrige måned" onClick={decreaseMonth}><ChevronLeft size={20} /></button>
+                    <AdminButton variant="ghost" size="icon-sm" aria-label="Forrige måned" onClick={decreaseMonth}><ChevronLeft size={20} /></AdminButton>
                     <strong aria-live="polite">{new Intl.DateTimeFormat("nb-NO", { month: "long", year: "numeric" }).format(date)}</strong>
-                    <button type="button" aria-label="Neste måned" onClick={increaseMonth}><ChevronRight size={20} /></button>
+                    <AdminButton variant="ghost" size="icon-sm" aria-label="Neste måned" onClick={increaseMonth}><ChevronRight size={20} /></AdminButton>
                   </div>
                 ),
               }} />}
@@ -77,14 +78,14 @@ export const PublicationDate: DateFieldClientComponent = ({ path, readOnly, fiel
               </div>
               {error && <p className="wedding-field-error" role="alert">{error}</p>}
               <div className="wedding-date-actions">
-                <button type="button" className="wedding-date-auto" onClick={() => { setValue(null); setOpen(false); }}>Sett automatisk</button>
-                <Popover.Close className="wedding-button wedding-button--secondary">Avbryt</Popover.Close>
-                <button type="button" className="wedding-button" onClick={() => {
+                <AdminButton variant="ghost" size="sm" className="wedding-date-auto" onClick={() => { setValue(null); setOpen(false); }}>Sett automatisk</AdminButton>
+                <Popover.Close render={<AdminButton variant="secondary" size="sm" />}>Avbryt</Popover.Close>
+                <AdminButton size="sm" onClick={() => {
                   const iso = publicationISO(day, time);
                   if (!iso) { setError("Velg et gyldig klokkeslett. Tiden kan være hoppet over ved overgang til sommertid."); return; }
                   setValue(iso);
                   setOpen(false);
-                }}>Bruk dato</button>
+                }}>Bruk dato</AdminButton>
               </div>
               <p className="wedding-field-hint">Norsk tid. Publisering skjer når du trykker Publiser.</p>
             </Popover.Popup>

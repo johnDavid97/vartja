@@ -6,6 +6,7 @@ import { useConfig, useField } from "@payloadcms/ui";
 import { BlockRemoveButton } from "@payloadcms/richtext-lexical/client";
 import { ImagePlus, Settings2 } from "lucide-react";
 import type { Media } from "@/payload-types";
+import { AdminButton, adminButtonStyles } from "../AdminButton";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
@@ -75,8 +76,8 @@ export function PhotoBlock() {
         onChange={(event) => { const file = event.target.files?.[0]; if (file) void upload(file); }}
       />
       <div className="post-photo-block__media">
-      <button
-        type="button"
+      <AdminButton
+        variant="plain"
         className={`post-photo-block__picker${preview?.url ? " post-photo-block__picker--filled" : ""}`}
         disabled={uploading || disabled}
         onClick={() => input.current?.click()}
@@ -87,7 +88,7 @@ export function PhotoBlock() {
         ) : (
           <><ImagePlus size={36} aria-hidden="true" /><strong>Klikk for å velge et bilde</strong><span>JPG, PNG eller WebP · maks 10 MB</span></>
         )}
-      </button>
+      </AdminButton>
       {imageId && (
         <details
           className="post-photo-block__settings"
@@ -99,7 +100,7 @@ export function PhotoBlock() {
             }
           }}
         >
-          <summary aria-label="Bildeinnstillinger" title="Bildeinnstillinger">
+          <summary className={adminButtonStyles({ variant: "secondary", size: "icon" })} aria-label="Bildeinnstillinger" title="Bildeinnstillinger">
             <Settings2 size={20} aria-hidden="true" />
           </summary>
           <div className="post-photo-block__fields">
