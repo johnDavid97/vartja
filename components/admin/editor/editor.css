@@ -1,0 +1,130 @@
+/* Keep the editor clear; building controls live in the sidebar. */
+.post-visual-editor [contenteditable="true"] {
+  min-height: 24rem;
+  padding-block: 1rem;
+}
+
+.post-visual-editor [contenteditable="true"] > * {
+  margin-block: 1.25rem;
+}
+
+.post-visual-editor .add-block-menu {
+  display: none;
+}
+
+.post-builder {
+  padding-bottom: 1.5rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--theme-elevation-150);
+}
+
+.post-builder h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.1rem;
+}
+
+.post-builder p,
+.post-builder__notice {
+  color: var(--theme-elevation-600);
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+
+.post-builder__blocks {
+  display: grid;
+  gap: 0.75rem;
+  margin-block: 1rem;
+}
+
+.post-builder__block {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 48px;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--theme-elevation-200);
+  border-radius: 0.5rem;
+  background: var(--theme-elevation-50);
+  color: var(--theme-text);
+  font: inherit;
+  cursor: grab;
+  text-align: left;
+}
+
+.post-builder__block span { flex: 1; }
+.post-builder__block svg { flex-shrink: 0; }
+.post-builder__block:hover { border-color: var(--theme-elevation-600); }
+.post-builder__block:active { cursor: grabbing; }
+.post-builder__block:disabled { opacity: 0.5; cursor: not-allowed; }
+.post-builder__block:focus-visible { outline: 2px solid var(--theme-text); outline-offset: 3px; }
+
+.post-builder__planned {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  color: var(--theme-elevation-600);
+}
+
+.post-builder__planned small { display: block; margin-top: 0.25rem; }
+
+.post-photo-block { position: relative; margin-block: 1.5rem; }
+.post-photo-block__input { display: none; }
+.post-photo-block__actions { display: flex; justify-content: flex-end; margin-bottom: 0.5rem; }
+.post-photo-block__picker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  width: 100%;
+  min-height: 220px;
+  padding: 2rem 1rem;
+  border: 2px dashed #bd8d96;
+  border-radius: 0.75rem;
+  background: #f6e7eb;
+  color: #713c4a;
+  font: inherit;
+  cursor: pointer;
+}
+.post-photo-block__picker span { font-size: 0.8rem; }
+.post-photo-block__picker:focus-visible { outline: 3px solid #854d59; outline-offset: 3px; }
+.post-photo-block__picker:disabled { opacity: 0.6; cursor: wait; }
+.post-photo-block__picker--filled { padding: 0; border: 0; background: transparent; min-height: 0; }
+.post-photo-block__picker img { display: block; width: 100%; height: auto; border-radius: 0.5rem; }
+.post-photo-block__media { position: relative; }
+.post-photo-block__settings { position: absolute; top: 0.75rem; right: 0.75rem; z-index: 10; }
+.post-photo-block__settings summary {
+  display: grid; place-items: center; width: 44px; height: 44px;
+  margin-left: auto; border: 1px solid var(--theme-elevation-200);
+  border-radius: 0.5rem; background: var(--theme-elevation-0);
+  color: var(--theme-text); box-shadow: 0 2px 8px #0002;
+  cursor: pointer; list-style: none;
+}
+.post-photo-block__settings summary::-webkit-details-marker { display: none; }
+.post-photo-block__settings summary:focus-visible { outline: 2px solid #854d59; outline-offset: 3px; }
+.post-photo-block__fields {
+  position: absolute; top: calc(100% + 0.5rem); right: 0;
+  display: grid; gap: 0.75rem; width: min(22rem, calc(100vw - 6rem));
+  max-height: 60svh; overflow-y: auto; padding: 1rem;
+  border: 1px solid var(--theme-elevation-200); border-radius: 0.5rem;
+  background: var(--theme-elevation-0); color: var(--theme-text);
+  box-shadow: 0 8px 24px #0002;
+}
+.post-photo-block__fields label { display: grid; gap: 0.35rem; font-size: 0.85rem; }
+.post-photo-block__fields input {
+  width: 100%; padding: 0.6rem; border: 1px solid var(--theme-elevation-200);
+  border-radius: 0.3rem; background: var(--theme-input-bg); color: var(--theme-text); font: inherit;
+}
+.post-photo-block__error { color: var(--theme-error-600); }
+
+.post-poll-block {
+  margin-block: 1.5rem; padding: 1.25rem;
+  border: 1px solid var(--theme-elevation-200); border-radius: 0.75rem;
+  background: var(--theme-elevation-50);
+}
+.post-poll-block__header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1.25rem; }
+.post-poll-block__header strong { display: flex; align-items: center; gap: 0.5rem; }
+.post-poll-block > p { font-size: 0.8rem; line-height: 1.5; color: var(--theme-elevation-600); }
+
+

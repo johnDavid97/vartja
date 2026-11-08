@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
-import Image from "next/image";
+import PostContent from "@/components/PostContent";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { getPayload } from "payload";
 import config from "@payload-config";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 
 export const metadata: Metadata = {
   title: "Nytt fra oss — Andrea & Martin",
@@ -32,12 +32,6 @@ async function Article({ params }: Props) {
   });
   const post = docs[0];
   if (!post) notFound();
-
-  const photo = typeof post.photo === "object" ? post.photo : null;
-  const paragraphs = post.description
-    .split(/\r?\n\s*\r?\n/)
-    .map((paragraph) => paragraph.replace(/\s*\r?\n\s*/g, " ").trim())
-    .filter(Boolean);
 
   return (
     <article className="space-y-8 sm:space-y-10">
@@ -65,24 +59,7 @@ async function Article({ params }: Props) {
           {post.title}
         </h1>
       </header>
-      {photo?.url && (
-        <Image
-          src={photo.url}
-          alt={photo.alt}
-          width={photo.width || 1200}
-          height={photo.height || 900}
-          unoptimized
-          sizes="(min-width: 896px) 848px, (min-width: 640px) calc(100vw - 48px), calc(100vw - 32px)"
-          className="h-auto w-full"
-        />
-      )}
-      <div className="space-y-5 text-left text-base leading-relaxed text-stone-600 sm:text-lg">
-        {paragraphs.map((paragraph, index) => (
-          <p key={index} className="break-words">
-            {paragraph}
-          </p>
-        ))}
-      </div>
+      <PostContent post={post} />
     </article>
   );
 }
@@ -91,9 +68,9 @@ export default function ArticlePage({ params }: Props) {
   return (
     <main className="min-h-svh px-4 py-8 sm:px-6 sm:py-16">
       <div className="mx-auto max-w-4xl">
-        <Button variant="ghost" className="mb-6" render={<Link href="/news" />}>
+        <Link href="/news" className={buttonVariants({ variant: "ghost", className: "mb-6" })}>
           ← Alle innlegg
-        </Button>
+        </Link>
         <Suspense
           fallback={
             <p role="status" className="py-16 text-center text-stone-600">
