@@ -70,6 +70,7 @@ export interface Config {
     users: User;
     posts: Post;
     media: Media;
+    'poll-votes': PollVote;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -80,6 +81,7 @@ export interface Config {
     users: UsersSelect<false> | UsersSelect<true>;
     posts: PostsSelect<false> | PostsSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
+    'poll-votes': PollVotesSelect<false> | PollVotesSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -161,7 +163,11 @@ export interface Post {
   title: string;
   authorName?: string | null;
   /**
-   * Vises som en fremhevet etikett, for eksempel Reise, Praktisk info eller Bryllupshelgen.
+   * Private innlegg kan kun leses av innloggede redaktører i admin. Bilder i mediebiblioteket er fortsatt offentlige. Lagre/publiser for å aktivere endringen.
+   */
+  visibility: 'public' | 'private';
+  /**
+   * Etiketten som vises på innlegget, for eksempel Reise eller Praktisk info.
    */
   theme?: string | null;
   /**
@@ -169,10 +175,32 @@ export interface Post {
    */
   publishedAt?: string | null;
   /**
-   * Hva vil dere fortelle gjestene?
+   * En kort introduksjon som vises på innleggskortene, ikke i artikkelteksten.
    */
   description: string;
+  /**
+   * Vises på innleggskortene. Bilder i selve artikkelen legges til i redigeringsområdet nedenfor.
+   */
   photo?: (number | null) | Media;
+  /**
+   * Skriv direkte her og bruk verktøylinjen for formatering. Dra byggeklosser fra sidepanelet inn i artikkelen, eller klikk for å sette dem inn etter valgt avsnitt. Bruk håndtaket til venstre for å flytte innhold.
+   */
+  body?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  content?: (PostTextBlock | PostImageBlock)[] | null;
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -200,6 +228,53 @@ export interface Media {
   height?: number | null;
   focalX?: number | null;
   focalY?: number | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "PostTextBlock".
+ */
+export interface PostTextBlock {
+  heading?: string | null;
+  /**
+   * Bruk en tom linje mellom avsnitt.
+   */
+  text: string;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'text';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "PostImageBlock".
+ */
+export interface PostImageBlock {
+  image: number | Media;
+  caption?: string | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'image';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "poll-votes".
+ */
+export interface PollVote {
+  id: number;
+  post: number | Post;
+  pollId: string;
+  optionId: string;
+  definition:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  voteKey: string;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -236,6 +311,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'media';
         value: number | Media;
+      } | null)
+    | ({
+        relationTo: 'poll-votes';
+        value: number | PollVote;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -310,13 +389,41 @@ export interface UsersSelect<T extends boolean = true> {
 export interface PostsSelect<T extends boolean = true> {
   title?: T;
   authorName?: T;
+  visibility?: T;
   theme?: T;
   publishedAt?: T;
   description?: T;
   photo?: T;
+  body?: T;
+  content?:
+    | T
+    | {
+        text?: T | PostTextBlockSelect<T>;
+        image?: T | PostImageBlockSelect<T>;
+      };
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "PostTextBlock_select".
+ */
+export interface PostTextBlockSelect<T extends boolean = true> {
+  heading?: T;
+  text?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "PostImageBlock_select".
+ */
+export interface PostImageBlockSelect<T extends boolean = true> {
+  image?: T;
+  caption?: T;
+  id?: T;
+  blockName?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -335,6 +442,19 @@ export interface MediaSelect<T extends boolean = true> {
   height?: T;
   focalX?: T;
   focalY?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "poll-votes_select".
+ */
+export interface PollVotesSelect<T extends boolean = true> {
+  post?: T;
+  pollId?: T;
+  optionId?: T;
+  definition?: T;
+  voteKey?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -445,6 +565,36 @@ export interface CollectionsWidget {
     [k: string]: unknown;
   };
   width: 'full';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ArticlePhotoBlock".
+ */
+export interface ArticlePhotoBlock {
+  image: number | Media;
+  alt?: string | null;
+  caption?: string | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'photo';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ArticlePollBlock".
+ */
+export interface ArticlePollBlock {
+  question: string;
+  options: {
+    label: string;
+    id?: string | null;
+  }[];
+  /**
+   * Slå av og publiser for å avslutte avstemningen. Resultatene blir fortsatt vist. Etter første stemme kan spørsmål og svar ikke endres; lag en ny avstemning i stedet.
+   */
+  open?: boolean | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'poll';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
