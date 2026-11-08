@@ -106,6 +106,8 @@ Comments and likes will be separate bottom-of-article features, not reorderable 
 - `collections/Media.ts` — public photo uploads.
 - `components/admin/` — navigation, dashboard, status header and branding.
 - `components/admin/fields/` — publication calendar, visibility cards, cover upload and description.
+- `components/admin/tables/` — shared list/table adapter for posts, media, users and their selection drawers. Payload retains permissions, queries, sorting, column preferences, bulk actions and pagination. Mobile tables scroll within their frame; rows retain real keyboard-accessible links/buttons.
+- Post lists show descriptions, themes, actual draft/private/published states and Oslo publication dates. Search matches titles and themes; counts reflect the current query. Existing saved column preferences are respected.
 - `lib/publication-date.ts` — timezone-safe publication date conversion.
 - `app/(payload)/custom.css` — admin-only styling.
 - `compose.yaml` — local PostgreSQL, bound to localhost port 5433.
@@ -138,6 +140,8 @@ its fixtures afterward.
 concurrent duplicates, immutable answers, private/closed polls and responsive results.
 `test:admin` checks all admin sections, cover upload, visibility, date persistence/cancellation,
 Norwegian dates in a different browser timezone, automatic publication dates and mobile navigation.
+It also checks shared tables, live counts, theme search, status badges, sorting, pagination,
+row selection/navigation, media-library selection and mobile table overflow.
 It saves review screenshots to `/tmp/sammen-admin-*.png` and removes its fixture records.
 Do not run these fixture tests against production.
 

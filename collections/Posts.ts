@@ -18,10 +18,14 @@ export const Posts: CollectionConfig = {
   admin: {
     useAsTitle: "title",
     group: "Bryllupet",
-    defaultColumns: ["title", "_status", "updatedAt"],
+    defaultColumns: ["title", "theme", "_status", "publishedAt"],
+    listSearchableFields: ["title", "theme"],
     hideAPIURL: true,
     description: "Små og store oppdateringer til gjestene deres.",
-    components: { edit: { beforeDocumentControls: ["/components/admin/PostHeading#default"] } },
+    components: {
+      views: { list: { Component: "/components/admin/tables/AdminList#default" } },
+      edit: { beforeDocumentControls: ["/components/admin/PostHeading#default"] },
+    },
   },
   access: {
     read: ({ req }): boolean | Where => req.user ? true : {
@@ -58,7 +62,13 @@ export const Posts: CollectionConfig = {
     ],
   },
   fields: [
-    { name: "title", label: "Tittel", type: "text", required: true, admin: { placeholder: "F.eks. Velkommen til bryllupshelgen", className: "wedding-post-title" } },
+    { name: "title", label: "Tittel", type: "text", required: true, admin: { placeholder: "F.eks. Velkommen til bryllupshelgen", className: "wedding-post-title", components: { Cell: "/components/admin/tables/Cells#TitleCell" } } },
+    {
+      name: "_status", type: "select", label: "Status",
+      // Payload merges its native draft/published options into this field.
+      options: [],
+      admin: { components: { Cell: "/components/admin/tables/Cells#PostStatusCell" } },
+    },
     // Retain the old column so existing author data isn't deleted by schema push.
     { name: "authorName", type: "text", hidden: true },
     {
@@ -92,7 +102,7 @@ export const Posts: CollectionConfig = {
           label: "Publiseringsdato",
           type: "date",
           admin: {
-            components: { Field: "/components/admin/fields/PublicationDate#PublicationDate" },
+            components: { Field: "/components/admin/fields/PublicationDate#PublicationDate", Cell: "/components/admin/tables/Cells#PublicationCell" },
           },
         },
       ],

@@ -11,6 +11,7 @@ assert(["localhost", "127.0.0.1"].includes(new URL(process.env.DATABASE_URL || "
 const payload = await getPayload({ config });
 let userId: number | undefined;
 let postId: number | undefined;
+let draftId: number | undefined;
 let mediaId: number | undefined;
 let browser: Browser | undefined;
 let code = 0;
@@ -18,7 +19,9 @@ try {
   const email = `design-${randomBytes(8).toString("hex")}@example.invalid`;
   const password = randomBytes(24).toString("hex");
   userId = (await payload.create({ collection: "users", data: { name: "Design test", email, password } })).id;
-  postId = (await payload.create({ collection: "posts", draft: true, data: { title: "Design test", description: "En liten oppdatering til gjestene." } })).id;
+  const searchTheme = `table-${randomBytes(8).toString("hex")}`;
+  postId = (await payload.create({ collection: "posts", draft: true, data: { title: "Design test", description: "En liten oppdatering til gjestene.", theme: searchTheme } })).id;
+  draftId = (await payload.create({ collection: "posts", draft: true, data: { title: "Test av tabellutkast", description: "Et upublisert testinnlegg.", theme: "Praktisk info" } })).id;
   browser = await chromium.launch();
   const context = await browser.newContext({ baseURL: "http://localhost:3000", viewport: { width: 1440, height: 1200 }, locale: "nb-NO", timezoneId: "America/New_York" });
   assert((await context.request.post("/api/users/login", { data: { email, password } })).ok());
@@ -54,6 +57,13 @@ try {
   const uploadResponse = await uploaded;
   assert(uploadResponse.ok());
   mediaId = (await uploadResponse.json()).doc.id;
+  await expect(cover.getByRole("img")).toBeVisible();
+  await cover.getByRole("button", { name: "Fjern forsidebilde", exact: true }).click();
+  await cover.getByRole("button", { name: "Velg fra biblioteket", exact: true }).click();
+  const library = page.locator(".list-drawer .admin-table");
+  await expect(library).toBeVisible();
+  await library.locator(`tr[data-id="${mediaId}"] button`).first().click();
+  await expect(library).toBeHidden();
   await expect(cover.getByRole("img")).toBeVisible();
   const trigger = page.getByRole("button", { name: /^Publiseringsdato/ });
   await trigger.click();
@@ -116,6 +126,11 @@ try {
     await page.waitForLoadState("networkidle");
     assert(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), `${route} must fit the screen`);
     if (route.includes("/collections/")) {
+      await expect(page.locator(".admin-list .admin-table table")).toBeVisible();
+      const slug = route.split("/").at(-1);
+      const result = await context.request.get(`/api/${slug}?limit=1`);
+      const total = (await result.json()).totalDocs;
+      await expect(page.locator(".admin-list__count")).toContainText(String(total));
       const header = await page.locator(".list-header").boundingBox();
       const action = page.locator(".list-header__title-actions .btn").first();
       const actionBox = await action.boundingBox();
@@ -130,9 +145,50 @@ try {
       assert(filterBox && filterBox.height >= 36, `${route}: native filter actions must use the shared button sizing`);
     }
     await page.screenshot({ path: `/tmp/sammen-admin-${screenshot}.png`, fullPage: true });
+    if (route.includes("/collections/")) {
+      await page.setViewportSize({ width: 390, height: 844 });
+      assert(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), `${route}: only the table may scroll horizontally on mobile`);
+      const scrollFrame = page.locator(".admin-table");
+      await scrollFrame.focus();
+      await page.keyboard.press("ArrowRight");
+      await expect.poll(() => scrollFrame.evaluate((node) => node.scrollLeft)).toBeGreaterThan(0);
+      await scrollFrame.evaluate((node) => { node.scrollLeft = 0; });
+      await page.screenshot({ path: `/tmp/sammen-admin-${screenshot}-mobile.png`, fullPage: true });
+      await page.setViewportSize({ width: 1440, height: 1200 });
+    }
   }
+  await page.goto("/admin/collections/posts");
+  await expect(page.locator(`tr[data-id="${draftId}"] .admin-table-status`)).toHaveText("Utkast");
+  const filterToggle = page.getByRole("button", { name: "Filter", exact: true });
+  await filterToggle.click();
+  await expect(filterToggle).toHaveAttribute("aria-expanded", "true");
+  await expect(page.locator(".where-builder")).toBeVisible();
+  await filterToggle.click();
+  const search = page.locator(".search-filter input");
+  await search.fill(searchTheme);
+  await expect(page.locator(".admin-table tbody tr")).toHaveCount(1);
+  await expect(page.locator(".admin-list__count")).toHaveText("1 innlegg");
+  const row = page.locator(`tr[data-id="${postId}"]`);
+  await expect(row.locator(".admin-table-status")).toHaveText("Privat");
+  await expect(row.locator(".admin-table-title__description")).toHaveText("En liten oppdatering til gjestene.");
+  await row.getByRole("checkbox").check();
+  await expect(page).toHaveURL(/\/collections\/posts\?/);
+  await row.getByRole("checkbox").uncheck();
+  await page.locator("#heading-title button").first().click();
+  await expect(page).toHaveURL(/sort=title/);
+  await row.locator(".cell-publishedAt").click();
+  await expect(page).toHaveURL(new RegExp(`/posts/${postId}(?:\\?|$)`));
+  await page.goto(`/admin/collections/posts?search=${searchTheme}`);
+  await search.fill(`${searchTheme}-does-not-exist`);
+  await expect(page.locator(".admin-list__count")).toHaveText("0 innlegg");
+  await expect(page.locator(".admin-table")).toHaveCount(0);
+  await page.goto("/admin/collections/posts?sort=-id&limit=1");
+  await expect(page.locator(".admin-table tbody tr")).toHaveCount(1);
+  await page.locator(".paginator .clickable-arrow--right").click();
+  await expect(page).toHaveURL(/page=2/);
+  await expect(page.locator(".admin-table tbody tr")).toHaveCount(1);
   assert.equal(errors.length, 0, errors.join("\n"));
-  console.log("PASS: admin navigation, placeholders, visibility, date/time persistence, cancel/Escape, timezone handling, mobile layout and all admin sections.");
+  console.log("PASS: admin navigation, forms, dates, shared tables, counts, status, theme search, row selection/navigation, sorting, pagination, library selection and mobile layout.");
 } catch (error) {
   console.error(error);
   const page = browser?.contexts()[0]?.pages()[0];
@@ -146,6 +202,7 @@ try {
   code = 1;
 } finally {
   if (browser) await browser.close();
+  if (draftId) await payload.delete({ collection: "posts", id: draftId });
   if (postId) await payload.delete({ collection: "posts", id: postId });
   if (mediaId) await payload.delete({ collection: "media", id: mediaId });
   if (userId) await payload.delete({ collection: "users", id: userId });

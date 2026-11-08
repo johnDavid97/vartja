@@ -5,6 +5,7 @@ import "@payloadcms/next/css";
 import "@/components/admin/editor/editor.css";
 import "@/components/admin/buttons.css";
 import "./custom.css";
+import "@/components/admin/tables/tables.css";
 import { handleServerFunctions, RootLayout } from "@payloadcms/next/layouts";
 import type { ServerFunctionClient } from "payload";
 import { importMap } from "./admin/importMap";

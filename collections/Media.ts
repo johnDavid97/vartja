@@ -7,6 +7,9 @@ export const Media: CollectionConfig = {
   admin: {
     group: "Bryllupet",
     useAsTitle: "alt",
+    defaultColumns: ["filename", "alt", "updatedAt"],
+    listSearchableFields: ["filename", "alt"],
+    components: { views: { list: { Component: "/components/admin/tables/AdminList#default" } } },
     hideAPIURL: true,
     description: "Bilder til nettsiden. Opplastede bilder er offentlige – ikke last opp private dokumenter.",
   },
