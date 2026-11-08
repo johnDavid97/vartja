@@ -1,0 +1,80 @@
+import type { Endpoint, PayloadRequest, Where } from "payload";
+import { getPolls, type PollDefinition, type PollResults } from "./polls";
+import { pollVoter, pollVoteKey } from "./poll-voter";
+
+function reply(data: unknown, status = 200, cookie?: string | null) {
+  const headers = new Headers({ "Cache-Control": "private, no-store", Vary: "Cookie" });
+  if (cookie) headers.set("Set-Cookie", cookie);
+  return Response.json(data, { status, headers });
+}
+
+async function results(req: PayloadRequest, post: number, poll: PollDefinition, voteKey: string): Promise<PollResults> {
+  const base: Where = { and: [{ post: { equals: post } }, { pollId: { equals: poll.id } }] };
+  const [ballot, counts] = await Promise.all([
+    req.payload.find({ collection: "poll-votes", where: { voteKey: { equals: voteKey } }, limit: 1, depth: 0, overrideAccess: true }),
+    Promise.all(poll.options.map(async (option) => {
+      const { totalDocs } = await req.payload.count({
+        collection: "poll-votes", overrideAccess: true,
+        where: { and: [base, { optionId: { equals: option.id } }] },
+      });
+      return { id: option.id, count: totalDocs };
+    })),
+  ]);
+  return { open: poll.open, selectedOption: ballot.docs[0]?.optionId || null, total: counts.reduce((sum, option) => sum + option.count, 0), options: counts };
+}
+
+function handler(voting: boolean): Endpoint["handler"] {
+  return async (req) => {
+    const id = String(req.routeParams?.postId || "");
+    const postId = Number(id);
+    const pollId = String(req.routeParams?.pollId || "");
+    if (!/^\d+$/.test(id) || !Number.isSafeInteger(postId) || postId < 1 || postId > 2147483647 || !pollId || pollId.length > 128) {
+      return reply({ error: "Fant ikke avstemningen." }, 404);
+    }
+    if (voting) {
+      // Cookie-based anonymous voting must not accept cross-site form submissions.
+      const origin = req.headers.get("origin");
+      if (!req.url || origin !== new URL(req.url).origin) return reply({ error: "Ugyldig forespørsel." }, 403);
+      if (!req.headers.get("content-type")?.startsWith("application/json")) return reply({ error: "Forventet JSON." }, 415);
+      if (Number(req.headers.get("content-length")) > 2048) return reply({ error: "Forespørselen er for stor." }, 413);
+    }
+    const { docs } = await req.payload.find({
+      collection: "posts", where: { id: { equals: postId } },
+      draft: false, overrideAccess: false, user: null, limit: 1, depth: 0,
+    });
+    const post = docs[0];
+    // Never allow voting on drafts/private posts, even for an authenticated editor.
+    if (!post || post._status !== "published" || post.visibility === "private") return reply({ error: "Fant ikke avstemningen." }, 404);
+    const poll = getPolls(post.body).find((item) => item.id === pollId);
+    if (!poll) return reply({ error: "Fant ikke avstemningen." }, 404);
+
+    const secret = req.payload.config.secret;
+    const voter = pollVoter(req.headers.get("cookie"), secret);
+    const voteKey = pollVoteKey(postId, pollId, voter.id, secret);
+    if (voting) {
+      if (!poll.open) return reply({ error: "Avstemningen er avsluttet." }, 409, voter.cookie);
+      let optionId: unknown;
+      try { optionId = (await req.json?.())?.optionId; }
+      catch { return reply({ error: "Ugyldig forespørsel." }, 400, voter.cookie); }
+      if (typeof optionId !== "string" || !poll.options.some((option) => option.id === optionId)) {
+        return reply({ error: "Velg et gyldig alternativ." }, 400, voter.cookie);
+      }
+      const existing = await req.payload.count({ collection: "poll-votes", where: { voteKey: { equals: voteKey } }, overrideAccess: true });
+      if (!existing.totalDocs) {
+        try {
+          await req.payload.create({ collection: "poll-votes", overrideAccess: true, data: { post: postId, pollId, optionId, voteKey, definition: poll } });
+        } catch (error) {
+          // The unique index handles simultaneous votes from the same browser.
+          const duplicate = await req.payload.count({ collection: "poll-votes", where: { voteKey: { equals: voteKey } }, overrideAccess: true });
+          if (!duplicate.totalDocs) throw error;
+        }
+      }
+    }
+    return reply(await results(req, postId, poll, voteKey), 200, voter.cookie);
+  };
+}
+
+export const pollEndpoints: Endpoint[] = [
+  { path: "/:postId/polls/:pollId", method: "get", handler: handler(false) },
+  { path: "/:postId/polls/:pollId", method: "post", handler: handler(true) },
+];

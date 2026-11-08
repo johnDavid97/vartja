@@ -6,6 +6,7 @@ import { buildConfig } from "payload";
 import { Users } from "./collections/Users";
 import { Posts } from "./collections/Posts";
 import { Media } from "./collections/Media";
+import { PollVotes } from "./collections/PollVotes";
 import sharp from "sharp";
 import { Wedding } from "./globals/Wedding";
 
@@ -18,11 +19,12 @@ export default buildConfig({
     importMap: { baseDir: directory },
     meta: { titleSuffix: "— Andrea & Martin" },
     components: {
+      providers: ["/components/admin/editor/PostEditorProvider#default"],
       beforeDashboard: ["/components/admin/Welcome#default"],
       graphics: { Logo: "/components/admin/Logo#default" },
     },
   },
-  collections: [Users, Posts, Media],
+  collections: [Users, Posts, Media, PollVotes],
   sharp,
   upload: { limits: { fileSize: 10 * 1024 * 1024 } },
   globals: [Wedding],
