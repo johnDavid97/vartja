@@ -18,9 +18,14 @@ export const Posts: CollectionConfig = {
   admin: {
     useAsTitle: "title",
     group: "Bryllupet",
-    defaultColumns: ["title", "_status", "updatedAt"],
+    defaultColumns: ["title", "theme", "_status", "publishedAt"],
+    listSearchableFields: ["title", "theme"],
     hideAPIURL: true,
-    description: "Skriv en oppdatering til gjestene. Lagre som utkast, eller publiser på forsiden.",
+    description: "Små og store oppdateringer til gjestene deres.",
+    components: {
+      views: { list: { Component: "/components/admin/tables/AdminList#default" } },
+      edit: { beforeDocumentControls: ["/components/admin/PostHeading#default"] },
+    },
   },
   access: {
     read: ({ req }): boolean | Where => req.user ? true : {
@@ -49,7 +54,7 @@ export const Posts: CollectionConfig = {
     beforeChange: [
       validatePostPolls,
       ({ data, originalDoc }) => {
-        if (data._status === "published" && !data.publishedAt && !originalDoc?.publishedAt) {
+        if (data._status === "published" && !data.publishedAt && (!originalDoc?.publishedAt || data.publishedAt === null)) {
           data.publishedAt = new Date().toISOString();
         }
         return data;
@@ -57,21 +62,19 @@ export const Posts: CollectionConfig = {
     ],
   },
   fields: [
-    { name: "title", label: "Tittel", type: "text", required: true },
+    { name: "title", label: "Tittel", type: "text", required: true, admin: { placeholder: "F.eks. Velkommen til bryllupshelgen", className: "wedding-post-title", components: { Cell: "/components/admin/tables/Cells#TitleCell" } } },
+    {
+      name: "_status", type: "select", label: "Status",
+      // Payload merges its native draft/published options into this field.
+      options: [],
+      admin: { components: { Cell: "/components/admin/tables/Cells#PostStatusCell" } },
+    },
     // Retain the old column so existing author data isn't deleted by schema push.
     { name: "authorName", type: "text", hidden: true },
     {
-      name: "postBuilder",
-      type: "ui",
-      admin: {
-        position: "sidebar",
-        components: { Field: "/components/admin/editor/PostSidebar#PostSidebar" },
-      },
-    },
-    {
-      label: "Innstillinger",
-      type: "collapsible",
-      admin: { position: "sidebar", initCollapsed: false },
+      label: "Publisering",
+      type: "group",
+      admin: { position: "sidebar", className: "wedding-publishing" },
       fields: [
         {
           name: "visibility",
@@ -84,7 +87,7 @@ export const Posts: CollectionConfig = {
             { label: "Privat – bare redaktører", value: "private" },
           ],
           admin: {
-            description: "Private innlegg kan kun leses av innloggede redaktører i admin. Bilder i mediebiblioteket er fortsatt offentlige. Lagre/publiser for å aktivere endringen.",
+            components: { Field: "/components/admin/fields/Visibility#Visibility" },
           },
         },
         {
@@ -92,23 +95,25 @@ export const Posts: CollectionConfig = {
           label: "Tema",
           type: "text",
           maxLength: 60,
-          admin: { description: "Etiketten som vises på innlegget, for eksempel Reise eller Praktisk info." },
+          admin: { placeholder: "Skriv et tema, f.eks. Reise", description: "Etiketten som vises på innlegget." },
         },
         {
           name: "publishedAt",
-          label: "Publisert dato",
+          label: "Publiseringsdato",
           type: "date",
           admin: {
-            date: { pickerAppearance: "dayAndTime" },
-            description: "Settes ved første publisering. For eldre innlegg kan dere velge riktig dato her.",
+            components: { Field: "/components/admin/fields/PublicationDate#PublicationDate", Cell: "/components/admin/tables/Cells#PublicationCell" },
           },
         },
-        {
-          name: "interactionNotice",
-          type: "ui",
-          admin: { components: { Field: "/components/admin/editor/PostSidebar#PostInteractionNotice" } },
-        },
       ],
+    },
+    {
+      name: "postBuilder",
+      type: "ui",
+      admin: {
+        position: "sidebar",
+        components: { Field: "/components/admin/editor/PostSidebar#PostSidebar" },
+      },
     },
     {
       name: "description",
@@ -116,7 +121,7 @@ export const Posts: CollectionConfig = {
       type: "textarea",
       required: true,
       admin: {
-        description: "En kort introduksjon som vises på innleggskortene, ikke i artikkelteksten.",
+        components: { Field: "/components/admin/fields/PostDescription#PostDescription" },
       },
     },
     {
@@ -125,7 +130,7 @@ export const Posts: CollectionConfig = {
       type: "upload",
       relationTo: "media",
       admin: {
-        description: "Vises på innleggskortene. Bilder i selve artikkelen legges til i redigeringsområdet nedenfor.",
+        components: { Field: "/components/admin/fields/CoverImage#CoverImage" },
       },
     },
     {
@@ -133,7 +138,7 @@ export const Posts: CollectionConfig = {
       label: "Artikkel",
       type: "richText",
       editor: lexicalEditor({
-        admin: { hideAddBlockButton: true, placeholder: "Skriv her…" },
+        admin: { hideAddBlockButton: true, placeholder: "Begynn å skrive her …" },
         features: ({ defaultFeatures }) => [
           // Payload reverses independent features during dependency sorting:
           // place our menu finalizer first so it resolves after all built-ins.
@@ -153,7 +158,7 @@ export const Posts: CollectionConfig = {
       }),
       admin: {
         className: "post-visual-editor",
-        description: "Skriv direkte her og bruk verktøylinjen for formatering. Dra byggeklosser fra sidepanelet inn i artikkelen, eller klikk for å sette dem inn etter valgt avsnitt. Bruk håndtaket til venstre for å flytte innhold.",
+        description: "Bruk verktøylinjen for tekst og håndtaket til venstre for å flytte innhold.",
       },
     },
     {

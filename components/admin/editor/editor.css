@@ -95,14 +95,9 @@
 .post-photo-block__media { position: relative; }
 .post-photo-block__settings { position: absolute; top: 0.75rem; right: 0.75rem; z-index: 10; }
 .post-photo-block__settings summary {
-  display: grid; place-items: center; width: 44px; height: 44px;
-  margin-left: auto; border: 1px solid var(--theme-elevation-200);
-  border-radius: 0.5rem; background: var(--theme-elevation-0);
-  color: var(--theme-text); box-shadow: 0 2px 8px #0002;
-  cursor: pointer; list-style: none;
+  margin-left: auto; list-style: none;
 }
 .post-photo-block__settings summary::-webkit-details-marker { display: none; }
-.post-photo-block__settings summary:focus-visible { outline: 2px solid #854d59; outline-offset: 3px; }
 .post-photo-block__fields {
   position: absolute; top: calc(100% + 0.5rem); right: 0;
   display: grid; gap: 0.75rem; width: min(22rem, calc(100vw - 6rem));
@@ -118,13 +113,6 @@
 }
 .post-photo-block__error { color: var(--theme-error-600); }
 
-.post-poll-block {
-  margin-block: 1.5rem; padding: 1.25rem;
-  border: 1px solid var(--theme-elevation-200); border-radius: 0.75rem;
-  background: var(--theme-elevation-50);
-}
-.post-poll-block__header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1.25rem; }
-.post-poll-block__header strong { display: flex; align-items: center; gap: 0.5rem; }
-.post-poll-block > p { font-size: 0.8rem; line-height: 1.5; color: var(--theme-elevation-600); }
+/* Poll layout is owned by poll.css, loaded after the shared admin field styles. */
 
 
