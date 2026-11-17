@@ -9,6 +9,7 @@ import { Media } from "./collections/Media";
 import { PollVotes } from "./collections/PollVotes";
 import sharp from "sharp";
 import { Wedding } from "./globals/Wedding";
+import { Program } from "./globals/Program";
 import { nb } from "@payloadcms/translations/languages/nb";
 
 const directory = path.dirname(fileURLToPath(import.meta.url));
@@ -32,7 +33,7 @@ export default buildConfig({
   collections: [Users, Posts, Media, PollVotes],
   sharp,
   upload: { limits: { fileSize: 10 * 1024 * 1024 } },
-  globals: [Wedding],
+  globals: [Wedding, Program],
   editor: lexicalEditor(),
   db: postgresAdapter({
     pool: { connectionString: process.env.DATABASE_URL },

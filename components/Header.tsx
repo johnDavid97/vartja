@@ -12,6 +12,7 @@ import {
 const links = [
   { href: "/", label: "Hjem" },
   { href: "/news", label: "Innlegg" },
+  { href: "/program", label: "Program" },
   { href: "/reiseplan", label: "Reiseplan" },
   { href: "/ting-a-gjore", label: "Ting å gjøre" },
   { href: "/bilder", label: "Bilder" },
