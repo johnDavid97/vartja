@@ -13,7 +13,8 @@ export default function AdminNav() {
   const name = user?.name || user?.email || "Redaktør";
   const initials = name.split(/\s+/).slice(0, 2).map((word: string) => word[0]).join("").toUpperCase();
   const closeOnMobile = () => { if (window.matchMedia("(max-width: 1024px)").matches) setNavOpen(false); };
-  const active = (href: string) => pathname.startsWith(href);
+  const active = (href: string) => pathname.startsWith(href)
+    || (href === "/admin/collections/households" && pathname.startsWith("/admin/collections/users"));
   const link = (href: string, label: string, Icon: typeof FileText) => (
     <Link href={href} className="wedding-nav__item" aria-current={active(href) ? "page" : undefined} onClick={closeOnMobile}>
       <Icon size={20} aria-hidden="true" /><span>{label}</span>
@@ -38,7 +39,7 @@ export default function AdminNav() {
       </Link>
       <AdminButton variant="ghost" size="icon-sm" className="wedding-nav__close" aria-label="Lukk meny" onClick={() => setNavOpen(false)}><X size={20} /></AdminButton>
       <nav aria-label="Administrasjon" className="wedding-nav__links">
-        {link("/admin/collections/users", "Brukere og admin", Users)}
+        {link("/admin/collections/households", "Brukere og admin", Users)}
         <h2>Sider</h2>
         {link("/admin/collections/posts", "Innlegg", FileText)}
         {link("/admin/globals/program", "Program", Clock3)}

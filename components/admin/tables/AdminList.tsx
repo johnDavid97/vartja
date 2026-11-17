@@ -8,6 +8,7 @@ const labels: Record<string, { one: string; many: string; table: string }> = {
   posts: { one: "innlegg", many: "innlegg", table: "Innlegg" },
   media: { one: "bilde", many: "bilder", table: "Bilder" },
   users: { one: "redaktør", many: "redaktører", table: "Redaktører" },
+  households: { one: "husstand", many: "husstander", table: "Husstander og gjester" },
 };
 
 /** One list adapter for every visible collection, including relationship drawers.

@@ -7,6 +7,9 @@ import { Users } from "./collections/Users";
 import { Posts } from "./collections/Posts";
 import { Media } from "./collections/Media";
 import { PollVotes } from "./collections/PollVotes";
+import { Households } from "./collections/Households";
+import { HouseholdCredentialAudits } from "./collections/HouseholdCredentialAudits";
+import { HouseholdRegistrationLimits } from "./collections/HouseholdRegistrationLimits";
 import sharp from "sharp";
 import { Wedding } from "./globals/Wedding";
 import { Program } from "./globals/Program";
@@ -30,12 +33,14 @@ export default buildConfig({
       graphics: { Logo: "/components/admin/Logo#default" },
     },
   },
-  collections: [Users, Posts, Media, PollVotes],
+  collections: [Users, Posts, Media, PollVotes, Households, HouseholdCredentialAudits, HouseholdRegistrationLimits],
   sharp,
   upload: { limits: { fileSize: 10 * 1024 * 1024 } },
   globals: [Wedding, Program],
   editor: lexicalEditor(),
   db: postgresAdapter({
+    // Schema changes are applied explicitly through reviewed migrations, including in development.
+    push: false,
     pool: { connectionString: process.env.DATABASE_URL },
     migrationDir: path.resolve(directory, "migrations"),
   }),
