@@ -8,7 +8,8 @@ const nextConfig: NextConfig = {
     return [{ source: "/tidsplan", destination: "/news", permanent: true }];
   },
   experimental: {
-    agentFeedback: true,
+    agentFeedback: false,
+    agentUpgrade: "security",
   },
   cacheComponents: true,
   partialPrefetching: true,
