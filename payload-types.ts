@@ -71,6 +71,9 @@ export interface Config {
     posts: Post;
     media: Media;
     'poll-votes': PollVote;
+    households: Household;
+    'household-credential-audits': HouseholdCredentialAudit;
+    'household-registration-limits': HouseholdRegistrationLimit;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -82,6 +85,9 @@ export interface Config {
     posts: PostsSelect<false> | PostsSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     'poll-votes': PollVotesSelect<false> | PollVotesSelect<true>;
+    households: HouseholdsSelect<false> | HouseholdsSelect<true>;
+    'household-credential-audits': HouseholdCredentialAuditsSelect<false> | HouseholdCredentialAuditsSelect<true>;
+    'household-registration-limits': HouseholdRegistrationLimitsSelect<false> | HouseholdRegistrationLimitsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -268,6 +274,56 @@ export interface PollVote {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "households".
+ */
+export interface Household {
+  id: number;
+  contactName: string;
+  email: string;
+  status: 'pending' | 'approved' | 'revoked';
+  members: {
+    memberId: string;
+    name: string;
+    status: 'pending' | 'approved';
+    id?: string | null;
+  }[];
+  revision: number;
+  credentialVersion: number;
+  publicId: string;
+  accessCodeDigest: string;
+  accessCodeEncrypted: string;
+  registrationRequestDigest: string;
+  registrationRequestFingerprint: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "household-credential-audits".
+ */
+export interface HouseholdCredentialAudit {
+  id: number;
+  household: number;
+  administrator: number;
+  action: 'reveal' | 'rotate';
+  occurredAt: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "household-registration-limits".
+ */
+export interface HouseholdRegistrationLimit {
+  id: number;
+  windowKey: string;
+  windowStart: string;
+  attempts: number;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -305,6 +361,18 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'poll-votes';
         value: number | PollVote;
+      } | null)
+    | ({
+        relationTo: 'households';
+        value: number | Household;
+      } | null)
+    | ({
+        relationTo: 'household-credential-audits';
+        value: number | HouseholdCredentialAudit;
+      } | null)
+    | ({
+        relationTo: 'household-registration-limits';
+        value: number | HouseholdRegistrationLimit;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -443,6 +511,55 @@ export interface PollVotesSelect<T extends boolean = true> {
   optionId?: T;
   definition?: T;
   voteKey?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "households_select".
+ */
+export interface HouseholdsSelect<T extends boolean = true> {
+  contactName?: T;
+  email?: T;
+  status?: T;
+  members?:
+    | T
+    | {
+        memberId?: T;
+        name?: T;
+        status?: T;
+        id?: T;
+      };
+  revision?: T;
+  credentialVersion?: T;
+  publicId?: T;
+  accessCodeDigest?: T;
+  accessCodeEncrypted?: T;
+  registrationRequestDigest?: T;
+  registrationRequestFingerprint?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "household-credential-audits_select".
+ */
+export interface HouseholdCredentialAuditsSelect<T extends boolean = true> {
+  household?: T;
+  administrator?: T;
+  action?: T;
+  occurredAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "household-registration-limits_select".
+ */
+export interface HouseholdRegistrationLimitsSelect<T extends boolean = true> {
+  windowKey?: T;
+  windowStart?: T;
+  attempts?: T;
   updatedAt?: T;
   createdAt?: T;
 }

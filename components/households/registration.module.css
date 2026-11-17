@@ -1,0 +1,108 @@
+.formCard,
+.successCard,
+.messageCard {
+  width: min(100%, 44rem);
+  box-shadow: 0 1.25rem 3rem rgb(0 0 0 / 8%);
+}
+
+.form {
+  display: grid;
+  gap: 2rem;
+  min-width: 0;
+}
+
+.title,
+.successTitle {
+  font-size: clamp(1.35rem, 4vw, 1.8rem);
+}
+
+.submitButton {
+  min-height: 2.75rem;
+  justify-self: start;
+}
+
+.submitError {
+  margin: 0;
+  padding: 0.75rem;
+  overflow-wrap: anywhere;
+  border: 1px solid color-mix(in oklch, var(--destructive), transparent 60%);
+  border-radius: var(--radius-lg);
+  background: color-mix(in oklch, var(--destructive), transparent 92%);
+  color: var(--destructive);
+}
+
+.loading {
+  margin: auto;
+  color: var(--muted-foreground);
+}
+
+.successCard {
+  border: 2px solid color-mix(in oklch, #2f5e52, transparent 35%);
+}
+
+.successContent {
+  display: grid;
+  gap: 1rem;
+}
+
+.successContent p {
+  margin: 0;
+  line-height: 1.55;
+}
+
+.codeLabel {
+  color: var(--muted-foreground);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.accessCode {
+  display: block;
+  width: 100%;
+  padding: 1rem;
+  overflow-wrap: anywhere;
+  border: 2px dashed #2f5e52;
+  border-radius: var(--radius-lg);
+  background: #edf3f0;
+  color: #17362e;
+  font-family: var(--font-mono), monospace;
+  font-size: clamp(1.35rem, 7vw, 2.2rem);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-align: center;
+  user-select: all;
+}
+
+.successActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.copyMessage {
+  color: var(--muted-foreground);
+  font-size: 0.875rem;
+}
+
+@media (max-width: 32rem) {
+  .formCard,
+  .successCard,
+  .messageCard {
+    border-radius: 0.75rem;
+  }
+
+  .submitButton,
+  .successActions button {
+    width: 100%;
+  }
+}
+
+@media print {
+  .successActions {
+    display: none;
+  }
+
+  .successCard {
+    box-shadow: none;
+  }
+}
