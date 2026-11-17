@@ -41,7 +41,7 @@ export default function AdminNav() {
         {link("/admin/collections/users", "Brukere og admin", Users)}
         <h2>Sider</h2>
         {link("/admin/collections/posts", "Innlegg", FileText)}
-        {planned("Program", Clock3)}
+        {link("/admin/globals/program", "Program", Clock3)}
         {link("/admin/collections/media", "Bilder", ImageIcon)}
         <h2>Aktivitet</h2>
         {planned("Avstemninger", BarChart3)}

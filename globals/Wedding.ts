@@ -5,7 +5,7 @@ export const Wedding: GlobalConfig = {
   label: "Bryllupsinformasjon",
   admin: {
     group: "Bryllupet",
-    description: "Navn, dato og velkomsttekst vises på forsiden. Reiseinformasjon og tidsplan kobles til egne sider senere.",
+    description: "Navn, dato og velkomsttekst vises på forsiden. Dagsprogrammet redigeres under Program. Reiseinformasjon kobles til egen side senere.",
   },
   access: {
     // Only public wedding information belongs in this global.
@@ -38,8 +38,9 @@ export const Wedding: GlobalConfig = {
     { name: "travelInformation", label: "Reiseinformasjon", type: "richText" },
     {
       name: "schedule",
-      label: "Tidsplan",
+      label: "Eldre tidsplan (ikke publisert)",
       type: "array",
+      admin: { description: "Beholdt for eldre innhold. Bruk Program i menyen for dagsprogrammet som vises på nettsiden." },
       fields: [
         { name: "title", label: "Hendelse", type: "text", required: true },
         {

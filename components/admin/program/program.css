@@ -1,0 +1,46 @@
+.document-fields:has(.program-builder) .document-fields__edit { border: 0; padding-top: 28px; }
+.program-builder { min-width: 0; }
+.program-builder > .field-error { position: static; margin-bottom: 16px; }
+.program-days { display: flex; flex-wrap: wrap; gap: 5px; padding: 5px; border-radius: 13px; background: #ecefeb; width: fit-content; margin-bottom: 20px; }
+.program-days button > span:first-child { text-transform: capitalize; }
+.program-days__count { color: #626b66; font-size: 12px; }
+.program-card { padding: 22px; border: 1px solid #dfe3dd; border-radius: 15px; background: #fff; min-width: 0; }
+.program-builder h2 { font-size: 17px; font-weight: 700; margin: 0 0 16px; line-height: 1.35; overflow-wrap: anywhere; }
+.program-day-settings { display: flex; align-items: flex-end; flex-wrap: wrap; gap: 16px; margin-bottom: 22px; }
+.program-day-settings > :is(label, .wedding-publication-date) { flex: 1; min-width: 180px; }
+.program-day-settings .wedding-publication-date { margin: 0; }
+.program-layout { display: grid; grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr); align-items: start; gap: 26px; }
+.program-main { min-width: 0; }
+.program-builder label { display: flex; flex-direction: column; gap: 8px; font-weight: 600; font-size: 14px; min-width: 0; }
+.program-builder :is(input, textarea) { display: block; width: 100%; min-width: 0; max-width: 100%; padding: 12px; min-height: 44px; border: 1px solid #cfd5ce; border-radius: 10px; background: #fff; color: #242c27; font: inherit; font-weight: 400; box-sizing: border-box; }
+.program-builder textarea { resize: vertical; }
+.program-builder :is(input, textarea):focus-visible { outline: 3px solid #83aa9a; outline-offset: 2px; }
+.program-builder :is(input, textarea):disabled { background: #f2f4f0; }
+.program-palette > div { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; }
+.program-palette__item { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 12px 4px; border: 1px solid #dfe3dd; background: #fafbf9; border-radius: 12px; cursor: pointer; font: inherit; }
+.program-palette__item:hover { border-color: #2f5e52; }
+.program-palette__item:disabled { opacity: .6; }
+.program-icon { display: grid; place-items: center; flex-shrink: 0; width: 42px; height: 42px; border-radius: 12px; color: #2f5e52; background: #edf3f0; }
+.program-icon--flight { background: #e9f1fc; color: #24569d; }
+.program-icon--train { background: #eeeefb; color: #4946a5; }
+.program-icon--bus { background: #fff1e1; color: #945100; }
+.program-icon--event { background: #f3edf9; color: #71449a; }
+.program-icon--info { background: #f0f1ef; color: #59616a; }
+.program-items { display: grid; gap: 10px; list-style: none; margin: 20px 0; padding: 0; }
+.program-item { display: flex; align-items: center; gap: 5px; padding: 12px 8px; border: 1px solid #dfe3dd; border-radius: 13px; background: #fff; min-width: 0; }
+.program-item--selected { border-color: #2f5e52; box-shadow: 0 0 0 1px #2f5e52; }
+.program-item__select { display: flex; flex: 1; align-items: center; gap: 14px; min-width: 0; text-align: left; border: 0; background: none; padding: 0; cursor: pointer; color: #242c27; font: inherit; }
+.program-item__select time { flex-shrink: 0; font-weight: 650; min-width: 42px; }
+.program-item__select > span:last-child { min-width: 0; overflow-wrap: anywhere; }
+.program-item__select strong { display: block; font-size: 15px; }
+.program-item__select small { display: block; color: #626b66; margin-top: 4px; line-height: 1.4; }
+.program-item__order { display: flex; flex-direction: column; }
+.program-item-editor { display: grid; gap: 20px; }
+.program-item-editor header { display: flex; align-items: center; gap: 12px; }
+.program-item-editor header small { text-transform: uppercase; color: #626b66; font-weight: 650; font-size: 11px; }
+.program-item-editor header h2 { margin: 0; }
+.program-input-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.program-item-editor footer { display: flex; justify-content: space-between; gap: 10px; border-top: 1px solid #e7ebe4; padding-top: 18px; }
+.program-hint, .program-empty p { color: #626b66; font-size: 13px; line-height: 1.6; margin: 12px 0; }
+@media (max-width: 1200px) { .program-layout { grid-template-columns: minmax(0, 1fr); } .program-palette > div { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 600px) { .program-card { padding: 16px; } .program-item__select { gap: 8px; flex-wrap: wrap; } .program-item__select > span:last-child { flex-basis: 100%; } .program-day-settings > :is(label, .wedding-publication-date) { min-width: 100%; } .program-item { padding: 10px 4px; } }
