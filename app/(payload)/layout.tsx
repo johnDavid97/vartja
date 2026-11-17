@@ -7,6 +7,7 @@ import "@/components/admin/buttons.css";
 import "./custom.css";
 import "@/components/admin/tables/tables.css";
 import "@/components/admin/editor/poll.css";
+import "@/components/admin/program/program.css";
 import { handleServerFunctions, RootLayout } from "@payloadcms/next/layouts";
 import type { ServerFunctionClient } from "payload";
 import { importMap } from "./admin/importMap";

@@ -4,6 +4,9 @@ import { withPayload } from "@payloadcms/next/withPayload";
 const nextConfig: NextConfig = {
   /* config options here */
   output: "standalone",
+  // Keep a single Payload runtime across config/RSC and REST chunks. Bundled copies
+  // break instanceof checks and strip field-validation details in production.
+  serverExternalPackages: ["payload"],
   async redirects() {
     return [{ source: "/tidsplan", destination: "/news", permanent: true }];
   },

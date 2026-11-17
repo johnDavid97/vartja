@@ -13,6 +13,7 @@
     "test:editor": "node --env-file=.env --import tsx tests/integration/visual-editor.ts",
     "test:polls": "node --env-file=.env --import tsx tests/integration/polls.ts",
     "test:admin": "node --env-file=.env --import tsx tests/integration/admin-design.ts",
+    "test:program": "node --env-file=.env --import tsx tests/integration/program.ts",
     "payload": "payload",
     "generate:types": "payload generate:types",
     "generate:importmap": "payload generate:importmap",

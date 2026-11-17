@@ -27,15 +27,26 @@ with the same permissions; do not create guest accounts here.
 ## Editing the website
 
 The admin uses a Norwegian, light green-and-white design with a responsive sidebar.
-Program, poll overview and comment overview entries are disabled **Kommer** placeholders;
-existing poll blocks still work. Preview is likewise marked as not yet available.
+Poll overview and comment overview entries remain disabled **Kommer** placeholders;
+existing post poll blocks still work. **Program** is now an active multi-day itinerary editor. Preview is likewise marked as not yet available.
 Publishing remains immediate: the date picker changes the displayed date, not scheduling.
 It uses Europe/Oslo time, supports quick dates, cancellation and **Sett automatisk**.
 Automatic dates are assigned when publishing. The description counter recommends 160
 characters but does not truncate or reject older, longer descriptions.
 
 - **Bryllupsinformasjon**: names, date and welcome text are connected to the homepage.
-  Schedule and travel fields are saved but their dedicated public pages are not connected yet.
+  Legacy schedule and travel fields are retained but are not displayed publicly. The new Program is separate; no legacy data is deleted or silently migrated.
+- **Program** (`/admin/globals/program`): create dated days and flight, train, bus, hotel,
+  event or information items. Select a row to edit details; drag handles or arrow buttons reorder
+  items. Dates are calendar dates and times are local `HH:mm` values (no browser timezone conversion).
+  Earlier return/end times mean the following day. Untimed hotel/information items are supported.
+  Edits, including deletions, enter the main form immediately; **Ferdig** only closes the detail panel.
+  Use **Lagre utkast** or **Publiser** to persist them. Existing published content remains visible
+  while a new draft is edited. `/program` shows only the published itinerary, ordered by date/time;
+  equal times preserve manual order, and untimed items come last. An empty published program shows
+  “Programmet kommer snart.” Version history is not exposed to editors (no Versions tab or history API);
+  internal version storage remains only to support native draft/live separation. Anonymous API access is denied. Preview, comments and polls
+  inside Program are intentionally deferred; shared comments/polls come on a separate branch.
 - **Innlegg**: enter a title, short description and optional cover photo for the cards.
   Write the article in the single **Artikkel** visual editor. Select text and use the fixed
   toolbar for bold, italic, lists, alignment, headings and **Liten / Normal / Stor** text sizes.
@@ -89,7 +100,11 @@ Comments and likes will be separate bottom-of-article features, not reorderable 
 - `app/(payload)/` — isolated admin layout and Payload REST API.
 - `payload.config.ts` — CMS configuration and database connection.
 - `collections/Users.ts` — editor accounts and access rules.
-- `globals/Wedding.ts` — editable wedding details and schedule.
+- `globals/Wedding.ts` — editable wedding details and retained legacy schedule.
+- `globals/Program.ts`, `lib/program.ts` — versioned program, stable day/item IDs, server validation and public sorting.
+- `components/admin/program/` — multi-day visual editor using shared admin buttons and native Payload draft/publish controls.
+- `app/(website)/program/page.tsx` — live-only public itinerary; no draft query parameters are accepted.
+- `migrations/20261108_220804_wedding_program.ts` — Program and Program version tables; run migrations before production deployment.
 - `collections/Posts.ts` — draft/published guest updates.
 - `blocks/postBlocks.ts` — legacy text/photo block schemas.
 - `blocks/ArticlePhoto.ts` — visual photo placeholder schema.
@@ -105,7 +120,8 @@ Comments and likes will be separate bottom-of-article features, not reorderable 
 - `lib/post-content.ts` — legacy fallback and paragraph handling.
 - `collections/Media.ts` — public photo uploads.
 - `components/admin/` — navigation, dashboard, status header and branding.
-- `components/admin/fields/` — publication calendar, visibility cards, cover upload and description.
+- `components/admin/fields/` — publication field, visibility cards, cover upload and description.
+- `components/admin/AdminDatePicker.tsx` — shared calendar/popover for publication dates (Oslo datetime) and Program days (date-only). Both support cancel/Escape and mobile positioning.
 - `components/admin/tables/` — shared list/table adapter for posts, media, users and their selection drawers. Payload retains permissions, queries, sorting, column preferences, bulk actions and pagination. Mobile tables scroll within their frame; rows retain real keyboard-accessible links/buttons.
 - Post lists show descriptions, themes, actual draft/private/published states and Oslo publication dates. Search matches titles and themes; counts reflect the current query. Existing saved column preferences are respected.
 - `lib/publication-date.ts` — timezone-safe publication date conversion.
@@ -127,6 +143,7 @@ npm run test:e2e              # Read-only desktop/mobile checks; requires npm ru
 npm run test:editor           # Local editor/publishing integration check; see below
 npm run test:polls            # Local poll editor/voting/privacy integration check
 npm run test:admin            # Local admin design, date picker and upload integration check
+npm run test:program          # Requires an empty local Program with no version history
 ```
 
 Browser tests use `http://localhost:3000` by default (override with `TEST_BASE_URL`).
@@ -143,6 +160,10 @@ Norwegian dates in a different browser timezone, automatic publication dates and
 It also checks shared tables, live counts, theme search, status badges, sorting, pagination,
 row selection/navigation, media-library selection and mobile table overflow.
 It saves review screenshots to `/tmp/sammen-admin-*.png` and removes its fixture records.
+`test:program` refuses to run if Program has content or version history. It exercises days, item
+editing, drag/keyboard ordering, draft isolation, publication, API permissions, deletion and mobile
+layouts. It restores the initial empty Program and removes its fixture versions/user afterward.
+Screenshots are saved to `/tmp/sammen-program-*.png`.
 Do not run these fixture tests against production.
 
 Database data persists in the `sammen_postgres_data` Docker volume.

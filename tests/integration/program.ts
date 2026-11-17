@@ -1,0 +1,163 @@
+// Local-only: requires an empty Program with no version history. Never overwrites a real itinerary.
+import assert from "node:assert/strict";
+import { randomBytes } from "node:crypto";
+import { chromium, expect, type Browser } from "@playwright/test";
+import { getPayload } from "payload";
+import config from "../../payload.config";
+import type { ProgramData } from "../../lib/program";
+
+assert(["localhost", "127.0.0.1"].includes(new URL(process.env.DATABASE_URL || "").hostname));
+const baseURL = process.env.TEST_BASE_URL || "http://localhost:3000";
+assert(["localhost", "127.0.0.1"].includes(new URL(baseURL).hostname));
+const payload = await getPayload({ config });
+const original = await payload.findGlobal({ slug: "program" });
+const versions = await payload.findGlobalVersions({ slug: "program", limit: 1 });
+assert.equal(versions.totalDocs, 0, "Use an empty development Program; existing version history must not be modified by this test");
+assert.equal((original.itinerary as ProgramData | undefined)?.days?.length ?? 0, 0, "Refusing to modify a real program");
+let userId: number | undefined;
+let browser: Browser | undefined;
+let code = 0;
+try {
+  const token = randomBytes(6).toString("hex");
+  const email = `program-${token}@example.invalid`;
+  const password = randomBytes(24).toString("hex");
+  userId = (await payload.create({ collection: "users", data: { name: "Program test", email, password } })).id;
+  browser = await chromium.launch();
+  const context = await browser.newContext({ baseURL, viewport: { width: 1440, height: 1100 }, locale: "nb-NO", timezoneId: "America/New_York" });
+  assert((await context.request.post("/api/users/login", { data: { email, password } })).ok());
+  const page = await context.newPage();
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  await page.goto("/admin/globals/program");
+  const builder = page.getByRole("region", { name: "Programbygger" });
+  const dateTrigger = builder.getByRole("button", { name: /^Dato / });
+  const calendar = page.getByRole("dialog", { name: "Velg dato", exact: true });
+  async function chooseDate(value: string) {
+    await dateTrigger.click();
+    await expect(calendar).toBeVisible();
+    await expect(calendar.getByLabel("Klokkeslett", { exact: true })).toHaveCount(0);
+    const month = value.slice(0, 7);
+    for (let step = 0; step < 120; step++) {
+      const current = await calendar.locator("[data-calendar-month]").getAttribute("data-calendar-month");
+      if (current === month) break;
+      await calendar.getByRole("button", { name: current! < month ? "Neste måned" : "Forrige måned", exact: true }).click();
+    }
+    await expect(calendar.locator("[data-calendar-month]")).toHaveAttribute("data-calendar-month", month);
+    await calendar.locator(`.react-datepicker__day--0${value.slice(-2)}:not(.react-datepicker__day--outside-month)`).click();
+    await calendar.getByRole("button", { name: "Bruk dato", exact: true }).click();
+    await expect(calendar).toBeHidden();
+  }
+  await expect(builder).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Program", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: /Versjoner/ })).toHaveCount(0);
+  assert.equal((await context.request.get("/api/globals/program/versions")).status(), 403);
+  await builder.getByRole("button", { name: "Ny dag", exact: true }).click();
+  const invalidPublish = page.waitForResponse((res) => res.url().includes("/api/globals/program") && res.request().method() === "POST");
+  await page.getByRole("button", { name: "Publiser endringer", exact: true }).click();
+  const invalidResponse = await invalidPublish;
+  assert.equal(invalidResponse.status(), 400);
+  const validation = await invalidResponse.json();
+  assert.equal(validation.errors[0].data.errors[0].path, "itinerary", "Production responses must retain structured field errors");
+  await expect(builder).toContainText("Alle dager må ha en dato");
+  await builder.getByLabel("Navn på dagen (valgfritt)").fill("Uferdig dag");
+  await save("Lagre utkast"); // Incomplete dates are allowed in drafts, never in live publication.
+  await chooseDate("2027-07-27");
+  const dateLabel = await dateTrigger.innerText();
+  await dateTrigger.click();
+  await calendar.getByRole("button", { name: "I morgen", exact: true }).click();
+  await calendar.getByRole("button", { name: "Avbryt", exact: true }).click();
+  assert.equal(await dateTrigger.innerText(), dateLabel);
+  await dateTrigger.click();
+  await page.keyboard.press("Escape");
+  await expect(calendar).toBeHidden();
+  await expect(dateTrigger).toBeFocused();
+  await builder.getByLabel("Navn på dagen (valgfritt)").fill("Bryllupsdagen");
+  await builder.getByRole("button", { name: "Buss", exact: true }).click();
+  const panel = page.getByRole("complementary", { name: "Rediger programpunkt" });
+  const busTitle = `Buss ${token}`;
+  const eventTitle = `Vielse ${token}`;
+  await panel.getByLabel("Tittel", { exact: true }).fill(busTitle);
+  await panel.getByLabel("Hentested / fra").fill("Hotellet");
+  await panel.getByLabel("Til", { exact: true }).fill("Kirken");
+  await panel.getByLabel("Avgang", { exact: true }).fill("13:00");
+  await panel.getByLabel("Retur (valgfritt)").fill("00:30");
+  await panel.getByLabel("Info til gjestene (valgfritt)").fill("Møt opp ti minutter før avgang.");
+  await builder.getByRole("button", { name: "Hendelse", exact: true }).click();
+  await panel.getByLabel("Tittel", { exact: true }).fill(eventTitle);
+  await panel.getByLabel("Klokkeslett", { exact: true }).fill("12:30");
+  await panel.getByLabel("Sted", { exact: true }).fill("Kirken");
+  await builder.getByRole("button", { name: `Flytt ${busTitle} ned`, exact: true }).click();
+  await expect(builder.locator(".program-items li").first()).toContainText(eventTitle);
+  await builder.getByRole("button", { name: `Dra ${busTitle}`, exact: true }).dragTo(builder.locator(".program-items li").first(), { steps: 10 });
+  await expect(builder.locator(".program-items li").first()).toContainText(busTitle);
+  await builder.getByRole("button", { name: "Ny dag", exact: true }).click();
+  await chooseDate("2027-07-26");
+  await builder.getByLabel("Navn på dagen (valgfritt)").fill("Velkomst");
+  await builder.getByRole("button", { name: "Hotell", exact: true }).click();
+  await panel.getByLabel("Tittel", { exact: true }).fill(`Hotell ${token}`);
+  async function save(label: string) {
+    const response = page.waitForResponse((res) => res.url().includes("/api/globals/program") && res.request().method() === "POST");
+    await page.getByRole("button", { name: label, exact: true }).click();
+    assert((await response).ok(), `${label} must save successfully`);
+  }
+  await save("Lagre utkast");
+  await page.reload();
+  await expect(builder.getByRole("button", { name: /^Velkomst/ })).toBeVisible();
+  const draft = await payload.findGlobal({ slug: "program", draft: true });
+  const draftData = draft.itinerary as ProgramData;
+  assert.equal(draftData.days.length, 2);
+  const guest = await browser.newContext({ baseURL });
+  assert([401, 403].includes((await guest.request.get("/api/globals/program?draft=true")).status()));
+  assert([401, 403].includes((await guest.request.post("/api/globals/program", { data: { itinerary: { days: [] } } })).status()));
+  const publicPage = await guest.newPage();
+  await publicPage.goto("/program");
+  await expect(publicPage.getByText("Programmet kommer snart.")).toBeVisible();
+  await save("Publiser endringer");
+  await publicPage.reload();
+  await expect(publicPage.getByRole("heading", { name: busTitle, exact: true })).toBeVisible();
+  assert.deepEqual(await publicPage.locator("main section > h2").allTextContents(), ["Velkomst", "Bryllupsdagen"]);
+  assert.deepEqual(await publicPage.getByRole("region", { name: "Bryllupsdagen", exact: true }).locator("h3").allTextContents(), [eventTitle, busTitle]);
+  await expect(publicPage.getByText("neste dag", { exact: true })).toBeVisible();
+  assert([401, 403].includes((await guest.request.get("/api/globals/program/versions")).status()));
+  const live = await payload.findGlobal({ slug: "program", draft: false });
+  assert.deepEqual((live.itinerary as ProgramData).days.map((day) => day.items.map((item) => item.id)), draftData.days.map((day) => day.items.map((item) => item.id)));
+  await builder.getByRole("button", { name: /^Bryllupsdagen/ }).click();
+  await builder.locator(".program-item__select").filter({ hasText: busTitle }).click();
+  await page.screenshot({ path: "/tmp/sammen-program-admin.png", fullPage: true });
+  await panel.getByLabel("Tittel", { exact: true }).fill(`HEMMELIG ${token}`);
+  await save("Lagre utkast");
+  await publicPage.reload();
+  await expect(publicPage.getByText(`HEMMELIG ${token}`)).toHaveCount(0);
+  await expect(publicPage.getByRole("heading", { name: busTitle, exact: true })).toBeVisible();
+  const invalid = structuredClone(draftData);
+  invalid.days[0].date = "2027-02-30";
+  assert.equal((await context.request.post("/api/globals/program", { data: { itinerary: invalid, _status: "published" } })).status(), 400);
+  await page.setViewportSize({ width: 390, height: 844 });
+  assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+  await dateTrigger.click();
+  await expect(calendar.getByRole("button", { name: "Bruk dato", exact: true })).toBeInViewport();
+  await page.screenshot({ path: "/tmp/sammen-program-mobile.png", fullPage: true });
+  await page.keyboard.press("Escape");
+  await publicPage.setViewportSize({ width: 390, height: 844 });
+  assert(await publicPage.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+  await publicPage.screenshot({ path: "/tmp/sammen-program-public-mobile.png", fullPage: true });
+  page.on("dialog", (dialog) => dialog.accept());
+  await panel.getByRole("button", { name: "Slett punkt", exact: true }).click();
+  await expect(builder.locator(".program-items li")).toHaveCount(1);
+  await builder.getByRole("button", { name: "Slett dag", exact: true }).click();
+  await expect(builder.getByRole("button", { name: /^Bryllupsdagen/ })).toHaveCount(0);
+  assert.equal(errors.length, 0, errors.join("\n"));
+  console.log("PASS: multi-day program, editing, drag/keyboard ordering, IDs, drafts, publication, privacy, validation, deletion and mobile layouts.");
+} catch (error) {
+  console.error(error);
+  const page = browser?.contexts()[0]?.pages()[0];
+  if (page) { await page.screenshot({ path: "/tmp/sammen-program-failure.png", fullPage: true }); console.log((await page.locator("body").innerText()).slice(-6000)); }
+  code = 1;
+} finally {
+  if (browser) await browser.close();
+  // The precondition above guarantees these are only this test's versions.
+  await payload.db.updateGlobal({ slug: "program", data: { itinerary: original.itinerary ?? { days: [] }, _status: original._status ?? "draft" } });
+  await payload.db.deleteVersions({ globalSlug: "program", where: { id: { exists: true } } });
+  if (userId) await payload.delete({ collection: "users", id: userId });
+  process.exit(code);
+}

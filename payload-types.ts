@@ -93,9 +93,11 @@ export interface Config {
   fallbackLocale: null;
   globals: {
     wedding: Wedding;
+    program: Program;
   };
   globalsSelect: {
     wedding: WeddingSelect<false> | WeddingSelect<true>;
+    program: ProgramSelect<false> | ProgramSelect<true>;
   };
   locale: null;
   widgets: {
@@ -485,7 +487,7 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
   createdAt?: T;
 }
 /**
- * Navn, dato og velkomsttekst vises på forsiden. Reiseinformasjon og tidsplan kobles til egne sider senere.
+ * Navn, dato og velkomsttekst vises på forsiden. Dagsprogrammet redigeres under Program. Reiseinformasjon kobles til egen side senere.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "wedding".
@@ -511,6 +513,9 @@ export interface Wedding {
     };
     [k: string]: unknown;
   } | null;
+  /**
+   * Beholdt for eldre innhold. Bruk Program i menyen for dagsprogrammet som vises på nettsiden.
+   */
   schedule?:
     | {
         title: string;
@@ -519,6 +524,25 @@ export interface Wedding {
         id?: string | null;
       }[]
     | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "program".
+ */
+export interface Program {
+  id: number;
+  itinerary:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  _status?: ('draft' | 'published') | null;
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -540,6 +564,17 @@ export interface WeddingSelect<T extends boolean = true> {
         description?: T;
         id?: T;
       };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "program_select".
+ */
+export interface ProgramSelect<T extends boolean = true> {
+  itinerary?: T;
+  _status?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

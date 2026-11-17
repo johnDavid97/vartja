@@ -34,7 +34,7 @@ try {
   await expect(page.locator(".app-header .step-nav__home")).toBeHidden();
   await expect(page.locator(".app-header .step-nav__home + span")).toBeHidden();
   await expect(page.locator(".wedding-nav__brand")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Program Kommer", exact: true })).toBeDisabled();
+  await expect(page.getByRole("link", { name: "Program", exact: true })).toHaveAttribute("href", "/admin/globals/program");
   await expect(page.getByRole("button", { name: "Kommentarer Kommer", exact: true })).toBeDisabled();
   await expect(page.getByRole("button", { name: "Avstemninger Kommer", exact: true })).toBeDisabled();
   await expect(page.getByRole("navigation", { name: "Administrasjon" })).toBeVisible();
@@ -142,10 +142,16 @@ try {
   await expect(page).toHaveURL(/\/admin\/collections\/media(?:\?|$)/);
   await expect(page.getByRole("button", { name: "Lukk meny", exact: true })).toBeHidden();
   await page.setViewportSize({ width: 1440, height: 1200 });
-  for (const [route, screenshot] of [["/admin", "dashboard"], ["/admin/collections/posts", "posts"], ["/admin/collections/media", "media"], ["/admin/collections/users", "users"], ["/admin/globals/wedding", "settings"], ["/admin/account", "account"]]) {
+  for (const [route, screenshot] of [["/admin", "dashboard"], ["/admin/collections/posts", "posts"], ["/admin/collections/media", "media"], ["/admin/collections/users", "users"], ["/admin/globals/wedding", "settings"], ["/admin/globals/program", "program"], ["/admin/account", "account"]]) {
     await page.goto(route);
     await page.waitForLoadState("networkidle");
     assert(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), `${route} must fit the screen`);
+    if (route === "/admin/globals/program") {
+      await expect(page.getByRole("link", { name: /Versjoner/ })).toHaveCount(0);
+      await expect(page.getByRole("button", { name: "Lagre utkast", exact: true })).toBeVisible();
+      await expect(page.getByRole("button", { name: "Publiser endringer", exact: true })).toBeVisible();
+      assert.equal((await context.request.get("/api/globals/program/versions")).status(), 403);
+    }
     if (route.includes("/collections/")) {
       await expect(page.locator(".admin-list .admin-table table")).toBeVisible();
       const slug = route.split("/").at(-1);
