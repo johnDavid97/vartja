@@ -6,13 +6,15 @@ Next.js website with a self-hosted Payload CMS and PostgreSQL.
 
 1. Install dependencies: `npm ci`.
 2. Create `.env` using `.env.example` if it does not already exist.
-   Generate separate random values for the database password and Payload secret
+   Generate separate random values for the database password, Payload secret and `HOUSEHOLD_ACCESS_SECRET`
    with `openssl rand -hex 32`. Use the same database password in `DATABASE_URL`.
    Never commit `.env`.
 3. Start Docker Desktop, then run:
 
    ```bash
    npm run db:up
+   # New/empty databases only; tracked deployments also use the migration command.
+   npm run payload -- migrate
    npm run dev
    ```
 
@@ -20,9 +22,50 @@ Next.js website with a self-hosted Payload CMS and PostgreSQL.
    Do this locally before exposing the app to the internet.
 5. Use the dashboard shortcuts to edit **Bryllupsinformasjon** or create an **Innlegg**.
 
+Automatic development schema pushing is disabled. Existing databases previously created
+with dev schema sync (a `dev` migration record) must be baselined before using the migration
+command; do not replay the initial migration or reset a populated database. The existing local
+registration tables were checked without resetting data. New migrations are verified against
+a disposable database by `npm run test:households`.
+
 The first account is created through Payload's first-user setup. After that,
 only signed-in editors can create accounts. All accounts are trusted editors
 with the same permissions; do not create guest accounts here.
+
+## Household registration (first usable slice)
+
+Open `/admin/collections/households` through **Brukere og admin**. Select **Vis invitasjonslenke**,
+then **Åpne registreringsskjema**. The same link/QR can be given to every household; use the final
+public domain before printing. Set `PUBLIC_SITE_URL=https://your-domain.example` in the hosted
+server's environment (restart the server after changing it). This overrides the request hostname,
+so previews/proxies cannot accidentally put their address into the QR. When unset, the current
+request origin is used. Public addresses must use HTTPS; HTTP is accepted for localhost only.
+The QR stores the complete URL: an already downloaded/printed localhost QR will not change when
+the site is deployed. Generate and download a new QR after setting the final domain.
+The invitation key is in a URL fragment rather than a query string.
+Opening `/register` without the complete link shows instructions instead of a registration form.
+
+Registration stores a pending household, automatically includes its contact as the first member,
+and shows a generated access code. Email is unverified contact information; no email is sent.
+The couple can set **Status → Godkjent** and save, approving the initial members. Later additions
+can be reviewed separately. **Administratorer** opens the separate admin-user collection.
+Native household creation is disabled; the couple can use the same registration form on behalf
+of a family and then approve it.
+
+Household details are admin-only. Code ciphertext/digests are excluded from normal API responses;
+explicit admin code reveal/replacement is audited. Replacement and its audit write use one database
+transaction. Retries use an idempotency key; it cannot recover a replaced code or a processed
+household. A lost code can be obtained from the couple. Unverified email never authorizes recovery.
+The invitation-holder quota is a durable global 100 attempts/minute, not an IP-based limit.
+
+Back up `HOUSEHOLD_ACCESS_SECRET` securely along with the database. Changing it invalidates
+invitation links and makes existing encrypted codes unrecoverable; rotation requires a deliberate
+migration, not simply changing the environment variable. Never commit this secret.
+
+**Not yet implemented:** guest code login, sessions, private wedding pages/media, household self-service,
+RSVP and household-based voting. Approval currently records the couple's decision; it does not yet
+provide guest login. Existing wedding pages/uploads remain public. Do not launch this as a private
+invitation website until those remaining access controls are complete.
 
 ## Editing the website
 
@@ -76,7 +119,7 @@ characters but does not truncate or reject older, longer descriptions.
   The homepage shows the 12 most recently created published public posts.
 - **Bilder**: upload JPEG, PNG or WebP images up to 10 MB. Add a short image description.
   All uploaded files are public, even when attached to a draft. Do not upload sensitive files.
-- **Brukere og admin**: accounts for trusted editors only.
+- **Brukere og admin**: household registrations and approvals, with a separate **Administratorer** section for trusted editors.
 - Cover images support native file selection, drag/drop and selection from the media library.
   Removing a cover image does not delete the media file. Edit image descriptions in **Bilder**.
 
@@ -184,6 +227,9 @@ Local development data and uploaded photos are not transferred automatically.
    `Postgres` if you renamed the database service) and `PAYLOAD_SECRET` to a
    stable random value generated with `openssl rand -hex 32`. Do not use the
    local `127.0.0.1` database URL. Do not set `NODE_ENV=development`.
+   Also set a separate stable `HOUSEHOLD_ACCESS_SECRET` (generate with `openssl rand -hex 32`).
+   Set `PUBLIC_SITE_URL` to the final HTTPS website origin, e.g. `https://your-domain.example`,
+   before downloading/printing invitation QR codes. These are server runtime variables, not build-time browser variables.
 4. Add a persistent volume on the app service at `/app/media` **before uploading
    photos**, and use only one app replica. The entrypoint makes the mounted
    directory writable by the Node user. Back up both the volume and Postgres.

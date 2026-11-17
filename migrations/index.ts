@@ -4,6 +4,7 @@ import * as migration_20261025_204537_visual_post_editor from './20261025_204537
 import * as migration_20261025_210023_post_visibility from './20261025_210023_post_visibility';
 import * as migration_20261025_212144_post_polls from './20261025_212144_post_polls';
 import * as migration_20261108_220804_wedding_program from './20261108_220804_wedding_program';
+import * as migration_20261117_140805_household_registration from './20261117_140805_household_registration';
 
 export const migrations = [
   {
@@ -34,6 +35,11 @@ export const migrations = [
   {
     up: migration_20261108_220804_wedding_program.up,
     down: migration_20261108_220804_wedding_program.down,
-    name: '20261108_220804_wedding_program'
+    name: '20261108_220804_wedding_program',
+  },
+  {
+    up: migration_20261117_140805_household_registration.up,
+    down: migration_20261117_140805_household_registration.down,
+    name: '20261117_140805_household_registration'
   },
 ];
