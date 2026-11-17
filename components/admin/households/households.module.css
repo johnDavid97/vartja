@@ -1,0 +1,117 @@
+.panel,
+.accessField {
+  display: grid;
+  gap: 16px;
+  margin-block: 16px 24px;
+  padding: 20px;
+  border: 1px solid #d9e1db;
+  border-radius: 12px;
+  background: #fff;
+  color: #283d33;
+}
+
+.navigation,
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.navigation a {
+  padding: 8px 11px;
+  border-radius: 8px;
+  color: #2f5e52;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.navigation a:hover,
+.navigation a:focus-visible {
+  background: #edf3f0;
+}
+
+.heading {
+  margin: 0;
+  font-size: 20px;
+}
+
+.description,
+.status,
+.warning {
+  max-width: 70ch;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.warning {
+  color: #872a27;
+  font-weight: 600;
+}
+
+.error {
+  margin: 0;
+  color: #a93632;
+  font-weight: 600;
+}
+
+.invitationResult {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+  padding-top: 4px;
+}
+
+.label {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.readonlyInput,
+.code {
+  width: 100%;
+  min-width: 0;
+  padding: 10px 12px;
+  overflow-wrap: anywhere;
+  border: 1px solid #ccd5ce;
+  border-radius: 8px;
+  background: #f7f9f7;
+  color: #1f3028;
+  font: inherit;
+}
+
+.code {
+  display: block;
+  font-family: monospace;
+  font-size: 18px;
+  user-select: all;
+}
+
+.qrImage {
+  display: block;
+  width: min(100%, 280px);
+  height: auto;
+  border: 1px solid #d9e1db;
+  background: white;
+}
+
+.openLink,
+.downloadLink {
+  color: #2f5e52;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 40rem) {
+  .panel,
+  .accessField {
+    padding: 14px;
+  }
+
+  .actions > * {
+    width: 100%;
+  }
+}

@@ -19,6 +19,8 @@ const nextConfig: NextConfig = {
   turbopack: {
     rules: {
       "*.css": {
+        // Keep CSS Modules' class-name exports; the Tailwind loader emits global CSS.
+        condition: { all: [{ not: "foreign" }, { not: { path: "*.module.css" } }] },
         loaders: ["@tailwindcss/turbopack"],
         as: "*.css",
       },
