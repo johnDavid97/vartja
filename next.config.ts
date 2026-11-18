@@ -4,6 +4,9 @@ import { withPayload } from "@payloadcms/next/withPayload";
 const nextConfig: NextConfig = {
   /* config options here */
   output: "standalone",
+  // Protected media must be fetched by the visitor's browser with its session cookie.
+  // Disable the public image optimizer/cache rather than proxying private files through it.
+  images: { unoptimized: true },
   // Keep a single Payload runtime across config/RSC and REST chunks. Bundled copies
   // break instanceof checks and strip field-validation details in production.
   serverExternalPackages: ["payload"],

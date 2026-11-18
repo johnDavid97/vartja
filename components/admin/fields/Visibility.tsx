@@ -13,7 +13,7 @@ export const Visibility: SelectFieldClientComponent = ({ path, readOnly, field, 
       <legend>Synlighet</legend>
       <FieldError path={path} />
       {[
-        { value: "public", label: "Offentlig", description: "Synlig for alle gjester på nettsiden." },
+        { value: "public", label: "Godkjente gjester", description: "Synlig for godkjente husstander som er logget inn." },
         { value: "private", label: "Privat", description: "Bare innloggede redaktører kan se innlegget i admin." },
       ].map((option) => (
         <label key={option.value} className="wedding-visibility__option">

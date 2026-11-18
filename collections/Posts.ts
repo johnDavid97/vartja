@@ -1,4 +1,5 @@
-import type { CollectionConfig, Where } from "payload";
+import type { CollectionConfig } from "payload";
+import { readPostsAccess } from "../features/households/auth/access";
 import { PostImage, PostText } from "../blocks/postBlocks";
 import {
   lexicalEditor, FixedToolbarFeature, HeadingFeature,
@@ -28,12 +29,7 @@ export const Posts: CollectionConfig = {
     },
   },
   access: {
-    read: ({ req }): boolean | Where => req.user ? true : {
-      and: [
-        { _status: { equals: "published" } },
-        { or: [{ visibility: { equals: "public" } }, { visibility: { exists: false } }] },
-      ],
-    },
+    read: readPostsAccess,
     create: ({ req }) => Boolean(req.user),
     update: ({ req }) => Boolean(req.user),
     delete: ({ req }) => Boolean(req.user),
@@ -83,7 +79,7 @@ export const Posts: CollectionConfig = {
           defaultValue: "public",
           required: true,
           options: [
-            { label: "Offentlig", value: "public" },
+            { label: "Godkjente gjester", value: "public" },
             { label: "Privat – bare redaktører", value: "private" },
           ],
           admin: {

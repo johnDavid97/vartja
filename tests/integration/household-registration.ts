@@ -50,6 +50,9 @@ try {
   await page.getByLabel("E-postadresse", { exact: true }).fill("alex@example.invalid");
   await page.getByRole("button", { name: "Legg til familiemedlem", exact: true }).click();
   await page.getByLabel("Navn på familiemedlem 2", { exact: true }).fill("Robin Example");
+  await expect(page.getByLabel("Husstandsnavn", { exact: true })).toHaveValue("Alex og Robin");
+  await page.getByLabel("Husstandsnavn", { exact: true }).fill("Familien Example");
+  await page.screenshot({ path: "/tmp/sammen-household-name-registration-390.png", fullPage: true });
   const registrationResponse = page.waitForResponse((response) => response.url().endsWith("/api/household-registration") && response.request().method() === "POST");
   await page.getByRole("button", { name: "Registrer husstanden", exact: true }).click();
   const registered = await registrationResponse;
@@ -61,6 +64,7 @@ try {
   assert.equal(await page.evaluate(() => localStorage.length), 0);
   const household = await payload.findByID({ collection: "households", id: receipt.householdId, overrideAccess: true });
   assert.equal(household.status, "pending");
+  assert.equal(household.displayName, "Familien Example");
   assert.deepEqual(household.members.map((member) => [member.name, member.status]), [["Alex Example", "pending"], ["Robin Example", "pending"]]);
   assert(!household.accessCodeEncrypted.includes(receipt.accessCode));
   assert.equal(new Set(household.members.map((member) => member.memberId)).size, 2);

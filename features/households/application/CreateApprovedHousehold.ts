@@ -13,6 +13,7 @@ export interface ApprovedHouseholdRepository {
   createApproved(input: {
     publicId: string;
     contactName: string;
+    displayName?: string;
     email: string;
     members: { memberId: string; name: string; status: "approved" }[];
     requestDigest: string;
@@ -45,6 +46,7 @@ export class CreateApprovedHousehold {
 
     const normalizedContent = {
       contactName: household.contactName,
+      ...(household.displayName === undefined ? {} : { displayName: household.displayName }),
       email: household.email,
       memberNames: household.memberNames,
     };
@@ -75,6 +77,7 @@ export class CreateApprovedHousehold {
         result = await this.repository.createApproved({
           publicId: provisioned.publicId,
           contactName: household.contactName,
+          ...(household.displayName === undefined ? {} : { displayName: household.displayName }),
           email: household.email,
           members: provisioned.members,
           requestDigest,

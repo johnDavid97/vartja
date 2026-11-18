@@ -5,6 +5,7 @@ import { chromium, expect, type Browser } from "@playwright/test";
 import { getPayload } from "payload";
 import sharp from "sharp";
 import config from "../../payload.config";
+import { createAuthenticatedGuest } from "./authenticated-guest";
 
 const databaseUrl = new URL(process.env.DATABASE_URL || "");
 assert(["localhost", "127.0.0.1"].includes(databaseUrl.hostname));
@@ -14,11 +15,12 @@ assert(["localhost", "127.0.0.1"].includes(new URL(baseURL).hostname));
 const payload = await getPayload({ config });
 let browser: Browser | undefined;
 let mediaId: number | undefined;
+let guestCleanup: (() => Promise<void>) | undefined;
 let exitCode = 0;
 try {
   const email = `homepage-${randomBytes(6).toString("hex")}@example.invalid`;
   const password = randomBytes(24).toString("hex");
-  await payload.create({ collection: "users", data: { name: "Homepage test", email, password } });
+  const administrator = await payload.create({ collection: "users", data: { name: "Homepage test", email, password } });
   await payload.updateGlobal({ slug: "wedding", data: {
     coupleNames: "Andrea & Martin", weddingDate: "2027-07-27T12:00:00Z", venue: "Skottland", welcomeMessage: "",
     heroEyebrow: "Vi gifter oss", heroTitleSuffix: "sitt bryllup", heroBackgroundMode: "color", heroBackgroundColor: "#3c4641",
@@ -31,7 +33,11 @@ try {
   await page.goto("/");
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Andrea & Martin");
   await expect(page.getByText("27. juli 2027", { exact: true }).first()).toBeVisible();
-  await expect(page.getByText("Det er ingen oppdateringer ennå.")).toBeVisible();
+  await expect(page.getByText("Logg inn for å se innlegg, program og bilder.", { exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Logg inn", exact: true }).first()).toBeVisible();
+  await expect(page.getByRole("link", { name: "Program", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("region", { name: "Bla i oppdateringer", exact: true })).toHaveCount(0);
+  assert.equal((await guest.request.get("/api/posts")).status(), 403);
   await page.keyboard.press("Tab");
   await expect(page.getByRole("link", { name: "Hopp til innhold", exact: true })).toBeFocused();
   await page.keyboard.press("Enter");
@@ -45,6 +51,11 @@ try {
   await payload.create({ collection: "posts", draft: true, data: { title: "Secret draft fixture", description: "Must never reach the homepage." } });
   await payload.create({ collection: "posts", data: { title: "Secret private fixture", description: "Must never reach the homepage.", _status: "published", visibility: "private" } });
   await page.reload();
+  await expect(page.getByRole("region", { name: "Bla i oppdateringer", exact: true })).toHaveCount(0);
+  await expect(page.getByText("Oppdatering 1", { exact: true })).toHaveCount(0);
+  guestCleanup = (await createAuthenticatedGuest({ payload, context: guest, administratorId: administrator.id, baseURL })).cleanup;
+  await page.reload();
+  await expect(page.getByRole("link", { name: "Program", exact: true })).toBeVisible();
   const carousel = page.getByRole("region", { name: "Bla i oppdateringer", exact: true });
   await expect(carousel.locator("[data-update-slide]")).toHaveCount(7);
   await expect(page.getByText("Secret draft fixture")).toHaveCount(0);
@@ -132,6 +143,12 @@ try {
   await page.reload();
   const heroImage = page.getByRole("img", { name: "Testbilde av brudeparet" });
   await expect(heroImage).toBeVisible();
+  const anonymousImageContext = await browser.newContext({ baseURL, viewport: { width: 390, height: 844 } });
+  const anonymousImagePage = await anonymousImageContext.newPage();
+  await anonymousImagePage.goto("/");
+  await expect(anonymousImagePage.getByRole("img", { name: "Testbilde av brudeparet" })).toBeVisible();
+  await expect(anonymousImagePage.getByText("Logg inn for å se innlegg, program og bilder.", { exact: true })).toBeVisible();
+  await anonymousImageContext.close();
   await expect(heroImage).toHaveCSS("object-position", "25% 75%");
   await expect.poll(() => heroImage.evaluate((image) => (image as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
   await page.screenshot({ path: "/tmp/sammen-homepage-image-mobile.png", fullPage: true });
@@ -158,6 +175,7 @@ try {
   exitCode = 1;
 } finally {
   await browser?.close();
+  await guestCleanup?.();
   if (mediaId) await payload.delete({ collection: "media", id: mediaId });
   await payload.destroy();
 }

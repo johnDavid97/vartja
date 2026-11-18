@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ChevronDown, Menu, X } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import LogoutButton from "@/components/households/LogoutButton";
 import styles from "@/components/homepage/header.module.css";
 
 const primaryLinks = [
@@ -38,7 +39,10 @@ function brandFromNames(names?: string) {
     : "A&M";
 }
 
-export default function Header({ names }: { names?: string }) {
+export default function Header({ names, access = "anonymous" }: { names?: string; access?: "anonymous" | "pending" | "approved" | "administrator" }) {
+  const canBrowse = access === "approved" || access === "administrator";
+  const links = canBrowse ? primaryLinks : [primaryLinks[0], { href: access === "pending" ? "/waiting" : "/login", label: access === "pending" ? "Venter på godkjenning" : "Logg inn" }];
+  const accountControl = access === "administrator" ? <Link href="/admin" className={styles.link}>Administrasjon</Link> : access !== "anonymous" ? <LogoutButton /> : null;
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const navigationId = useId();
@@ -76,15 +80,16 @@ export default function Header({ names }: { names?: string }) {
         </Link>
 
         <nav className={styles.desktopNav} aria-label="Hovedmeny">
-          {primaryLinks.map(navLink)}
-          <details className={styles.more}>
+          {links.map(navLink)}
+          {canBrowse && <details className={styles.more}>
             <summary className={styles.moreSummary}>
               Mer <ChevronDown aria-hidden="true" />
             </summary>
             <div className={styles.moreMenu}>
               {moreLinks.map(navLink)}
             </div>
-          </details>
+          </details>}
+          {accountControl}
         </nav>
 
         <Button
@@ -104,7 +109,8 @@ export default function Header({ names }: { names?: string }) {
 
       {menuOpen && (
         <nav id={navigationId} className={styles.mobileNav} aria-label="Hovedmeny">
-          {[...primaryLinks, ...moreLinks].map(navLink)}
+          {[...links, ...(canBrowse ? moreLinks : [])].map(navLink)}
+          {accountControl}
         </nav>
       )}
     </header>

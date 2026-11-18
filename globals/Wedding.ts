@@ -1,4 +1,5 @@
 import type { GlobalConfig } from "payload";
+import { canReadGuestContent } from "../features/households/auth/access";
 import { DEFAULT_HERO_COLOR } from "../features/homepage/settings";
 import { isHexColor } from "../lib/colors";
 
@@ -10,7 +11,7 @@ export const Wedding: GlobalConfig = {
     description: "Tilpass den offentlige forsiden: navn, dato, sted, tekster og bilde eller bakgrunnsfarge. Dagsprogrammet redigeres under Program.",
   },
   access: {
-    // Only public wedding information belongs in this global.
+    // Homepage settings are public; legacy guest-only fields have their own access checks.
     read: () => true,
     update: ({ req }) => req.user?.collection === "users",
   },
@@ -64,9 +65,10 @@ export const Wedding: GlobalConfig = {
         },
       ],
     },
-    { name: "travelInformation", label: "Reiseinformasjon", type: "richText" },
+    { name: "travelInformation", label: "Reiseinformasjon", type: "richText", access: { read: canReadGuestContent } },
     {
       name: "schedule",
+      access: { read: ({ req }) => req.user?.collection === "users" },
       label: "Eldre tidsplan (ikke publisert)",
       labels: { singular: "Hendelse", plural: "Hendelser" },
       type: "array",

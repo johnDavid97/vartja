@@ -16,36 +16,51 @@ test.afterEach(async ({ page }) => {
   expect(browserErrors.get(page), "No React or browser-console errors").toEqual([]);
 });
 
-// Read-only smoke checks against a running development server.
-test("news page renders without horizontal overflow", async ({ page }) => {
-  await page.goto("/news");
-  await expect(page.getByRole("heading", { name: "Nytt fra oss", level: 1 })).toBeVisible();
+// Read-only anonymous smoke checks against a running development server.
+test("anonymous homepage shows only the hero and public login navigation", async ({ page }, testInfo) => {
+  await page.goto("/");
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+  await expect(page.getByText("Logg inn for å se innlegg, program og bilder.", { exact: true })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Bla i oppdateringer", exact: true })).toHaveCount(0);
+  await expect(page.getByText("Det er ingen oppdateringer ennå.", { exact: true })).toHaveCount(0);
+
+  const visibleNavigation = page.getByRole("navigation", { name: "Hovedmeny" }).filter({ visible: true });
+  if (testInfo.project.name === "mobile") {
+    await page.getByRole("button", { name: "Åpne meny", exact: true }).click();
+  }
+  await expect(visibleNavigation.getByRole("link", { name: "Logg inn", exact: true })).toBeVisible();
+  for (const label of ["Program", "Innlegg", "Bilder", "Reiseplan", "Ting å gjøre", "Brudefølge"]) {
+    await expect(visibleNavigation.getByRole("link", { name: label, exact: true })).toHaveCount(0);
+  }
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });
 
-test("a published article opens and remains responsive", async ({ page, request }) => {
-  const response = await request.get("/api/posts?limit=1");
-  expect(response.ok()).toBe(true);
-  const { docs } = await response.json();
-  test.skip(!docs.length, "No published posts exist in this database.");
-  const post = docs[0];
-  await page.goto(`/news/${post.id}`);
-  await expect(page.getByRole("heading", { name: post.title, level: 1 })).toBeVisible();
-  await expect(page.getByRole("link", { name: "← Alle innlegg" })).toBeVisible();
+test("skip link focuses the anonymous homepage content", async ({ page }) => {
+  await page.goto("/");
+  await page.keyboard.press("Tab");
+  const skipLink = page.getByRole("link", { name: "Hopp til innhold", exact: true });
+  await expect(skipLink).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(page.locator("#main-content")).toBeFocused();
+});
+
+test("protected wedding pages redirect anonymous visitors to household login", async ({ page }) => {
+  for (const route of ["/news", "/news/not-a-valid-id", "/program", "/bilder", "/reiseplan", "/ting-a-gjore", "/wedding-party"]) {
+    await page.goto(route);
+    await expect(page).toHaveURL(/\/login$/);
+    await expect(page.getByRole("heading", { name: "Velkommen tilbake", level: 1 })).toBeVisible();
+  }
+});
+
+test("household login form is responsive and exposes its accessible controls", async ({ page }) => {
+  await page.goto("/login");
+  await expect(page.getByLabel("Husstandsnavn", { exact: true })).toBeVisible();
+  await expect(page.getByLabel("Husstandskode", { exact: true })).toHaveAttribute("type", "password");
+  await expect(page.getByRole("checkbox", { name: "Husk meg på denne enheten", exact: true })).toBeChecked();
+  await expect(page.getByRole("button", { name: "Logg inn", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Vis kode", exact: true }).click();
+  await expect(page.getByLabel("Husstandskode", { exact: true })).toHaveAttribute("type", "text");
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
-});
-
-test("unknown articles show the not-found page", async ({ page }) => {
-  await page.goto("/news/not-a-valid-id");
-  await expect(page.getByRole("heading", { name: "Fant ikke innlegget" })).toBeVisible();
-});
-
-test("empty pagination offers a working link back", async ({ page }) => {
-  await page.goto("/news?page=999999");
-  const back = page.getByRole("link", { name: "Til første side" });
-  await expect(back).toBeVisible();
-  await back.click();
-  await expect(page).toHaveURL(/\/news$/);
 });
 
 test("admin login renders without prerender errors", async ({ page }) => {
@@ -53,7 +68,7 @@ test("admin login renders without prerender errors", async ({ page }) => {
   await expect(page.locator('input[name="email"]')).toBeVisible();
 });
 
-test("anonymous visitors cannot create posts", async ({ request }) => {
-  const response = await request.post("/api/posts", { data: {} });
-  expect(response.status()).toBe(403);
+test("anonymous visitors cannot read or create posts", async ({ request }) => {
+  expect((await request.get("/api/posts?limit=1")).status()).toBe(403);
+  expect((await request.post("/api/posts", { data: {} })).status()).toBe(403);
 });
