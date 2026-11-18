@@ -31,7 +31,7 @@ An initial regression attempt against the long-running development server hit a 
 
 No schema migration or real data replacement was needed.
 
-## Remaining review follow-ups
+## Review follow-ups resolved
 
-- **Ambiguous-response editing:** an unchanged retry reuses its request key and is covered by a browser test. However, editing any field after a lost response clears the key, even for whitespace-only changes. If the first request was saved, submitting again can create a duplicate household. Preserve the original submitted snapshot/key until the uncertain result is resolved, and add coverage for edits after a lost response.
-- **Duplicate summary polling:** the sidebar and overview each instantiate `useHouseholdSummary`, creating independent requests and timers. Sharing the summary state would avoid redundant fetching and temporarily differing counts.
+- **Ambiguous-response editing:** the form keeps the exact submitted snapshot/key and locks contact/member editing while the result is uncertain. A later rejection cannot clear an earlier uncertain result. Successful responses keep the form locked during navigation; initial validation errors still allow corrections. Browser coverage checks disabled fields, exact retry bodies, a lost successful response followed by a 403, and recovery of the original household. The snapshot is in memory only: after leaving/reloading, administrators must check the overview before starting a new creation; no personal data is stored in browser storage.
+- **Shared summary:** `HouseholdSummaryProvider` owns one authenticated state, request and polling timer for the sidebar and overview. Concurrent triggers share an in-flight request, failed refreshes retain the last confirmed value, and identity changes reset the state. Route/tab changes and native document updates refresh the shared count. Browser coverage verifies one initial request, simultaneous focus triggers, synchronized displays, failed refreshes and one polling request.
