@@ -13,6 +13,12 @@ import styles from "./household-workspace.module.css"
 
 type ContactDetails = { contactName: string; email: string }
 type CreateResult = { householdId: number }
+type CreateRequest = {
+  requestKey: string
+  contactName: string
+  email: string
+  additionalMembers: Array<{ name: string }>
+}
 
 class CreateResponseError extends Error {
   constructor(message: string, readonly ambiguous: boolean) {
@@ -26,12 +32,7 @@ function isCreateResult(value: unknown): value is CreateResult {
   return typeof id === "number" && Number.isSafeInteger(id) && id > 0
 }
 
-async function createHousehold(body: {
-  requestKey: string
-  contactName: string
-  email: string
-  additionalMembers: Array<{ name: string }>
-}): Promise<CreateResult> {
+async function createHousehold(body: CreateRequest): Promise<CreateResult> {
   const response = await fetch("/api/household-admin", {
     method: "POST",
     credentials: "same-origin",
@@ -57,46 +58,55 @@ export default function HouseholdCreateForm() {
   const [additionalMembers, setAdditionalMembers] = useState<MemberFormRow[]>([])
   const [pending, setPending] = useState(false)
   const [error, setError] = useState("")
-  const requestKey = useRef<string | null>(null)
+  const submittedRequest = useRef<CreateRequest | null>(null)
+  const [uncertain, setUncertain] = useState(false)
+  const [completed, setCompleted] = useState(false)
   const submitting = useRef(false)
+  const fieldsLocked = pending || uncertain || completed
 
   function changed() {
-    requestKey.current = null
+    submittedRequest.current = null
     setError("")
   }
 
   function updateContact(next: ContactDetails) {
+    if (fieldsLocked || submitting.current) return
     changed()
     setContact(next)
   }
 
   function updateMembers(allMembers: MemberFormRow[]) {
+    if (fieldsLocked || submitting.current) return
     changed()
     setAdditionalMembers(allMembers.slice(1))
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (pending || submitting.current) return
+    if (pending || completed || submitting.current) return
     submitting.current = true
     setPending(true)
     setError("")
-    const currentRequestKey = requestKey.current ?? crypto.randomUUID()
-    requestKey.current = currentRequestKey
-
     try {
-      const result = await createHousehold({
-        requestKey: currentRequestKey,
+      // Retry the exact submitted snapshot, not the current editable form values.
+      submittedRequest.current ??= {
+        requestKey: crypto.randomUUID(),
         contactName: contact.contactName.trim(),
         email: contact.email.trim(),
         additionalMembers: additionalMembers.map(({ name }) => ({ name: name.trim() })),
-      })
+      }
+      const result = await createHousehold(submittedRequest.current)
+      setCompleted(true)
       router.push(`/admin/collections/households/${encodeURIComponent(String(result.householdId))}`)
     } catch (caught) {
-      if (caught instanceof CreateResponseError && !caught.ambiguous) requestKey.current = null
-      setError(caught instanceof CreateResponseError
-        ? `${caught.message} ${caught.ambiguous ? "Prøv igjen – samme forespørsel brukes trygt på nytt." : "Rett eventuelle feil og prøv på nytt."}`
-        : "Vi fikk ikke kontakt med serveren. Kontroller nettet og prøv igjen – samme forespørsel brukes trygt på nytt.")
+      // A later 4xx cannot prove that an earlier, ambiguous attempt was not saved.
+      const outcomeUncertain = uncertain || !(caught instanceof CreateResponseError) || caught.ambiguous
+      setUncertain(outcomeUncertain)
+      if (!outcomeUncertain) submittedRequest.current = null
+      const message = caught instanceof CreateResponseError ? caught.message : "Vi fikk ikke kontakt med serveren."
+      setError(`${message} ${outcomeUncertain
+        ? "Prøv igjen – samme forespørsel brukes trygt på nytt."
+        : "Rett eventuelle feil og prøv på nytt."}`)
     } finally {
       submitting.current = false
       setPending(false)
@@ -115,11 +125,11 @@ export default function HouseholdCreateForm() {
         <p>Legg inn kontaktpersonen og alle som hører til husstanden.</p>
       </header>
       <form className={styles.createForm} onSubmit={submit} aria-busy={pending}>
-        <HouseholdContactFields value={contact} onChange={updateContact} disabled={pending} />
+        <HouseholdContactFields value={contact} onChange={updateContact} disabled={fieldsLocked} />
         <MemberListFields
           value={members}
           onChange={updateMembers}
-          disabled={pending}
+          disabled={fieldsLocked}
           maxMembers={MAX_MEMBERS}
           buttonClassName={adminButtonStyles({ variant: "secondary", size: "sm" })}
           firstMemberLocked
@@ -128,9 +138,10 @@ export default function HouseholdCreateForm() {
         <div className={styles.approvalNotice}>
           Husstanden og alle familiemedlemmene du legger inn her blir automatisk godkjent.
         </div>
+        {uncertain ? <p role="status">Feltene er låst til vi vet om husstanden ble opprettet. Prøv igjen før du gjør endringer, eller sjekk oversikten før du oppretter på nytt.</p> : null}
         {error ? <p className={styles.formError} role="alert">{error}</p> : null}
         <div className={styles.formActions}>
-          <AdminButton type="submit" loading={pending} disabled={pending}>
+          <AdminButton type="submit" loading={pending} disabled={pending || completed}>
             {pending ? "Oppretter …" : "Opprett husstand"}
           </AdminButton>
           <Link href="/admin/collections/households?tab=overview" className={adminButtonStyles({ variant: "secondary" })}>
