@@ -16,7 +16,7 @@ Registration, database storage, admin approval/creation, household overview and 
 
 Administrator creation uses `application/CreateApprovedHousehold.ts`, sharing strict initial validation and credential provisioning with guest registration. Only the administrator use case creates approved households; guest registration stays pending. `GetHouseholdSummary.ts` provides pending-household counts, read in one database snapshot without requiring the credential secret.
 
-The admin workspace lives in `components/admin/households/HouseholdWorkspace.tsx` and reuses `AdminList`/`AdminTable`. See [admin UI scope and verification](../../docs/household-admin-ui.md). The existing household editor is unchanged.
+The admin workspace lives in `components/admin/households/HouseholdWorkspace.tsx` and reuses `AdminList`/`AdminTable`. See [admin UI scope and verification](../../docs/household-admin-ui.md). The individual household editor retains native Payload persistence and fields with a matching card layout, explicit approval choices and separate code controls. See [editor refinement](../../docs/household-editor.md).
 
 The reusable React fields live in `components/households/`. They display and edit form values, but do not log anybody in, save records or approve guests.
 

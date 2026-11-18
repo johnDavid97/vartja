@@ -72,15 +72,38 @@ try {
 
   const adminPage = await admin.newPage();
   adminPage.on("pageerror", (error) => browserErrors.push(error.message));
+  async function saveDetails() {
+    const responsePromise = adminPage.waitForResponse((response) => response.url().includes(`/api/households/${household.id}`) && response.request().method() === "PATCH");
+    await adminPage.getByRole("button", { name: "Lagre", exact: true }).click();
+    const response = await responsePromise;
+    assert(response.ok(), await response.text());
+  }
   await adminPage.goto("/admin/collections/households");
   await expect(adminPage.getByText("Alex Example", { exact: true })).toBeVisible();
   await adminPage.goto("/admin/collections/households?tab=invitation");
   await expect(adminPage.getByRole("link", { name: "Åpne registreringsskjema", exact: true })).toHaveAttribute("href", invitation.registrationUrl);
   await adminPage.goto(`/admin/collections/households/${household.id}`);
-  await expect(adminPage.getByRole("heading", { name: "Familiemedlemmer*", exact: true })).toBeVisible();
+  await expect(adminPage.getByRole("heading", { name: "Familiemedlemmer", exact: true })).toBeVisible();
   await expect(adminPage.getByRole("button", { name: "Legg til Familiemedlem", exact: true })).toBeVisible();
-  await adminPage.getByRole("combobox").first().click();
-  await adminPage.getByRole("option", { name: "Godkjent", exact: true }).click();
+  await expect(adminPage.getByRole("heading", { name: "Rediger husstand", exact: true })).toBeVisible();
+  await expect(adminPage.getByRole("button", { name: "Godkjenn husstanden", exact: true })).toBeEnabled();
+  await adminPage.waitForLoadState("networkidle");
+  for (const width of [1440, 1024, 768, 390, 320]) {
+    await adminPage.setViewportSize({ width, height: 1100 });
+    assert(await adminPage.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `Household editor must fit ${width}px`);
+    const contactCard = await adminPage.locator(".household-contact").boundingBox();
+    const approvalCard = await adminPage.locator(".household-approval").boundingBox();
+    const accountLink = await adminPage.locator(".app-header__account").boundingBox();
+    assert(contactCard && approvalCard && accountLink);
+    assert(contactCard.x >= 10 && contactCard.x + contactCard.width <= width - 10, "Contact card needs a visible outer gutter");
+    assert(accountLink.x + accountLink.width <= width, "Account link must remain on screen");
+    if (width === 1440) assert(approvalCard.x >= contactCard.x + contactCard.width + 20, "Sidebar cards must not overlap the form");
+    await adminPage.screenshot({ path: `/tmp/sammen-household-editor-${width}.png`, fullPage: true });
+  }
+  await adminPage.setViewportSize({ width: 1440, height: 1100 });
+  await adminPage.getByRole("button", { name: "Godkjenn husstanden", exact: true }).click();
+  await expect(adminPage.locator(".household-editor-heading")).toContainText("Ulagrede endringer");
+  assert.equal((await payload.findByID({ collection: "households", id: household.id })).status, "pending", "Approval must wait for the explicit save");
   const approvalResponse = adminPage.waitForResponse((response) => response.url().includes(`/api/households/${household.id}`) && response.request().method() === "PATCH");
   await adminPage.getByRole("button", { name: "Lagre", exact: true }).click();
   const approval = await approvalResponse;
@@ -89,20 +112,78 @@ try {
   assert.equal(approved.status, "approved");
   assert(approved.members.every((member) => member.status === "approved"));
   assert.deepEqual(approved.members.map((member) => member.memberId), household.members.map((member) => member.memberId));
+  await expect(adminPage.locator(".household-member-row").nth(0).getByRole("radio", { name: "Godkjent", exact: true })).toBeChecked();
+  await expect(adminPage.locator(".household-member-row").nth(1).getByRole("radio", { name: "Godkjent", exact: true })).toBeChecked();
+  await adminPage.locator("#field-email").fill("updated@example.invalid");
+  await adminPage.locator('#field-members__1__name').fill("Robin Updated");
+  await adminPage.getByRole("button", { name: "Legg til Familiemedlem", exact: true }).click();
+  await adminPage.locator('#field-members__2__name').fill("Added in editor");
+  await saveDetails();
+  const edited = await payload.findByID({ collection: "households", id: household.id });
+  assert.equal(edited.email, "updated@example.invalid");
+  assert.equal(edited.members[1].name, "Robin Updated");
+  assert.equal(edited.members[1].memberId, approved.members[1].memberId);
+  assert.equal(edited.members[1].status, "approved");
+  assert.equal(edited.members[2].status, "pending");
+  assert.equal(edited.status, "approved");
+  await expect(adminPage.getByRole("button", { name: /^Flytt familiemedlem/ })).toHaveCount(0);
+  await expect(adminPage.locator('#field-members__1__name')).toHaveValue("Robin Updated");
+  await expect(adminPage.locator('#field-members__2__name')).toHaveValue("Added in editor");
+  await adminPage.locator(".household-member-row").nth(2).getByRole("radio", { name: "Godkjent", exact: true }).check();
+  const robinRow = adminPage.locator(".household-member-row").nth(1);
+  await robinRow.getByRole("radio", { name: "Godkjent", exact: true }).focus();
+  await adminPage.keyboard.press("ArrowLeft");
+  await expect(robinRow.getByRole("radio", { name: "Venter", exact: true })).toBeChecked();
+  const beforeToggleSave = await payload.findByID({ collection: "households", id: household.id });
+  assert.equal(beforeToggleSave.members.find((member) => member.memberId === edited.members[2].memberId)?.status, "pending", "Approval toggle must wait for Save");
+  assert.equal(beforeToggleSave.members.find((member) => member.memberId === edited.members[1].memberId)?.status, "approved", "Pending toggle must wait for Save");
+  await saveDetails();
+  const memberApproved = await payload.findByID({ collection: "households", id: household.id });
+  assert.deepEqual(memberApproved.members.map((member) => member.memberId), edited.members.map((member) => member.memberId));
+  assert.equal(memberApproved.members[2].status, "approved");
+  assert.equal(memberApproved.members[1].status, "pending", "Toggles must update the intended member without changing order");
+  await adminPage.getByRole("button", { name: "Legg til Familiemedlem", exact: true }).click();
+  await adminPage.locator('#field-members__3__name').fill("Temporary member");
+  await saveDetails();
+  assert.equal((await payload.findByID({ collection: "households", id: household.id })).members.length, 4);
+  await adminPage.getByRole("button", { name: "Fjern familiemedlem 4", exact: true }).click();
+  await saveDetails();
+  assert.deepEqual((await payload.findByID({ collection: "households", id: household.id })).members.map((member) => member.memberId), memberApproved.members.map((member) => member.memberId));
+  await adminPage.getByRole("button", { name: "Avslå husstanden", exact: true }).click();
+  assert.equal((await payload.findByID({ collection: "households", id: household.id })).status, "approved");
+  await saveDetails();
+  assert.equal((await payload.findByID({ collection: "households", id: household.id })).status, "revoked");
+  await adminPage.getByRole("button", { name: "Godkjenn husstanden", exact: true }).click();
+  await saveDetails();
   const addedMemberResponse = await admin.request.patch(`/api/households/${household.id}`, {
     headers,
-    data: { members: [...approved.members, { name: "New Family Member", status: "pending" }], accessCodeEncrypted: "must-not-be-saved", credentialVersion: 999 },
+    data: { members: [...memberApproved.members, { name: "New Family Member", status: "pending" }], accessCodeEncrypted: "must-not-be-saved", credentialVersion: 999 },
   });
   assert(addedMemberResponse.ok(), await addedMemberResponse.text());
   const withAddition = await payload.findByID({ collection: "households", id: household.id });
-  assert.equal(withAddition.members.length, 3);
-  assert.equal(withAddition.members[2].status, "pending");
-  assert(withAddition.members[2].memberId);
+  assert.equal(withAddition.members.length, 4);
+  assert.equal(withAddition.members[3].status, "pending");
+  assert(withAddition.members[3].memberId);
   assert.equal(withAddition.credentialVersion, household.credentialVersion);
   assert.equal(withAddition.accessCodeEncrypted, household.accessCodeEncrypted);
   assert.equal((await guest.request.patch(`/api/households/${household.id}`, { headers, data: { status: "approved" } })).status(), 403);
   await adminPage.getByRole("button", { name: "Vis husstandskode", exact: true }).click();
   await expect(adminPage.locator("output[aria-label='Husstandskode']")).toHaveText(receipt.accessCode);
+  await admin.grantPermissions(["clipboard-read", "clipboard-write"]);
+  await adminPage.getByRole("button", { name: "Kopier koden", exact: true }).click();
+  assert.equal(await adminPage.evaluate(() => navigator.clipboard.readText()), receipt.accessCode);
+  await adminPage.getByRole("button", { name: "Skjul koden", exact: true }).click();
+  await expect(adminPage.locator("output[aria-label='Husstandskode']")).toHaveCount(0);
+  adminPage.once("dialog", (dialog) => dialog.dismiss());
+  await adminPage.getByRole("button", { name: "Lag ny kode", exact: true }).click();
+  assert.equal((await payload.findByID({ collection: "households", id: household.id })).credentialVersion, 1);
+  adminPage.once("dialog", (dialog) => dialog.accept());
+  await adminPage.getByRole("button", { name: "Lag ny kode", exact: true }).click();
+  await expect(adminPage.getByText("Ny kode er laget. Den forrige koden er nå ugyldig.", { exact: true })).toBeVisible();
+  const rotatedInEditor = await payload.findByID({ collection: "households", id: household.id });
+  assert.equal(rotatedInEditor.credentialVersion, 2, "Code replacement is immediate and independent of Save");
+  assert.notEqual(await adminPage.locator("output[aria-label='Husstandskode']").textContent(), receipt.accessCode);
+  await expect(adminPage.locator(".household-editor-heading")).not.toContainText("Ulagrede endringer");
 
   const requestData = { invitationKey, requestKey: randomUUID(), contactName: "Retry Family", email: "retry@example.invalid", additionalMembers: [] };
   const concurrent = await Promise.all(Array.from({ length: 3 }, () => guest.request.post("/api/household-registration", { headers, data: requestData })));
