@@ -3,30 +3,11 @@ import Image from "next/image";
 import WeddingCountdown from "@/components/WeddingCountdown";
 import type { HomepageSettings } from "@/features/homepage/models";
 import styles from "./hero.module.css";
-import { DEFAULT_HERO_COLOR, isHexColor } from "@/features/homepage/settings";
+import { DEFAULT_HERO_COLOR } from "@/features/homepage/settings";
+import { isHexColor } from "@/lib/colors";
 import { heroTextColor } from "@/features/homepage/contrast";
 
-function dateValue(date: string) {
-  const dateOnly = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
-  if (dateOnly) {
-    return {
-      value: new Date(Date.UTC(Number(dateOnly[1]), Number(dateOnly[2]) - 1, Number(dateOnly[3]))),
-      timeZone: "UTC",
-    };
-  }
-  return { value: new Date(date), timeZone: "Europe/Oslo" };
-}
-
-export function formatWeddingDate(date: string) {
-  const parsed = dateValue(date);
-  if (Number.isNaN(parsed.value.getTime())) return "Dato kommer";
-  return new Intl.DateTimeFormat("nb-NO", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-    timeZone: parsed.timeZone,
-  }).format(parsed.value);
-}
+import { formatWeddingDate } from "@/lib/wedding-date";
 
 export default function WeddingHero({ settings }: { settings: HomepageSettings }) {
   const hasImage = settings.backgroundMode === "image" && Boolean(settings.image?.src);
