@@ -1,0 +1,154 @@
+.workspace {
+  min-width: 0;
+}
+
+.tabs {
+  display: flex;
+  gap: 28px;
+  margin: 0 0 6px;
+  border-bottom: 1px solid #dfe3de;
+}
+
+.tabs a {
+  position: relative;
+  padding: 16px 2px 14px;
+  color: #5e6562;
+  font-size: 14px;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.tabs a:hover { color: #2f5e52; }
+.tabs a[aria-current="page"] { color: #2f5e52; }
+.tabs a[aria-current="page"]::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 3px;
+  border-radius: 3px 3px 0 0;
+  background: #2f5e52;
+}
+
+.createPanel {
+  --foreground: var(--theme-text);
+  --muted-foreground: var(--wedding-muted);
+  --border: var(--wedding-border);
+  --card: #fff;
+  --muted: var(--wedding-green-soft);
+  --radius-lg: 10px;
+  --destructive: #9c2924;
+  margin-bottom: 32px;
+  max-width: 820px;
+  margin-top: 30px;
+  overflow: hidden;
+  border: 1px solid #dfe3de;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgb(27 43 37 / 4%);
+}
+
+.createHeader {
+  padding: 26px 30px;
+  background: #edf3f0;
+  border-bottom: 1px solid #dce7e1;
+}
+
+.createHeader h1 { margin: 0 0 6px; color: #243c35; font-size: 25px; }
+.createHeader p { margin: 0; color: #58645f; line-height: 1.5; }
+.createForm { display: grid; gap: 30px; padding: 30px; }
+/* Shared guest fields also work here without importing the public site's Tailwind reset. */
+.createForm input {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--wedding-border);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--theme-text);
+  font: inherit;
+}
+.createForm input:focus-visible { outline: 2px solid var(--wedding-green); outline-offset: 2px; }
+.createForm input:disabled { opacity: 0.6; }
+.createForm label { font-weight: 500; }
+.tabs a:focus-visible { outline: 2px solid var(--wedding-green); outline-offset: 3px; }
+
+.approvalNotice {
+  padding: 14px 16px;
+  border: 1px solid #cddfd6;
+  border-radius: 10px;
+  background: #f2f7f4;
+  color: #294f44;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.formError {
+  margin: -10px 0 0;
+  padding: 12px 14px;
+  border-radius: 9px;
+  background: #fff0ef;
+  color: #9c2924;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.formActions { display: flex; flex-wrap: wrap; gap: 10px; }
+.members { display: flex; align-items: center; gap: 10px; white-space: nowrap; }
+.avatars { display: flex; padding-left: 2px; }
+.avatar {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  margin-left: -5px;
+  place-items: center;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: #728ba9;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+}
+.avatar:first-child { margin-left: 0; background: #a38766; }
+.avatar:nth-child(3) { background: #96789b; }
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 99px;
+  font-size: 12px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+.status::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.status_pending { background: #fff4e5; color: #985500; }
+.status_approved { background: #edf3f0; color: #2f5e52; }
+.status_revoked { background: #fff0ef; color: #a12e29; }
+.status_unknown { background: #f0f1ef; color: #60656b; }
+
+.navBadge {
+  min-width: 22px;
+  margin-left: auto;
+  padding: 2px 7px;
+  border-radius: 99px;
+  background: #fff1d9;
+  color: #8a4b00;
+  font-size: 11px;
+  font-weight: 750;
+  text-align: center;
+}
+
+@media (max-width: 600px) {
+  .tabs { gap: 20px; overflow-x: auto; }
+  .tabs a { white-space: nowrap; }
+  .createPanel { margin-top: 22px; border-radius: 13px; }
+  .createHeader, .createForm { padding: 20px 16px; }
+  .createForm { gap: 24px; }
+  .formActions { align-items: stretch; flex-direction: column; }
+  .formActions > * { justify-content: center; width: 100%; }
+}

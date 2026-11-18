@@ -15,6 +15,7 @@
     "test:admin": "node --env-file=.env --import tsx tests/integration/admin-design.ts",
     "test:program": "node --env-file=.env --import tsx tests/integration/program.ts",
     "test:homepage": "npm run build && node --env-file=.env --import tsx tests/integration/homepage-isolated.ts",
+    "test:household-admin": "npm run build && node --env-file=.env --import tsx tests/integration/household-admin-isolated.ts",
     "test:households": "npm run build && node --env-file=.env --import tsx tests/integration/household-registration-isolated.ts",
     "payload": "payload",
     "generate:types": "payload generate:types",

@@ -34,8 +34,12 @@ import { HorizontalRuleFeatureClient as HorizontalRuleFeatureClient_e70f5e05f09f
 import { SidebarBlocksFeatureClient as SidebarBlocksFeatureClient_6556cd5a1e1f542585e7174c3eb4642f } from '../../../components/admin/editor/SidebarBlocksFeature.client'
 import { PostStatusCell as PostStatusCell_fd632f21ba984e4333d52fc06b4e62be } from '../../../components/admin/tables/Cells'
 import { default as default_8c6fec1c371dda0dd69cbb7b7fc5d9ab } from '../../../components/admin/PostHeading'
+import { HouseholdContactCell as HouseholdContactCell_6f289caf9d59e7060b50d7664ffcabb6 } from '../../../components/admin/households/HouseholdCells'
+import { HouseholdStatusCell as HouseholdStatusCell_6f289caf9d59e7060b50d7664ffcabb6 } from '../../../components/admin/households/HouseholdCells'
+import { HouseholdMembersCell as HouseholdMembersCell_6f289caf9d59e7060b50d7664ffcabb6 } from '../../../components/admin/households/HouseholdCells'
+import { HouseholdDateCell as HouseholdDateCell_6f289caf9d59e7060b50d7664ffcabb6 } from '../../../components/admin/households/HouseholdCells'
 import { default as default_d8af97953020cfde82518140e062f2c4 } from '../../../components/admin/households/HouseholdAccessCode'
-import { default as default_c369d5c837b8fb00eed29441d7898893 } from '../../../components/admin/households/HouseholdInvitationPanel'
+import { default as default_e8b6a71809adf5f3f2d2c24defca11b6 } from '../../../components/admin/households/HouseholdWorkspace'
 import { ColorField as ColorField_d5770e1c9d402fd6e9af7db4aa07a763 } from '../../../components/admin/fields/ColorField'
 import { InlineToolbarFeatureClient as InlineToolbarFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { RelationshipFeatureClient as RelationshipFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
@@ -88,8 +92,12 @@ export const importMap = {
   "/components/admin/editor/SidebarBlocksFeature.client#SidebarBlocksFeatureClient": SidebarBlocksFeatureClient_6556cd5a1e1f542585e7174c3eb4642f,
   "/components/admin/tables/Cells#PostStatusCell": PostStatusCell_fd632f21ba984e4333d52fc06b4e62be,
   "/components/admin/PostHeading#default": default_8c6fec1c371dda0dd69cbb7b7fc5d9ab,
+  "/components/admin/households/HouseholdCells#HouseholdContactCell": HouseholdContactCell_6f289caf9d59e7060b50d7664ffcabb6,
+  "/components/admin/households/HouseholdCells#HouseholdStatusCell": HouseholdStatusCell_6f289caf9d59e7060b50d7664ffcabb6,
+  "/components/admin/households/HouseholdCells#HouseholdMembersCell": HouseholdMembersCell_6f289caf9d59e7060b50d7664ffcabb6,
+  "/components/admin/households/HouseholdCells#HouseholdDateCell": HouseholdDateCell_6f289caf9d59e7060b50d7664ffcabb6,
   "/components/admin/households/HouseholdAccessCode#default": default_d8af97953020cfde82518140e062f2c4,
-  "/components/admin/households/HouseholdInvitationPanel#default": default_c369d5c837b8fb00eed29441d7898893,
+  "/components/admin/households/HouseholdWorkspace#default": default_e8b6a71809adf5f3f2d2c24defca11b6,
   "/components/admin/fields/ColorField#ColorField": ColorField_d5770e1c9d402fd6e9af7db4aa07a763,
   "@payloadcms/richtext-lexical/client#InlineToolbarFeatureClient": InlineToolbarFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "@payloadcms/richtext-lexical/client#RelationshipFeatureClient": RelationshipFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,

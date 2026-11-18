@@ -17,10 +17,12 @@ export async function POST(request: Request) {
       publicSiteUrl: process.env.PUBLIC_SITE_URL,
       invitationKey: invitation.getKey(),
     });
-    const qrDataUrl = await QRCode.toDataURL(registrationUrl, {
-      errorCorrectionLevel: "M", margin: 4, width: 512,
-    });
-    return householdResponse({ registrationUrl, qrDataUrl });
+    const qrOptions = { errorCorrectionLevel: "M", margin: 4, width: 512 } as const;
+    const [qrDataUrl, qrSvg] = await Promise.all([
+      QRCode.toDataURL(registrationUrl, qrOptions),
+      QRCode.toString(registrationUrl, { ...qrOptions, type: "svg" }),
+    ]);
+    return householdResponse({ registrationUrl, qrDataUrl, qrSvg });
   } catch (error) {
     return householdErrorResponse(error);
   }

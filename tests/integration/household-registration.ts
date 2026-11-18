@@ -28,8 +28,9 @@ try {
   assert.equal((await admin.request.post("/api/household-invitation", { headers: { Origin: "https://elsewhere.invalid" }, data: {} })).status(), 403);
   const invitationResponse = await admin.request.post("/api/household-invitation", { headers, data: {} });
   assert.equal(invitationResponse.status(), 200);
-  const invitation = await invitationResponse.json() as { registrationUrl: string; qrDataUrl: string };
+  const invitation = await invitationResponse.json() as { registrationUrl: string; qrDataUrl: string; qrSvg: string };
   assert(invitation.qrDataUrl.startsWith("data:image/png;base64,"));
+  assert.match(invitation.qrSvg, /^<svg\s/);
   const registrationUrl = new URL(invitation.registrationUrl);
   assert.equal(registrationUrl.origin, baseURL, "Never navigate a fixture to a hosted website");
   assert.equal(registrationUrl.search, "");
@@ -73,7 +74,7 @@ try {
   adminPage.on("pageerror", (error) => browserErrors.push(error.message));
   await adminPage.goto("/admin/collections/households");
   await expect(adminPage.getByText("Alex Example", { exact: true })).toBeVisible();
-  await adminPage.getByRole("button", { name: "Vis invitasjonslenke", exact: true }).click();
+  await adminPage.goto("/admin/collections/households?tab=invitation");
   await expect(adminPage.getByRole("link", { name: "Åpne registreringsskjema", exact: true })).toHaveAttribute("href", invitation.registrationUrl);
   await adminPage.goto(`/admin/collections/households/${household.id}`);
   await expect(adminPage.getByRole("heading", { name: "Familiemedlemmer*", exact: true })).toBeVisible();

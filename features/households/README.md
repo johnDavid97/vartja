@@ -1,6 +1,6 @@
 # Reading the household code
 
-Registration, database storage, admin approval and code recovery/replacement are connected. Guest login, site privacy and household self-service are still pending.
+Registration, database storage, admin approval/creation, household overview and shared invitations are connected. Guest login, site privacy and household self-service are still pending.
 
 ## Start here
 
@@ -13,6 +13,10 @@ Registration, database storage, admin approval and code recovery/replacement are
 7. **`application/HouseholdCodeServices.ts`** — explicit admin code reveal and replacement.
 8. **`infrastructure/`** — real Payload storage, credential encryption and durable rate limits.
 9. **`composition-root.ts`** — connects the application classes to their dependencies. The original edit-details service still uses fakes in tests and is not exposed as a guest endpoint.
+
+Administrator creation uses `application/CreateApprovedHousehold.ts`, sharing strict initial validation and credential provisioning with guest registration. Only the administrator use case creates approved households; guest registration stays pending. `GetHouseholdSummary.ts` provides pending-household counts, read in one database snapshot without requiring the credential secret.
+
+The admin workspace lives in `components/admin/households/HouseholdWorkspace.tsx` and reuses `AdminList`/`AdminTable`. See [admin UI scope and verification](../../docs/household-admin-ui.md). The existing household editor is unchanged.
 
 The reusable React fields live in `components/households/`. They display and edit form values, but do not log anybody in, save records or approve guests.
 
@@ -48,3 +52,5 @@ The smaller private methods explain each step. They are not separate classes bec
 For initial registration, the contact person automatically becomes the first member. The general edit validator must not add them again on every save.
 
 Unit tests are in `tests/unit/household-*.test.ts(x)`. Run `npm run test:households` for the real registration/browser test: it builds the app, creates a disposable local database, applies/rolls back/reapplies migrations and runs against a separate production server. It does not overwrite the development database.
+
+`npm run test:household-admin` additionally exercises the admin form (including a lost-response retry), native list interactions, tabs, invitation downloads and 320–1440px layouts, followed by the existing admin/editor/poll regressions in that same disposable database.

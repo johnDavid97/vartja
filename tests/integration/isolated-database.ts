@@ -8,7 +8,7 @@ interface IsolatedIntegrationOptions {
   name: string;
   port: number;
   migration: string;
-  testFile: string;
+  testFile: string | readonly string[];
   verifyRollback: (database: Client) => Promise<void>;
   verifyReapply?: (database: Client) => Promise<void>;
 }
@@ -69,7 +69,8 @@ export async function runIsolatedIntegration(options: IsolatedIntegrationOptions
       await new Promise((resolve) => setTimeout(resolve, 250));
     }
     assert(ready, "Isolated server did not become ready");
-    await runNode(["--import", "tsx", options.testFile]);
+    const testFiles = typeof options.testFile === "string" ? [options.testFile] : options.testFile;
+    for (const testFile of testFiles) await runNode(["--import", "tsx", testFile]);
   } catch (error) {
     if (serverOutput) console.error(serverOutput);
     throw error;

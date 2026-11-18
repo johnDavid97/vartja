@@ -1,0 +1,310 @@
+.panel {
+  display: grid;
+  gap: 24px;
+  min-width: 0;
+  margin-block: 22px 32px;
+  color: #202723;
+}
+
+.header {
+  display: grid;
+  gap: 6px;
+}
+
+.heading,
+.cardHeading,
+.steps h4,
+.intro,
+.cardDescription,
+.copyStatus,
+.domainCaption,
+.error p,
+.warning p {
+  margin: 0;
+}
+
+.heading {
+  font-size: clamp(26px, 3vw, 34px);
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+}
+
+.intro {
+  max-width: 68ch;
+  color: #626965;
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+.loading,
+.error {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 90px;
+  padding: 20px;
+  border: 1px solid #dce2de;
+  border-radius: 14px;
+  background: #fff;
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+  border: 2px solid #abc0b7;
+  border-right-color: #2f5e52;
+  border-radius: 50%;
+  animation: invitation-spin 700ms linear infinite;
+}
+
+.error {
+  flex-wrap: wrap;
+  justify-content: space-between;
+  color: #8c302c;
+}
+
+.warning {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 14px;
+  padding: 18px 20px;
+  border: 1px solid #e8cf92;
+  border-radius: 14px;
+  background: #fff9ec;
+  color: #6b4913;
+}
+
+.warning svg {
+  margin-top: 1px;
+}
+
+.warning strong {
+  display: block;
+  margin-bottom: 3px;
+  font-size: 15px;
+}
+
+.warning p {
+  line-height: 1.5;
+}
+
+.warning code {
+  font: inherit;
+  font-weight: 700;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(250px, 0.85fr);
+  gap: 24px;
+  align-items: stretch;
+}
+
+.linkCard,
+.qrCard {
+  min-width: 0;
+  padding: 24px;
+  border: 1px solid #dce2de;
+  border-radius: 14px;
+  background: #fff;
+}
+
+.linkCard {
+  display: grid;
+  gap: 26px;
+}
+
+.qrCard {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 15px;
+}
+
+.cardHeading {
+  color: #202723;
+  font-size: 18px;
+  line-height: 1.3;
+}
+
+.cardDescription {
+  margin-top: 4px;
+  max-width: 62ch;
+  color: #626965;
+  line-height: 1.5;
+}
+
+.addressGroup {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+}
+
+.label {
+  color: #29322d;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.addressField {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 46px;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid #dce2de;
+  border-radius: 11px;
+  background: #f6f7f6;
+}
+
+.addressField:focus-within {
+  outline: 3px solid #83aa9a;
+  outline-offset: 2px;
+}
+
+.addressInput {
+  width: 100%;
+  min-width: 0;
+  padding: 14px 4px 14px 14px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #26312b;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 14px;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+}
+
+.visibilityButton {
+  width: 46px;
+  height: 100%;
+  min-height: 46px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #52615a;
+  cursor: pointer;
+}
+
+.visibilityButton:hover {
+  background: #e9eeeb;
+  color: #234a40;
+}
+
+.visibilityButton:focus-visible {
+  outline: 3px solid #83aa9a;
+  outline-offset: -4px;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.copyStatus {
+  margin-top: -16px;
+  color: #405c50;
+  font-size: 13px;
+}
+
+.steps {
+  padding-top: 20px;
+  border-top: 1px solid #e7ebe8;
+}
+
+.steps h4 {
+  margin-bottom: 7px;
+  font-size: 14px;
+}
+
+.steps ol {
+  margin: 0;
+  padding-left: 22px;
+  color: #4f5753;
+  line-height: 1.65;
+}
+
+.qrImage {
+  display: block;
+  width: min(100%, 290px);
+  height: auto;
+  margin-inline: auto;
+  border: 1px solid #e1e5e2;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.domainCaption {
+  overflow-wrap: anywhere;
+  color: #747b77;
+  font-size: 13px;
+  text-align: center;
+}
+
+.downloadButton {
+  width: 100%;
+}
+
+.svgDownload {
+  align-self: center;
+  padding: 6px;
+  color: #2f5e52;
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+  text-decoration: none;
+}
+
+.svgDownload:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.svgDownload:focus-visible {
+  outline: 3px solid #83aa9a;
+  outline-offset: 2px;
+  border-radius: 5px;
+}
+
+@keyframes invitation-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 760px) {
+  .cards {
+    grid-template-columns: 1fr;
+  }
+
+  .qrCard {
+    max-width: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .panel {
+    gap: 18px;
+    margin-block: 16px 24px;
+  }
+
+  .linkCard,
+  .qrCard,
+  .warning {
+    padding: 17px;
+  }
+
+  .actions > * {
+    width: 100%;
+  }
+
+  .addressInput {
+    font-size: 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner { animation: none; }
+}
