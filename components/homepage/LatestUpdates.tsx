@@ -21,7 +21,7 @@ export default function LatestUpdates({ posts }: LatestUpdatesProps) {
         {posts.length === 0 ? (
           <p className={styles.empty}>Det er ingen oppdateringer ennå.</p>
         ) : (
-          <UpdatesCarousel itemCount={posts.length}>
+          <UpdatesCarousel>
             {posts.map((post) => <NewsCard key={post.id} post={post} headingLevel="h3" variant="homepage" />)}
           </UpdatesCarousel>
         )}

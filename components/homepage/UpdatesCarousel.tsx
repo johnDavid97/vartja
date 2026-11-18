@@ -1,38 +1,31 @@
 "use client";
 
-import { Children, type KeyboardEvent, type ReactNode, useCallback, useEffect, useRef, useState } from "react";
+import { Children, isValidElement, type KeyboardEvent, type ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import styles from "./updates.module.css";
+import { carouselPageTargets, carouselPosition, pageInDirection } from "@/features/homepage/carousel-navigation";
 
 type UpdatesCarouselProps = {
   children: ReactNode;
-  itemCount: number;
 };
 
 function prefersReducedMotion() {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
-export default function UpdatesCarousel({ children, itemCount }: UpdatesCarouselProps) {
+export default function UpdatesCarousel({ children }: UpdatesCarouselProps) {
+  const items = Children.toArray(children);
+  const itemCount = items.length;
   const viewportRef = useRef<HTMLDivElement>(null);
   const [pageTargets, setPageTargets] = useState<number[]>([]);
-  const [activePage, setActivePage] = useState(0);
+  const [position, setPosition] = useState(() => carouselPosition([], 0, 0));
+  const { activePage, canGoPrevious, canGoNext } = position;
 
-  const updateActivePage = useCallback((targets: number[]) => {
+  const updatePosition = useCallback((targets: number[]) => {
     const viewport = viewportRef.current;
-    if (!viewport || targets.length === 0) return;
-
-    let nearest = 0;
-    let nearestDistance = Number.POSITIVE_INFINITY;
-    targets.forEach((target, index) => {
-      const distance = Math.abs(viewport.scrollLeft - target);
-      if (distance < nearestDistance) {
-        nearest = index;
-        nearestDistance = distance;
-      }
-    });
-    setActivePage(nearest);
+    if (!viewport) return;
+    setPosition(carouselPosition(targets, viewport.scrollLeft, Math.max(0, viewport.scrollWidth - viewport.clientWidth)));
   }, []);
 
   const measure = useCallback(() => {
@@ -40,27 +33,10 @@ export default function UpdatesCarousel({ children, itemCount }: UpdatesCarousel
     if (!viewport) return;
 
     const slides = Array.from(viewport.querySelectorAll<HTMLElement>("[data-update-slide]"));
-    const maxScroll = Math.max(0, viewport.scrollWidth - viewport.clientWidth);
-    const nextTargets: number[] = [];
-    const firstSlide = slides[0];
-    const secondSlide = slides[1];
-    const stride = firstSlide
-      ? (secondSlide ? secondSlide.offsetLeft - firstSlide.offsetLeft : firstSlide.offsetWidth)
-      : viewport.clientWidth;
-    // The CSS deliberately leaves part of the next card visible. Count only fully
-    // visible cards so each control advances one responsive page (1, 2, or 3 cards).
-    const cardsPerPage = Math.max(1, Math.floor(viewport.clientWidth / Math.max(1, stride)));
-
-    for (let index = 0; index < slides.length; index += cardsPerPage) {
-      const target = Math.min(slides[index].offsetLeft - slides[0].offsetLeft, maxScroll);
-      const previous = nextTargets.at(-1);
-      if (previous === undefined || Math.abs(target - previous) > 2) nextTargets.push(target);
-    }
-
-    if (nextTargets.length === 0) nextTargets.push(0);
+    const nextTargets = carouselPageTargets(slides.map((slide) => slide.offsetLeft), viewport.clientWidth, viewport.scrollWidth);
     setPageTargets(nextTargets);
-    updateActivePage(nextTargets);
-  }, [updateActivePage]);
+    updatePosition(nextTargets);
+  }, [updatePosition]);
 
   useEffect(() => {
     const viewport = viewportRef.current;
@@ -77,23 +53,27 @@ export default function UpdatesCarousel({ children, itemCount }: UpdatesCarousel
 
   const goToPage = (page: number) => {
     const viewport = viewportRef.current;
-    if (!viewport) return;
+    if (!viewport || pageTargets.length === 0) return;
     const boundedPage = Math.max(0, Math.min(page, pageTargets.length - 1));
     viewport.scrollTo({
       left: pageTargets[boundedPage],
       behavior: prefersReducedMotion() ? "auto" : "smooth",
     });
-    setActivePage(boundedPage);
+  };
+
+  const goInDirection = (direction: "previous" | "next") => {
+    const viewport = viewportRef.current;
+    if (viewport) goToPage(pageInDirection(pageTargets, viewport.scrollLeft, direction));
   };
 
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (event.target !== event.currentTarget) return;
     if (event.key === "ArrowLeft") {
       event.preventDefault();
-      goToPage(activePage - 1);
+      goInDirection("previous");
     } else if (event.key === "ArrowRight") {
       event.preventDefault();
-      goToPage(activePage + 1);
+      goInDirection("next");
     } else if (event.key === "Home") {
       event.preventDefault();
       goToPage(0);
@@ -114,8 +94,8 @@ export default function UpdatesCarousel({ children, itemCount }: UpdatesCarousel
             variant="outline"
             size="icon-lg"
             className={styles.arrowButton}
-            onClick={() => goToPage(activePage - 1)}
-            disabled={activePage === 0}
+            onClick={() => goInDirection("previous")}
+            disabled={!canGoPrevious}
             aria-label="Forrige side"
           >
             <ChevronLeft aria-hidden="true" />
@@ -124,8 +104,8 @@ export default function UpdatesCarousel({ children, itemCount }: UpdatesCarousel
             type="button"
             size="icon-lg"
             className={styles.nextButton}
-            onClick={() => goToPage(activePage + 1)}
-            disabled={activePage === pageTargets.length - 1}
+            onClick={() => goInDirection("next")}
+            disabled={!canGoNext}
             aria-label="Neste side"
           >
             <ChevronRight aria-hidden="true" />
@@ -141,11 +121,11 @@ export default function UpdatesCarousel({ children, itemCount }: UpdatesCarousel
         aria-label="Bla i oppdateringer"
         tabIndex={hasControls ? 0 : -1}
         onKeyDown={handleKeyDown}
-        onScroll={() => updateActivePage(pageTargets)}
+        onScroll={() => updatePosition(pageTargets)}
       >
         <ul className={styles.track}>
-          {Children.map(children, (child, index) => (
-            <li className={styles.slide} data-update-slide aria-label={`${index + 1} av ${itemCount}`}>
+          {items.map((child, index) => (
+            <li key={isValidElement(child) ? child.key : index} className={styles.slide} data-update-slide aria-label={`${index + 1} av ${itemCount}`}>
               {child}
             </li>
           ))}
