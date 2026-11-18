@@ -39,6 +39,9 @@
 .program-item-editor header { display: flex; align-items: center; gap: 12px; }
 .program-item-editor header small { text-transform: uppercase; color: #626b66; font-weight: 650; font-size: 11px; }
 .program-item-editor header h2 { margin: 0; }
+.program-day-comments { margin-top: 24px; border-top: 1px solid #e7ebe4; padding-top: 20px; }
+.program-builder .program-checkbox { flex-direction: row; align-items: center; }
+.program-builder input[type="checkbox"] { width: auto; min-height: auto; margin-right: 8px; accent-color: #315e52; }
 .program-input-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .program-item-editor footer { display: flex; justify-content: space-between; gap: 10px; border-top: 1px solid #e7ebe4; padding-top: 18px; }
 .program-hint, .program-empty p { color: #626b66; font-size: 13px; line-height: 1.6; margin: 12px 0; }

@@ -75,58 +75,6 @@
   transform: scaleX(1);
 }
 
-.more {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.moreSummary {
-  display: flex;
-  align-items: center;
-  gap: 0.3rem;
-  height: 100%;
-  cursor: pointer;
-  font-size: 0.98rem;
-  font-weight: 550;
-  list-style: none;
-}
-
-.moreSummary::-webkit-details-marker {
-  display: none;
-}
-
-.moreSummary svg {
-  width: 1rem;
-  transition: transform 160ms ease;
-}
-
-.more[open] .moreSummary svg {
-  transform: rotate(180deg);
-}
-
-.moreSummary:hover,
-.moreSummary:focus-visible {
-  color: var(--wedding-green);
-}
-
-.moreMenu {
-  position: absolute;
-  top: calc(100% - 0.55rem);
-  right: 0;
-  min-width: 12rem;
-  padding: 0.5rem 1rem;
-  display: grid;
-  background: #fcfbf8;
-  border: 1px solid rgba(32, 55, 47, 0.12);
-  border-radius: 0.5rem;
-  box-shadow: 0 0.8rem 2rem rgba(26, 40, 35, 0.12);
-}
-
-.moreMenu .link::after {
-  bottom: 0.25rem;
-}
-
 .menuButton {
   display: none;
   color: var(--wedding-green);
@@ -181,8 +129,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .link::after,
-  .moreSummary svg {
+  .link::after {
     transition: none;
   }
 }

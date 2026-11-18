@@ -1,6 +1,7 @@
 import "server-only";
 import { cache } from "react";
 import { headers } from "next/headers";
+import { connection } from "next/server";
 import { redirect } from "next/navigation";
 import { getPayload } from "payload";
 import config from "@payload-config";
@@ -9,6 +10,8 @@ import { sessionTokenFromHeaders } from "../http/session-cookie";
 
 /** A React render-pass cache, never a shared cross-visitor authorization cache. */
 export const getWebsiteViewer = cache(async () => {
+  // Session expiry uses the current clock; never evaluate it during partial prerender/prefetch.
+  await connection();
   const requestHeaders = new Headers(await headers());
   const payload = await getPayload({ config });
   const { user } = await payload.auth({ headers: requestHeaders });

@@ -1,0 +1,4 @@
+.identity { display: flex; align-items: center; flex-wrap: wrap; gap: .55rem; min-width: 0; overflow-wrap: anywhere; }
+.identity strong { min-width: 0; font-size: .9rem; }
+.avatar { display: inline-grid; place-items: center; flex: 0 0 2rem; width: 2rem; height: 2rem; background: #315e52; color: white; border-radius: 50%; font-size: .7rem; font-weight: 650; }
+.badge { font-size: .7rem; color: #315e52; background: #e5eee8; border-radius: .4rem; padding: .1rem .35rem; }

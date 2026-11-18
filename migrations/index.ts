@@ -7,6 +7,7 @@ import * as migration_20261108_220804_wedding_program from './20261108_220804_we
 import * as migration_20261117_140805_household_registration from './20261117_140805_household_registration';
 import * as migration_20261117_211959_homepage_appearance from './20261117_211959_homepage_appearance';
 import * as migration_20261118_153059_household_login from './20261118_153059_household_login';
+import * as migration_20261118_181836_program_day_activity from './20261118_181836_program_day_activity';
 
 export const migrations = [
   {
@@ -52,6 +53,11 @@ export const migrations = [
   {
     up: migration_20261118_153059_household_login.up,
     down: migration_20261118_153059_household_login.down,
-    name: '20261118_153059_household_login'
+    name: '20261118_153059_household_login',
+  },
+  {
+    up: migration_20261118_181836_program_day_activity.up,
+    down: migration_20261118_181836_program_day_activity.down,
+    name: '20261118_181836_program_day_activity'
   },
 ];

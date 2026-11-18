@@ -1,0 +1,56 @@
+.page { max-width: 58rem; margin: 0 auto; padding: 3.5rem 1.5rem 6rem; color: #292d29; }
+.intro { text-align: center; margin: 0 auto 2.5rem; max-width: 37rem; }
+.eyebrow { color: #315e52; font-size: .75rem; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; }
+.intro h1 { font-family: var(--font-wedding-serif, Georgia, serif); font-size: clamp(2.8rem, 6vw, 4rem); font-weight: 400; line-height: 1.15; margin: .65rem 0 1rem; }
+.intro > p:last-child { color: #555b58; line-height: 1.65; }
+.days { display: flex; gap: .65rem; overflow-x: auto; padding: .25rem .2rem .65rem; margin: 0 -.2rem 2rem; }
+.day { flex: 1 0 8rem; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1px solid #dcded9; border-radius: .85rem; padding: .6rem 1rem; background: white; cursor: pointer; line-height: 1.4; }
+.day[data-active] { background: #dcebe5; border-color: #dcebe5; color: #254f43; }
+.day:hover { border-color: #315e52; }
+.day:focus-visible, .panel:focus-visible { outline: 2px solid #315e52; outline-offset: 2px; }
+.day time { display: block; font-weight: 650; white-space: nowrap; }
+.day time::first-letter { text-transform: uppercase; }
+.dayNumber { font-size: .7rem; font-weight: 650; text-transform: uppercase; letter-spacing: .09em; }
+.dayLabel { font-size: .75rem; margin-top: .2rem; overflow-wrap: anywhere; max-width: 14rem; }
+/* Visited tabs retain their state but leave layout immediately when inactive. */
+.panel[inert] { display: none; }
+.timeline { list-style: none; margin: 0; padding: 0; }
+.item { --item-color: #315e52; position: relative; display: grid; grid-template-columns: 3.8rem 3.1rem minmax(0, 1fr); column-gap: .75rem; padding-bottom: 1.6rem; }
+.item[data-kind="bus"] { --item-color: #875209; }
+.item[data-kind="flight"] { --item-color: #336787; }
+.item[data-kind="train"] { --item-color: #476444; }
+.item[data-kind="hotel"] { --item-color: #73513e; }
+.item[data-kind="event"] { --item-color: #654383; }
+.item:not(:last-child)::before { content: ""; position: absolute; top: 3.15rem; bottom: 0; left: 6.1rem; border-left: 2px dotted #c5c4ba; }
+.departure { padding-top: .8rem; text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; }
+.marker { position: relative; display: grid; place-items: center; width: 3.1rem; height: 3.1rem; border: 2px solid var(--item-color); border-radius: 50%; background: #fcfbf8; color: var(--item-color); }
+.card { min-width: 0; padding: 1.1rem 1.2rem; border: 1px solid #e7e7e1; border-radius: 1rem; background: white; overflow-wrap: anywhere; }
+.kind { display: block; color: var(--item-color); font-size: .68rem; font-weight: 750; letter-spacing: .09em; text-transform: uppercase; }
+.card h3 { font-size: 1.05rem; font-weight: 650; line-height: 1.4; }
+.route { display: flex; align-items: center; gap: .7rem; border-radius: .8rem; background: #f6f5f1; padding: .65rem .8rem; margin-top: .65rem; }
+.endpoint { min-width: 0; max-width: 40%; flex: 0 1 auto; font-size: .85rem; line-height: 1.4; }
+.endpoint > span { display: block; font-size: .65rem; color: #5b625e; text-transform: uppercase; letter-spacing: .05em; }
+.destination { text-align: right; margin-left: auto; }
+.routeLine { position: relative; min-width: 2rem; flex: 1; border-top: 1px dashed var(--item-color); color: var(--item-color); display: flex; align-items: center; justify-content: center; height: 0; }
+.routeLine::before, .routeLine::after { content: ""; position: absolute; top: -4px; width: 7px; height: 7px; border: 1px solid var(--item-color); border-radius: 50%; background: #f6f5f1; }
+.routeLine::before { left: 0; }
+.routeLine::after { right: 0; background: var(--item-color); }
+.routeLine svg { box-sizing: content-box; flex-shrink: 0; padding: 0 .4rem; background: #f6f5f1; }
+.returnTime, .location { display: table; background: #f4f3ef; padding: .25rem .6rem; border-radius: 1rem; font-size: .8rem; margin-top: .6rem; }
+.returnTime { display: flex; width: fit-content; flex-wrap: wrap; align-items: baseline; gap: .25rem; }
+.notes { margin-top: .65rem; white-space: pre-wrap; font-size: .9rem; line-height: 1.65; color: #525953; }
+.empty { text-align: center; padding: 2rem 1rem; color: #555b58; }
+@media (max-width: 600px) {
+  .page { padding: 2.5rem 1rem 4rem; }
+  .intro { margin-bottom: 1.8rem; }
+  .item { grid-template-columns: 2.3rem minmax(0, 1fr); gap: .45rem .65rem; padding-bottom: 1.4rem; }
+  .departure { grid-column: 2; grid-row: 1; text-align: left; padding-top: 0; font-size: .9rem; }
+  .departure:empty { display: none; }
+  .marker { grid-column: 1; grid-row: 1 / span 2; width: 2.3rem; height: 2.3rem; }
+  .marker svg { width: 17px; height: 17px; }
+  .card { grid-column: 2; padding: .9rem; }
+  .item:not(:last-child)::before { left: 1.1rem; top: 2.3rem; }
+  .route { gap: .4rem; padding: .6rem; }
+  .routeLine { min-width: 1.2rem; }
+  .routeLine svg { padding: 0 .15rem; width: 13px; }
+}

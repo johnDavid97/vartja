@@ -46,33 +46,33 @@ export default function PollOverview({ rows }: { rows: PollOverviewRow[] }) {
       </header>
       <p className={styles.hint}>Avstemninger opprettes og redigeres i innlegg. Publiserte innstillinger vises her; upubliserte avstemninger er merket Utkast. Stemmer telles per nettleser, ikke per husstand.</p>
       <div className={styles.toolbar}>
-        <label>Søk i avstemninger<input type="search" value={search} placeholder="Spørsmål eller innlegg" onChange={(event) => { setSearch(event.target.value); setPage(1); }} /></label>
+        <label>Søk i avstemninger<input type="search" value={search} placeholder="Spørsmål, innlegg eller programdag" onChange={(event) => { setSearch(event.target.value); setPage(1); }} /></label>
         <div className={styles.statusFilter}><label htmlFor="poll-overview-status">Status</label><select id="poll-overview-status" value={status} onChange={(event) => { setStatus(event.target.value); setPage(1); }}><option value="all">Alle statuser</option>{Object.entries(statuses).map(([value, item]) => <option key={value} value={value}>{item.label}</option>)}</select></div>
         <span role="status">{filtered.length} avstemninger</span>
       </div>
       {visible.length ? <AdminTable label="Avstemninger"><table>
-        <thead><tr><th scope="col">Spørsmål</th><th scope="col">Innlegg</th><th scope="col">Status</th><th scope="col">Stemmer</th></tr></thead>
+        <thead><tr><th scope="col">Spørsmål</th><th scope="col">Innlegg / programdag</th><th scope="col">Status</th><th scope="col">Stemmer</th></tr></thead>
         <tbody>{visible.map((row) => <tr key={row.key}>
           <td className={`admin-table-title ${styles.question}`}><button type="button" onClick={() => setSelectedKey(row.key)} aria-haspopup="dialog">{row.question}</button><span className="admin-table-title__description">Se resultater{row.hasDraftChanges ? " · Endringer i utkast" : ""}</span></td>
-          <td><Link href={`/admin/collections/posts/${row.postId}`}>{row.postTitle}</Link>{row.private ? <span className="admin-table-title__description">Privat · bare redaktører</span> : null}</td>
+          <td><Link href={row.editorHref ?? `/admin/collections/posts/${row.postId}`}>{row.postTitle}</Link>{row.private ? <span className="admin-table-title__description">Privat · bare redaktører</span> : null}</td>
           <td><span className={`admin-table-status admin-table-status--${statuses[row.status].className}`}>{statuses[row.status].label}</span></td>
           <td>{row.total}</td>
         </tr>)}</tbody>
-      </table></AdminTable> : <section className={styles.empty}><BarChart3 size={32} aria-hidden="true" /><h2>{rows.length ? "Ingen treff" : "Ingen avstemninger ennå"}</h2><p>{rows.length ? "Prøv et annet søk eller en annen status." : "Legg til en avstemning i et innlegg for å se den her. Ufullstendige utkast vises når spørsmål og svar er fylt ut."}</p><Link href="/admin/collections/posts" className={adminButtonStyles({ variant: "secondary" })}>Gå til innlegg</Link></section>}
+      </table></AdminTable> : <section className={styles.empty}><BarChart3 size={32} aria-hidden="true" /><h2>{rows.length ? "Ingen treff" : "Ingen avstemninger ennå"}</h2><p>{rows.length ? "Prøv et annet søk eller en annen status." : "Legg til en avstemning i et innlegg eller på en programdag for å se den her. Ufullstendige utkast vises når spørsmål og svar er fylt ut."}</p><Link href="/admin/collections/posts" className={adminButtonStyles({ variant: "secondary" })}>Gå til innlegg</Link></section>}
       <footer className={styles.pagination}><span>Side {currentPage} av {pages}</span><AdminButton variant="secondary" size="sm" disabled={currentPage === 1} onClick={() => setPage(currentPage - 1)}>Forrige</AdminButton><AdminButton variant="secondary" size="sm" disabled={currentPage === pages} onClick={() => setPage(currentPage + 1)}>Neste</AdminButton></footer>
       <dialog ref={dialog} className={styles.results} aria-labelledby="poll-results-title" onClose={() => setSelectedKey(null)}>
         {selected && <>
           <header className={styles.resultHeader}><h2 id="poll-results-title">{selected.question}</h2><AdminButton variant="ghost" size="icon-sm" aria-label="Lukk resultater" onClick={() => dialog.current?.close()}><X size={20} aria-hidden="true" /></AdminButton></header>
           <p>{selected.total} stemmer · {statuses[selected.status].label}</p>
           {selected.status === "archived" ? <p>Fjernet fra innlegget. Tidligere stemmer er bevart.</p> : null}
-          {selected.hasDraftChanges ? <p>Innlegget har upubliserte endringer for denne avstemningen. Resultatene gjelder den publiserte versjonen.</p> : null}
+          {selected.hasDraftChanges ? <p>Innholdet har upubliserte endringer for denne avstemningen. Resultatene gjelder den publiserte versjonen.</p> : null}
           {selected.private ? <p>Privat innlegg – bare redaktører har tilgang.</p> : null}
           {!selected.total ? <p>Ingen stemmer ennå.</p> : null}
           <ul className={styles.options}>{selected.options.map((option) => {
             const percent = selected.total ? Math.round(option.count / selected.total * 100) : 0;
             return <li key={option.id}><div><strong>{option.label}</strong><span>{option.count} stemmer · {percent} %</span></div><progress max={selected.total || 1} value={option.count} aria-label={`${option.label}: ${option.count} av ${selected.total} stemmer`} /></li>;
           })}</ul>
-          <Link href={`/admin/collections/posts/${selected.postId}`} className={adminButtonStyles({ variant: "secondary" })}>Rediger i innlegget</Link>
+          <Link href={selected.editorHref ?? `/admin/collections/posts/${selected.postId}`} className={adminButtonStyles({ variant: "secondary" })}>{selected.editorHref ? "Rediger i Program" : "Rediger i innlegget"}</Link>
         </>}
       </dialog>
     </div>

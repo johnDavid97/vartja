@@ -6,6 +6,7 @@ export type PollDefinition = {
 };
 
 export type PollResults = {
+  canVote?: boolean;
   selectedOption: string | null;
   total: number;
   open: boolean;

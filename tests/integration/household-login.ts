@@ -57,7 +57,7 @@ try {
   await expect(page.getByText(post.title)).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Program", exact: true })).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Logg inn", exact: true }).first()).toBeVisible();
-  for (const path of ["/news", `/news/${post.id}`, "/program", "/bilder", "/reiseplan", "/ting-a-gjore", "/wedding-party"]) {
+  for (const path of ["/news", `/news/${post.id}`, "/program", "/bilder"]) {
     const response = await anonymous.request.get(path);
     const text = await response.text();
     assert(!text.includes(post.title) && !text.includes("Guest-only meeting place"), `No SSR/RSC leak at ${path}`);
