@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
-import { ChevronDown, Menu, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import LogoutButton from "@/components/households/LogoutButton";
@@ -13,12 +13,6 @@ const primaryLinks = [
   { href: "/program", label: "Program" },
   { href: "/news", label: "Innlegg" },
   { href: "/bilder", label: "Bilder" },
-];
-
-const moreLinks = [
-  { href: "/reiseplan", label: "Reiseplan" },
-  { href: "/ting-a-gjore", label: "Ting å gjøre" },
-  { href: "/wedding-party", label: "Brudefølge" },
 ];
 
 function isActive(pathname: string, href: string) {
@@ -65,7 +59,7 @@ export default function Header({ names, access = "anonymous" }: { names?: string
         href={href}
         className={active ? `${styles.link} ${styles.active}` : styles.link}
         aria-current={active ? "page" : undefined}
-        onClick={(event) => { setMenuOpen(false); event.currentTarget.closest("details")?.removeAttribute("open"); }}
+        onClick={() => setMenuOpen(false)}
       >
         {label}
       </Link>
@@ -81,14 +75,6 @@ export default function Header({ names, access = "anonymous" }: { names?: string
 
         <nav className={styles.desktopNav} aria-label="Hovedmeny">
           {links.map(navLink)}
-          {canBrowse && <details className={styles.more}>
-            <summary className={styles.moreSummary}>
-              Mer <ChevronDown aria-hidden="true" />
-            </summary>
-            <div className={styles.moreMenu}>
-              {moreLinks.map(navLink)}
-            </div>
-          </details>}
           {accountControl}
         </nav>
 
@@ -109,7 +95,7 @@ export default function Header({ names, access = "anonymous" }: { names?: string
 
       {menuOpen && (
         <nav id={navigationId} className={styles.mobileNav} aria-label="Hovedmeny">
-          {[...links, ...(canBrowse ? moreLinks : [])].map(navLink)}
+          {links.map(navLink)}
           {accountControl}
         </nav>
       )}

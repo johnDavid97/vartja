@@ -22,11 +22,6 @@ export default function AdminNav() {
       <Icon size={20} aria-hidden="true" /><span>{label}</span>{trailing}
     </Link>
   );
-  const planned = (label: string, Icon: typeof FileText) => (
-    <AdminButton variant="plain" className="wedding-nav__item wedding-nav__planned" disabled>
-      <Icon size={20} aria-hidden="true" /><span>{label}</span><small>Kommer</small>
-    </AdminButton>
-  );
 
   return (
     <aside className={`nav wedding-nav${navOpen ? " wedding-nav--open" : ""}`} ref={navRef} onKeyDown={(event) => {
@@ -54,7 +49,7 @@ export default function AdminNav() {
         {link("/admin/collections/media", "Bilder", ImageIcon)}
         <h2>Aktivitet</h2>
         {link("/admin/polls", "Avstemninger", BarChart3)}
-        {planned("Kommentarer", MessageCircle)}
+        {link("/admin/collections/program-comments", "Kommentarer", MessageCircle)}
         <div className="wedding-nav__settings">{link("/admin/globals/wedding", "Innstillinger", Settings2)}</div>
       </nav>
       <footer className="wedding-nav__footer">

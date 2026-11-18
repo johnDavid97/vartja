@@ -76,6 +76,9 @@ export interface Config {
     'household-registration-limits': HouseholdRegistrationLimit;
     'household-sessions': HouseholdSession;
     'household-login-limits': HouseholdLoginLimit;
+    'program-poll-votes': ProgramPollVote;
+    'program-comments': ProgramComment;
+    'program-activity-limits': ProgramActivityLimit;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -92,6 +95,9 @@ export interface Config {
     'household-registration-limits': HouseholdRegistrationLimitsSelect<false> | HouseholdRegistrationLimitsSelect<true>;
     'household-sessions': HouseholdSessionsSelect<false> | HouseholdSessionsSelect<true>;
     'household-login-limits': HouseholdLoginLimitsSelect<false> | HouseholdLoginLimitsSelect<true>;
+    'program-poll-votes': ProgramPollVotesSelect<false> | ProgramPollVotesSelect<true>;
+    'program-comments': ProgramCommentsSelect<false> | ProgramCommentsSelect<true>;
+    'program-activity-limits': ProgramActivityLimitsSelect<false> | ProgramActivityLimitsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -362,6 +368,61 @@ export interface HouseholdLoginLimit {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "program-poll-votes".
+ */
+export interface ProgramPollVote {
+  id: number;
+  dayId: string;
+  pollId: string;
+  optionId: string;
+  definition:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  voteKey: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Kommentarer per programdag. Skjul eller vis kommentarer her. Svar fra brudeparet skrives på Program-siden mens du er logget inn som administrator.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "program-comments".
+ */
+export interface ProgramComment {
+  id: number;
+  dayId: string;
+  dayLabel: string;
+  authorName: string;
+  household?: (number | null) | Household;
+  administrator?: (number | null) | User;
+  parent?: (number | null) | ProgramComment;
+  body: string;
+  status: 'published' | 'hidden';
+  requestDigest: string;
+  requestFingerprint: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "program-activity-limits".
+ */
+export interface ProgramActivityLimit {
+  id: number;
+  bucketDigest: string;
+  windowStart: string;
+  attempts: number;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -411,6 +472,18 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'household-registration-limits';
         value: number | HouseholdRegistrationLimit;
+      } | null)
+    | ({
+        relationTo: 'program-poll-votes';
+        value: number | ProgramPollVote;
+      } | null)
+    | ({
+        relationTo: 'program-comments';
+        value: number | ProgramComment;
+      } | null)
+    | ({
+        relationTo: 'program-activity-limits';
+        value: number | ProgramActivityLimit;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -621,6 +694,48 @@ export interface HouseholdSessionsSelect<T extends boolean = true> {
  * via the `definition` "household-login-limits_select".
  */
 export interface HouseholdLoginLimitsSelect<T extends boolean = true> {
+  bucketDigest?: T;
+  windowStart?: T;
+  attempts?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "program-poll-votes_select".
+ */
+export interface ProgramPollVotesSelect<T extends boolean = true> {
+  dayId?: T;
+  pollId?: T;
+  optionId?: T;
+  definition?: T;
+  voteKey?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "program-comments_select".
+ */
+export interface ProgramCommentsSelect<T extends boolean = true> {
+  dayId?: T;
+  dayLabel?: T;
+  authorName?: T;
+  household?: T;
+  administrator?: T;
+  parent?: T;
+  body?: T;
+  status?: T;
+  requestDigest?: T;
+  requestFingerprint?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "program-activity-limits_select".
+ */
+export interface ProgramActivityLimitsSelect<T extends boolean = true> {
   bucketDigest?: T;
   windowStart?: T;
   attempts?: T;

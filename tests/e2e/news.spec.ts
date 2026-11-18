@@ -45,10 +45,16 @@ test("skip link focuses the anonymous homepage content", async ({ page }) => {
 });
 
 test("protected wedding pages redirect anonymous visitors to household login", async ({ page }) => {
-  for (const route of ["/news", "/news/not-a-valid-id", "/program", "/bilder", "/reiseplan", "/ting-a-gjore", "/wedding-party"]) {
+  for (const route of ["/news", "/news/not-a-valid-id", "/program", "/bilder"]) {
     await page.goto(route);
     await expect(page).toHaveURL(/\/login$/);
     await expect(page.getByRole("heading", { name: "Velkommen tilbake", level: 1 })).toBeVisible();
+  }
+});
+
+test("removed wedding pages return not found", async ({ request }) => {
+  for (const route of ["/reiseplan", "/ting-a-gjore", "/wedding-party"]) {
+    expect((await request.get(route)).status()).toBe(404);
   }
 });
 
