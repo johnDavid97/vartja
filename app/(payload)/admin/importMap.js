@@ -36,6 +36,7 @@ import { PostStatusCell as PostStatusCell_fd632f21ba984e4333d52fc06b4e62be } fro
 import { default as default_8c6fec1c371dda0dd69cbb7b7fc5d9ab } from '../../../components/admin/PostHeading'
 import { default as default_d8af97953020cfde82518140e062f2c4 } from '../../../components/admin/households/HouseholdAccessCode'
 import { default as default_c369d5c837b8fb00eed29441d7898893 } from '../../../components/admin/households/HouseholdInvitationPanel'
+import { ColorField as ColorField_d5770e1c9d402fd6e9af7db4aa07a763 } from '../../../components/admin/fields/ColorField'
 import { InlineToolbarFeatureClient as InlineToolbarFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { RelationshipFeatureClient as RelationshipFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { InlineCodeFeatureClient as InlineCodeFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
@@ -89,6 +90,7 @@ export const importMap = {
   "/components/admin/PostHeading#default": default_8c6fec1c371dda0dd69cbb7b7fc5d9ab,
   "/components/admin/households/HouseholdAccessCode#default": default_d8af97953020cfde82518140e062f2c4,
   "/components/admin/households/HouseholdInvitationPanel#default": default_c369d5c837b8fb00eed29441d7898893,
+  "/components/admin/fields/ColorField#ColorField": ColorField_d5770e1c9d402fd6e9af7db4aa07a763,
   "@payloadcms/richtext-lexical/client#InlineToolbarFeatureClient": InlineToolbarFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "@payloadcms/richtext-lexical/client#RelationshipFeatureClient": RelationshipFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "@payloadcms/richtext-lexical/client#InlineCodeFeatureClient": InlineCodeFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
