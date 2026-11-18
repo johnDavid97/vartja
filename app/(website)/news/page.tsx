@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { connection } from "next/server";
+import { requireApprovedViewer } from "@/features/households/auth/server";
+import { publishedGuestPosts } from "@/features/households/auth/access";
+import { withWebsiteAccess } from "@/components/households/withWebsiteAccess";
 import { Suspense } from "react";
 import NewsCards from "@/components/NewsCards";
 import { getPayload } from "payload";
@@ -13,12 +15,14 @@ export const metadata: Metadata = {
   description: "Nyheter og oppdateringer til bryllupsgjestene.",
 };
 
+export default withWebsiteAccess(PostsPage);
+
 type Props = {
   searchParams: Promise<{ page?: string | string[] }>;
 };
 
 async function Posts({ searchParams }: Props) {
-  await connection();
+  const viewer = await requireApprovedViewer();
   const { page: pageParam } = await searchParams;
   const requestedPage = Number(pageParam);
   const page = Number.isSafeInteger(requestedPage) && requestedPage > 0
@@ -27,6 +31,8 @@ async function Posts({ searchParams }: Props) {
   const payload = await getPayload({ config });
   const posts = await payload.find({
     collection: "posts",
+    req: viewer.req,
+    where: publishedGuestPosts,
     overrideAccess: false,
     draft: false,
     sort: "-createdAt",
@@ -81,7 +87,7 @@ async function Posts({ searchParams }: Props) {
   );
 }
 
-export default function PostsPage({ searchParams }: Props) {
+function PostsPage({ searchParams }: Props) {
   return (
     <main className="min-h-svh px-4 py-12 sm:px-6 sm:py-20">
       <div className="mx-auto max-w-7xl">

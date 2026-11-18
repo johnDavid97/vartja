@@ -121,8 +121,9 @@ export class PayloadHouseholdRepository implements
         collection: "households", overrideAccess: true, showHiddenFields: true,
         context,
         data: {
-          publicId: input.publicId, contactName: input.contactName, email: input.email,
-          status, members: input.members, revision: 0, credentialVersion: 1,
+          publicId: input.publicId, contactName: input.contactName,
+          displayName: input.displayName ?? input.contactName,
+          email: input.email, status, members: input.members, revision: 0, credentialVersion: 1, sessionVersion: 1,
           accessCodeDigest: input.code.digest, accessCodeEncrypted: input.code.encrypted,
           registrationRequestDigest: input.requestDigest,
           registrationRequestFingerprint: input.requestFingerprint,

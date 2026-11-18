@@ -6,6 +6,7 @@ import { useRef, useState, type FormEvent } from "react"
 
 import { AdminButton, adminButtonStyles } from "@/components/admin/AdminButton"
 import { HouseholdContactFields } from "@/components/households/HouseholdContactFields"
+import { HouseholdNameField } from "@/components/households/HouseholdNameField"
 import { MemberListFields, type MemberFormRow } from "@/components/households/MemberListFields"
 import { MAX_MEMBERS } from "@/features/households/domain/validation"
 
@@ -16,6 +17,7 @@ type CreateResult = { householdId: number }
 type CreateRequest = {
   requestKey: string
   contactName: string
+  displayName: string
   email: string
   additionalMembers: Array<{ name: string }>
 }
@@ -55,6 +57,7 @@ async function createHousehold(body: CreateRequest): Promise<CreateResult> {
 export default function HouseholdCreateForm() {
   const router = useRouter()
   const [contact, setContact] = useState<ContactDetails>({ contactName: "", email: "" })
+  const [displayName, setDisplayName] = useState("")
   const [additionalMembers, setAdditionalMembers] = useState<MemberFormRow[]>([])
   const [pending, setPending] = useState(false)
   const [error, setError] = useState("")
@@ -75,6 +78,12 @@ export default function HouseholdCreateForm() {
     setContact(next)
   }
 
+  function updateDisplayName(nextDisplayName: string) {
+    if (fieldsLocked || submitting.current) return
+    changed()
+    setDisplayName(nextDisplayName)
+  }
+
   function updateMembers(allMembers: MemberFormRow[]) {
     if (fieldsLocked || submitting.current) return
     changed()
@@ -92,6 +101,7 @@ export default function HouseholdCreateForm() {
       submittedRequest.current ??= {
         requestKey: crypto.randomUUID(),
         contactName: contact.contactName.trim(),
+        displayName,
         email: contact.email.trim(),
         additionalMembers: additionalMembers.map(({ name }) => ({ name: name.trim() })),
       }
@@ -126,6 +136,13 @@ export default function HouseholdCreateForm() {
       </header>
       <form className={styles.createForm} onSubmit={submit} aria-busy={pending}>
         <HouseholdContactFields value={contact} onChange={updateContact} disabled={fieldsLocked} />
+        <HouseholdNameField
+          value={displayName}
+          onChange={updateDisplayName}
+          contactName={contact.contactName}
+          additionalMemberNames={additionalMembers.map(({ name }) => name)}
+          disabled={fieldsLocked}
+        />
         <MemberListFields
           value={members}
           onChange={updateMembers}

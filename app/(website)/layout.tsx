@@ -5,6 +5,7 @@ import { geistSans, geistMono, weddingSerif } from "@/app/fonts";
 import { getHomepageSettings } from "@/features/homepage/composition-root";
 import "./globals.css";
 import Header from "@/components/Header";
+import { getWebsiteViewer } from "@/features/households/auth/server";
 
 export const metadata: Metadata = {
   title: "Bryllupet vårt",
@@ -13,8 +14,9 @@ export const metadata: Metadata = {
 
 async function WeddingHeader() {
   await connection();
-  const settings = await getHomepageSettings();
-  return <Header names={settings.names} />;
+  const [settings, viewer] = await Promise.all([getHomepageSettings(), getWebsiteViewer()]);
+  const access = viewer.administrator ? "administrator" : viewer.household?.status ?? "anonymous";
+  return <Header names={settings.names} access={access} />;
 }
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

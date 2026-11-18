@@ -123,7 +123,7 @@ try {
   const search = page.locator(".search-filter input");
   await search.fill("kari@example.invalid");
   await expect(table.locator("tbody tr")).toHaveCount(1);
-  await expect(table.getByText("Kari Nordmann", { exact: true })).toBeVisible();
+  await expect(table.getByRole("link", { name: "Kari Nordmann", exact: true })).toBeVisible();
   await search.fill("");
   await expect(table.locator("tbody tr")).toHaveCount(6);
   await page.goto("/admin/collections/households?where[status][equals]=pending");

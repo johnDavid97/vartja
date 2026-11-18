@@ -68,6 +68,10 @@ export class HouseholdCredentialProtection implements HouseholdCredentialService
     this.fingerprintKey = deriveKey(secret, "registration-content-fingerprint");
   }
 
+  lookupDigest(code: string): string {
+    return digest(this.codeLookupKey, code);
+  }
+
   requestDigest(requestKey: string): string {
     return digest(this.requestLookupKey, requestKey);
   }
@@ -88,7 +92,7 @@ export class HouseholdCredentialProtection implements HouseholdCredentialService
     const ciphertext = Buffer.concat([cipher.update(code, "utf8"), cipher.final()]);
     const authenticationTag = cipher.getAuthTag();
     return {
-      digest: digest(this.codeLookupKey, code),
+      digest: this.lookupDigest(code),
       encrypted: ["v1", nonce.toString("base64url"), ciphertext.toString("base64url"), authenticationTag.toString("base64url")].join("."),
     };
   }

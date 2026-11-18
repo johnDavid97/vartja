@@ -1,6 +1,6 @@
 # Household access architecture and security decisions
 
-Status: registration persistence, admin approval, invitation QR and encrypted code recovery/replacement implemented. Guest authentication, sessions, privacy enforcement and self-service remain unwired.
+Status: registration persistence, admin approval, invitation QR, encrypted code recovery/replacement, guest authentication, revocable sessions and website/API/media privacy are implemented. Guest self-service remains unwired. See `features/households/README.md` for current authentication boundaries and verification.
 
 ## Dependency direction
 
@@ -40,7 +40,7 @@ Email is unverified contact data. It must not authorize recovery, auto-merge hou
 
 ## Site privacy release blockers
 
-The existing website is still public until the full access feature is integrated. Do not advertise privacy before all entry points are covered.
+Website pages, APIs, polls and media now enforce approved guest access; the public homepage hero is the explicit media exception. Preserve these checks when adding entry points or deploying a CDN/static upload server. Approved households share guest media; this is not an administrator-confidential file store.
 
 - `Posts`, `Wedding`, `Media`, program reads and poll endpoints currently allow public content access in different ways. Authorize all of them.
 - Existing `Boolean(req.user)` checks assume every Payload-authenticated user is an administrator. Preserve structural separation and use explicit administrator checks before adding any guest authentication strategy.

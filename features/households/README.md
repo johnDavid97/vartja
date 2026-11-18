@@ -1,6 +1,18 @@
 # Reading the household code
 
-Registration, database storage, admin approval/creation, household overview and shared invitations are connected. Guest login, site privacy and household self-service are still pending.
+Registration, database storage, admin approval/creation, household overview, shared invitations, guest login and site privacy are connected. Household self-service and comments remain pending.
+
+## Guest authentication
+
+`auth/HouseholdAuthService.ts` coordinates injected session storage, credentials, clock, limiter and token generation. `auth/validation.ts` ignores casing and whitespace for login names without altering display names. Duplicate names are distinguished by the existing access code.
+
+Opaque session tokens are stored only as digests. Remembered sessions last 12 calendar months per device; session cookies otherwise expire server-side after 24 hours. Live household status and credential/session versions enforce revocation. Renaming preserves sessions; replacing codes, withdrawing approval and logout invalidate access. Pending households see only the waiting page.
+
+`auth/server.ts` protects server-rendered pages and loaders; `auth/access.ts` protects Payload reads and media. Only the selected homepage hero image is anonymous; approved households can read guest media and published guest posts, not administrator-only posts. Media is shared among approved households, not a separate administrator-confidential file store. Native administrator authentication remains separate. Do not serve uploads directly through a static web server/CDN that bypasses Payload access checks; private responses are no-store and Next image optimization is disabled.
+
+Migration `20261118_153059_household_login` adds sessions, login quotas and household names/versions, backfilling existing names from contact names. On populated databases, back up and apply only outstanding reviewed migrations; never replay the initial migration.
+
+Run `npm run test:household-login` for disposable-database migration, Program and login/privacy browser checks.
 
 ## Start here
 
