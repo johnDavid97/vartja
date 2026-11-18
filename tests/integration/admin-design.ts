@@ -36,7 +36,7 @@ try {
   await expect(page.locator(".wedding-nav__brand")).toBeVisible();
   await expect(page.getByRole("link", { name: "Program", exact: true })).toHaveAttribute("href", "/admin/globals/program");
   await expect(page.getByRole("button", { name: "Kommentarer Kommer", exact: true })).toBeDisabled();
-  await expect(page.getByRole("button", { name: "Avstemninger Kommer", exact: true })).toBeDisabled();
+  await expect(page.getByRole("link", { name: "Avstemninger", exact: true })).toHaveAttribute("href", "/admin/polls");
   await expect(page.getByRole("navigation", { name: "Administrasjon" })).toBeVisible();
   const editorBox = await page.locator('.post-visual-editor').boundingBox();
   const publishingBox = await page.locator('.wedding-publishing').boundingBox();
