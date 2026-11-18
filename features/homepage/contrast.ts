@@ -1,4 +1,5 @@
-import { DEFAULT_HERO_COLOR, isHexColor } from "./settings";
+import { DEFAULT_HERO_COLOR } from "./settings";
+import { isHexColor } from "@/lib/colors";
 
 /** Choose actual black/white, guaranteeing at least WCAG AA normal-text contrast. */
 export function heroTextColor(color: string): "#000000" | "#ffffff" {

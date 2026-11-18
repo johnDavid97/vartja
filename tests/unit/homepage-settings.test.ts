@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Wedding, Media, Post } from "../../payload-types";
-import { DEFAULT_HERO_COLOR, isHexColor, toHomepageSettings } from "../../features/homepage/settings";
+import { DEFAULT_HERO_COLOR, toHomepageSettings } from "../../features/homepage/settings";
+import { isHexColor } from "../../lib/colors";
 import { heroTextColor } from "../../features/homepage/contrast";
 import { LoadHomepage, type HomepageRepository } from "../../features/homepage/application/LoadHomepage";
 

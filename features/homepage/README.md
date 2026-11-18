@@ -5,7 +5,9 @@ Design reference: `Forsiden_bryllup.pdf` supplied by the couple. Hero photo/colo
 ## Responsibilities
 
 - `models.ts`: small presentation contract consumed by the hero/footer.
-- `settings.ts`, `contrast.ts`: pure defaults, media/focal-point mapping, colour validation and contrast.
+- `settings.ts`, `contrast.ts`: pure defaults, media/focal-point mapping and contrast; shared colour validation lives in `lib/colors.ts`.
+- `carousel-navigation.ts`: pure page targeting, nearest-dot selection and actual scroll-boundary navigation.
+- `lib/wedding-date.ts`: shared date formatting for hero/footer, independent of UI components.
 - `application/LoadHomepage.ts`: public homepage reads through an injected `HomepageRepository` interface.
 - `infrastructure/PayloadHomepageRepository.ts`: Payload queries; explicitly published/public posts only.
 - `composition-root.ts`: production wiring and request-local React cache, not cross-request caching of CMS changes.
@@ -26,12 +28,12 @@ Only additive migration `20261117_211959_homepage_appearance` is new. Previous m
 - `npm run test:homepage`: production build, fresh disposable PostgreSQL database, rollback/reapply with legacy field preservation, real admin and responsive browser checks.
 - Existing news/admin and household integration suites remain regression gates.
 
-## Review follow-ups
+## Review follow-ups — resolved
 
-- Base carousel arrow availability on actual scroll boundaries, not the nearest page; add a manual-scroll regression test.
-- Wait for timed-out test subprocesses to exit, with forced termination if needed, before database cleanup.
-- Extract shared date formatting from `WeddingHero` into a pure helper with timezone/date-only tests.
-- Reuse configured field descriptions and shared colour validation in `ColorField`.
-- Remove the unused homepage variant from `NewsCards` (the carousel uses `NewsCard` directly).
+- [x] Carousel arrows use actual scroll boundaries and navigate from the current position; pure boundary tests and a real manual-scroll browser regression cover the original defect.
+- [x] Shared subprocess helpers wait for exit and escalate to SIGKILL after a grace period before database cleanup; real-process tests cover graceful timeout, ignored SIGTERM, spawn failure and exit codes.
+- [x] Shared date formatting extracted from `WeddingHero`, with invalid, date-only and summer/winter timezone tests.
+- [x] `ColorField` uses configured descriptions/labels and shared colour validation, with reusable-field markup tests and native admin browser checks.
+- [x] Removed the unused `NewsCards` homepage variant; the carousel continues to use `NewsCard` directly.
 
 No real wedding content is replaced for screenshots. Test images/uploads are deleted during fixture cleanup. Desktop/tablet/mobile screenshots are reviewed separately from automated overflow assertions; these tests are not a substitute for checking on actual phones.
