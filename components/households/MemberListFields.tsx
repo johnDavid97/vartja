@@ -24,6 +24,7 @@ export interface MemberListFieldsProps {
   maxMembers?: number
   errors?: readonly (string | undefined)[]
   className?: string
+  buttonClassName?: string
   description?: ReactNode
   firstMemberLocked?: boolean
 }
@@ -35,6 +36,7 @@ export function MemberListFields({
   maxMembers = MAX_MEMBERS,
   errors = [],
   className,
+  buttonClassName,
   description,
   firstMemberLocked = false,
 }: MemberListFieldsProps) {
@@ -94,12 +96,12 @@ export function MemberListFields({
             <li className={styles.memberRow} key={member.rowKey}>
               <div className={cn(styles.field, styles.memberField)}>
                 {firstMemberLocked && memberIndex === 0 ? (
-                  <span className="text-sm font-medium leading-none">Kontaktperson (familiemedlem 1)</span>
+                  <span className={styles.lockedLabel}>Kontaktperson (familiemedlem 1)</span>
                 ) : (
                   <Label htmlFor={inputId}>Navn på familiemedlem {memberIndex + 1}</Label>
                 )}
                 {firstMemberLocked && memberIndex === 0 ? (
-                  <p id={inputId} className="m-0 min-h-8 [overflow-wrap:anywhere] rounded-lg border border-border bg-muted px-2.5 py-2">
+                  <p id={inputId} className={styles.lockedContact}>
                     {member.name || "Kontaktpersonens navn vises her"}
                   </p>
                 ) : (
@@ -124,6 +126,7 @@ export function MemberListFields({
                 ) : null}
               </div>
               <Button
+                className={buttonClassName}
                 type="button"
                 variant="outline"
                 onClick={() => removeMember(memberIndex)}
@@ -138,7 +141,7 @@ export function MemberListFields({
       </ol>
 
       <div className={styles.actions}>
-        <Button type="button" variant="secondary" onClick={addMember} disabled={disabled || hasReachedMemberLimit}>
+        <Button className={buttonClassName} type="button" variant="secondary" onClick={addMember} disabled={disabled || hasReachedMemberLimit}>
           Legg til familiemedlem
         </Button>
         <p id={countId} className={styles.count} aria-live="polite">

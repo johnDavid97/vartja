@@ -13,7 +13,18 @@ function invalidField(path: string, message: string): never {
 type MemberData = { id?: string; memberId?: string; name?: unknown; status?: unknown };
 type HouseholdData = Record<string, unknown> & { members?: MemberData[]; status?: unknown };
 
-function validatedMembers(data: HouseholdData, original: HouseholdData | undefined, trustedRegistration: boolean): MemberData[] {
+const trustedAdminCreationToken = Object.freeze({ purpose: "household-admin-creation" });
+
+/** An identity token (not JSON data) makes this creation path available only to server code. */
+export function trustedAdminHouseholdCreationContext(): Record<string, unknown> {
+  return { householdTrustedAdminCreation: trustedAdminCreationToken };
+}
+
+function validatedMembers(
+  data: HouseholdData,
+  original: HouseholdData | undefined,
+  creationMode: "registration" | "administrator" | null,
+): MemberData[] {
   if (!Array.isArray(data.members)) invalidField("members", "Husstanden må ha medlemmer.");
   const originalMembers = Array.isArray(original?.members) ? original.members : [];
   const originalByMemberId = new Map(originalMembers.map((member) => [member.memberId, member]));
@@ -23,15 +34,17 @@ function validatedMembers(data: HouseholdData, original: HouseholdData | undefin
     const previousMember = submittedMember.memberId
       ? originalByMemberId.get(submittedMember.memberId)
       : undefined;
-    const memberId = trustedRegistration
+    const memberId = creationMode
       ? validateMemberId(submittedMember.memberId)
       : previousMember?.memberId ?? randomUUID();
     if (memberIds.has(memberId)) invalidField("members", "Et medlem kan ikke forekomme flere ganger.");
     memberIds.add(memberId);
 
-    // Guests only enter through trusted registration (always pending). Native
-    // CRUD is admin-only, so the couple may explicitly approve a new member.
-    const status = trustedRegistration ? "pending" : submittedMember.status ?? "pending";
+    // Guest registration is always pending; the separate trusted administrator
+    // creation path is approved. Native CRUD may explicitly approve new members.
+    const status = creationMode === "registration"
+      ? "pending"
+      : creationMode === "administrator" ? "approved" : submittedMember.status ?? "pending";
     if (status !== "pending" && status !== "approved") invalidField("members", "Ugyldig medlemsstatus.");
     return { ...submittedMember, memberId, status };
   });
@@ -44,16 +57,17 @@ export const Households: CollectionConfig = {
     useAsTitle: "contactName",
     group: "Brukere og admin",
     hideAPIURL: true,
-    defaultColumns: ["contactName", "email", "status", "updatedAt"],
+    defaultColumns: ["contactName", "members", "status", "updatedAt"],
+    listSearchableFields: ["contactName", "email"],
     components: {
-      beforeList: ["/components/admin/households/HouseholdInvitationPanel#default"],
-      views: { list: { Component: "/components/admin/tables/AdminList#default" } },
+      views: { list: { Component: "/components/admin/households/HouseholdWorkspace#default" } },
     },
   },
+  forceSelect: { contactName: true, email: true, members: true },
   versions: false,
   access: {
     admin: isAdministrator,
-    create: () => false, // Native creation is intentionally disabled; registration creates safe credentials.
+    create: () => false, // Only dedicated registration/admin services may create credentials and initial members.
     read: isAdministrator,
     update: isAdministrator,
     delete: isAdministrator,
@@ -64,11 +78,14 @@ export const Households: CollectionConfig = {
       const submitted = data as HouseholdData;
       const original = originalDoc as HouseholdData | undefined;
       const trustedRegistration = context.householdTrustedRegistration === true;
+      const trustedAdminCreation = context.householdTrustedAdminCreation === trustedAdminCreationToken;
+      const creationMode = trustedRegistration
+        ? "registration" as const
+        : trustedAdminCreation ? "administrator" as const : null;
 
-
-      if (operation === "create" && !trustedRegistration) invalidField("contactName", "Bruk registreringsskjemaet for å opprette en husstand.");
+      if (operation === "create" && !creationMode) invalidField("contactName", "Bruk registreringsskjemaet for å opprette en husstand.");
       if (operation === "create") {
-        submitted.status = "pending";
+        submitted.status = creationMode === "administrator" ? "approved" : "pending";
         submitted.revision = 0;
         submitted.credentialVersion = 1;
       }
@@ -85,9 +102,11 @@ export const Households: CollectionConfig = {
       }
 
       const merged = { ...original, ...submitted } as HouseholdData;
-      const members = validatedMembers(merged, original, trustedRegistration);
+      const members = validatedMembers(merged, original, creationMode);
       const previousStatus = original?.status;
-      const status = trustedRegistration ? "pending" : merged.status;
+      const status = creationMode === "registration"
+        ? "pending"
+        : creationMode === "administrator" ? "approved" : merged.status;
       if (status !== "pending" && status !== "approved" && status !== "revoked") invalidField("status", "Ugyldig husstandsstatus.");
       if (previousStatus === "pending" && status === "approved") {
         members.forEach((member) => { member.status = "approved"; });
@@ -106,19 +125,24 @@ export const Households: CollectionConfig = {
     }],
   },
   fields: [
-    { name: "contactName", label: "Kontaktperson", type: "text", required: true },
+    {
+      name: "contactName", label: "Kontaktperson", type: "text", required: true,
+      admin: { components: { Cell: "/components/admin/households/HouseholdCells#HouseholdContactCell" } },
+    },
     { name: "email", label: "E-post", type: "email", required: true },
     {
       name: "status", label: "Status", type: "select", required: true, defaultValue: "pending",
+      admin: { components: { Cell: "/components/admin/households/HouseholdCells#HouseholdStatusCell" } },
       options: [
         { label: "Venter", value: "pending" },
         { label: "Godkjent", value: "approved" },
-        { label: "Trukket tilbake", value: "revoked" },
+        { label: "Avslått", value: "revoked" },
       ],
     },
     {
       name: "members", label: "Familiemedlemmer", type: "array", required: true, minRows: 1, maxRows: 50,
       labels: { singular: "Familiemedlem", plural: "Familiemedlemmer" },
+      admin: { components: { Cell: "/components/admin/households/HouseholdCells#HouseholdMembersCell" } },
       fields: [
         { name: "memberId", type: "text", required: true, admin: hiddenAdmin, access: { create: () => false, update: () => false } },
         { name: "name", label: "Navn", type: "text", required: true },
@@ -127,6 +151,13 @@ export const Households: CollectionConfig = {
           options: [{ label: "Venter", value: "pending" }, { label: "Godkjent", value: "approved" }],
         },
       ],
+    },
+    {
+      name: "updatedAt", label: "Sist endret", type: "date", index: true,
+      admin: {
+        hidden: true, disableBulkEdit: true,
+        components: { Cell: "/components/admin/households/HouseholdCells#HouseholdDateCell" },
+      },
     },
     { name: "accessCodeControls", type: "ui", admin: { components: { Field: "/components/admin/households/HouseholdAccessCode#default" } } },
     { name: "revision", type: "number", required: true, defaultValue: 0, admin: hiddenAdmin, access: { create: () => false, update: () => false } },

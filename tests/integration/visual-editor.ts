@@ -6,7 +6,7 @@ import { getPayload } from "payload";
 import sharp from "sharp";
 import config from "../../payload.config";
 
-const baseURL = "http://localhost:3000";
+const baseURL = process.env.TEST_BASE_URL || "http://localhost:3000";
 const databaseHost = new URL(process.env.DATABASE_URL || "").hostname;
 assert(["localhost", "127.0.0.1"].includes(databaseHost), "Editor integration tests require a local database.");
 const payload = await getPayload({ config });

@@ -6,7 +6,7 @@ import { getPayload } from "payload";
 import config from "../../payload.config";
 import { getPolls } from "../../lib/polls";
 
-const baseURL = "http://localhost:3000";
+const baseURL = process.env.TEST_BASE_URL || "http://localhost:3000";
 assert(["localhost", "127.0.0.1"].includes(new URL(process.env.DATABASE_URL || "").hostname));
 const payload = await getPayload({ config });
 let userId: number | undefined;

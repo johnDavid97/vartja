@@ -1,6 +1,8 @@
 import { randomUUID } from "node:crypto";
 import type { Payload } from "payload";
 import { RevealHouseholdCode, RotateHouseholdCode } from "./application/HouseholdCodeServices";
+import { CreateApprovedHousehold } from "./application/CreateApprovedHousehold";
+import { GetHouseholdSummary } from "./application/GetHouseholdSummary";
 import { RegisterHousehold } from "./application/HouseholdRegistration";
 import { UpdateHouseholdDetails } from "./application/UpdateHouseholdDetails";
 import type { HouseholdRepository, MemberIdGenerator } from "./application/ports";
@@ -45,4 +47,25 @@ export function getHouseholdRegistrationServices(payload: Payload) {
       rotate: (householdId: number, administratorId: number) => rotateCode.rotate(householdId, administratorId),
     },
   };
+}
+
+/** Production construction for authenticated administrator creation. */
+export function getHouseholdAdminServices(payload: Payload) {
+  const secret = process.env.HOUSEHOLD_ACCESS_SECRET;
+  assertHouseholdAccessSecret(secret);
+  const repository = new PayloadHouseholdRepository(payload);
+  const createApproved = new CreateApprovedHousehold(
+    repository,
+    new HouseholdCredentialProtection(secret),
+    { publicId: () => randomUUID(), memberId: () => randomUUID() },
+  );
+  return {
+    create: (input: unknown, administratorId: number) => createApproved.create(input, administratorId),
+  };
+}
+
+/** Counts do not require access to household credential key material. */
+export function getHouseholdSummaryServices(payload: Payload) {
+  const summary = new GetHouseholdSummary(new PayloadHouseholdRepository(payload));
+  return { get: () => summary.get() };
 }
