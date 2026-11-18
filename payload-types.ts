@@ -281,6 +281,9 @@ export interface Household {
   contactName: string;
   email: string;
   status: 'pending' | 'approved' | 'revoked';
+  /**
+   * Alle som hører til husstanden. Nye familiemedlemmer får status Venter til du godkjenner dem.
+   */
   members: {
     memberId: string;
     name: string;

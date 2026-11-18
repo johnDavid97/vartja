@@ -82,9 +82,10 @@ function HouseholdCodeControls({ householdId }: { householdId: number | null }) 
 
   return (
     <section className={styles.accessField} aria-labelledby={headingId}>
-      <h3 id={headingId} className={styles.heading}>Husstandskode</h3>
-      <p className={styles.description}>Koden vises bare når du ber om det. Den lagres ikke i dette skjemaet.</p>
+      <h2 id={headingId} className={styles.heading}>Husstandskode</h2>
+      <p className={styles.description}>Koden vises bare når du ber om det. Visning og bytte av kode loggføres separat fra skjemaet.</p>
       {!householdId ? <p className={styles.description}>Lagre husstanden før en kode kan vises eller lages.</p> : null}
+      {!accessCode ? <div className={styles.maskedCode} aria-label="Husstandskoden er skjult">•••• •••• ••••</div> : null}
       <div className={styles.actions}>
         <AdminButton
           variant="secondary"
@@ -110,9 +111,11 @@ function HouseholdCodeControls({ householdId }: { householdId: number | null }) 
           <output className={styles.code} aria-label="Husstandskode">{accessCode}</output>
           <div className={styles.actions}>
             <AdminButton variant="secondary" onClick={copyCode}>Kopier koden</AdminButton>
+            <AdminButton variant="ghost" onClick={() => { setAccessCode(null); setStatusMessage(""); setCodeWasRotated(false) }}>Skjul koden</AdminButton>
           </div>
         </div>
       ) : null}
+      <p className={styles.description}>«Lag ny kode» gjelder med én gang og gjør den gamle koden ugyldig. Du trenger ikke trykke «Lagre» etterpå.</p>
       {statusMessage ? <p className={styles.status} role="status">{statusMessage}</p> : null}
     </section>
   )
