@@ -28,7 +28,10 @@ export default buildConfig({
     meta: { titleSuffix: "— Andrea & Martin" },
     components: {
       Nav: "/components/admin/AdminNav#default",
-      providers: ["/components/admin/editor/PostEditorProvider#default"],
+      providers: [
+        "/components/admin/editor/PostEditorProvider#default",
+        "/components/admin/households/HouseholdSummaryProvider#default",
+      ],
       beforeDashboard: ["/components/admin/Welcome#default"],
       graphics: { Logo: "/components/admin/Logo#default" },
     },

@@ -77,6 +77,9 @@ try {
   assert.deepEqual(await (await admin.request.get("/api/household-summary")).json(), { total: 6, pending: 3 });
 
   const page = await admin.newPage();
+  await page.clock.install();
+  let summaryRequests = 0;
+  page.on("request", (request) => { if (new URL(request.url()).pathname === "/api/household-summary") summaryRequests += 1; });
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
   await page.goto("/admin/collections/households");
@@ -88,6 +91,24 @@ try {
   await expect(page.locator('.wedding-nav a[href^="/admin/collections/households"]')).toContainText("3");
   await expect(page.getByRole("link", { name: "Administratorer", exact: true })).toHaveAttribute("href", "/admin/collections/users");
   await page.screenshot({ path: "/tmp/sammen-households-overview.png", fullPage: true });
+  assert.equal(summaryRequests, 1, "Sidebar and overview must share one initial request");
+  await page.route("**/api/household-summary", (route) => route.fulfill({ json: { total: 6, pending: 2 } }));
+  await page.evaluate(() => { window.dispatchEvent(new Event("focus")); window.dispatchEvent(new Event("focus")); });
+  await expect(page.locator(".admin-list__count")).toHaveText("6 husstander · 2 venter");
+  await expect(page.locator('.wedding-nav a[href^="/admin/collections/households"]')).toContainText("2");
+  assert.equal(summaryRequests, 2, "Simultaneous refresh triggers must share an in-flight request");
+  await page.unroute("**/api/household-summary");
+  await page.route("**/api/household-summary", (route) => route.fulfill({ status: 503, json: { error: "Test: unavailable" } }));
+  const failedSummary = page.waitForResponse((response) => response.url().endsWith("/api/household-summary"));
+  await page.evaluate(() => window.dispatchEvent(new Event("focus")));
+  await (await failedSummary).finished();
+  await expect(page.locator(".admin-list__count")).toHaveText("6 husstander · 2 venter");
+  await expect(page.locator('.wedding-nav a[href^="/admin/collections/households"]')).toContainText("2");
+  await page.unroute("**/api/household-summary");
+  await page.clock.fastForward(60_000);
+  await expect(page.locator(".admin-list__count")).toHaveText("6 husstander · 3 venter");
+  await expect(page.locator('.wedding-nav a[href^="/admin/collections/households"]')).toContainText("3");
+  assert.equal(summaryRequests, 4, "Only one polling timer should fetch the shared count");
 
   await page.locator("#heading-contactName button").first().click();
   await expect(page).toHaveURL(/sort=contactName/);
@@ -180,8 +201,16 @@ try {
   await page.getByLabel("E-postadresse", { exact: true }).fill("ada@example.invalid");
   await page.getByRole("button", { name: "Legg til familiemedlem", exact: true }).click();
   await page.getByLabel("Navn på familiemedlem 2", { exact: true }).fill("Per Testfamilie");
+  await page.route("**/api/household-admin", (route) => route.fulfill({ status: 400, json: { error: "Test: ugyldige felt" } }));
+  await page.getByRole("button", { name: "Opprett husstand", exact: true }).click();
+  await expect(page.locator("form").getByRole("alert")).toContainText("Rett eventuelle feil");
+  await expect(page.getByLabel("Navn på kontaktperson", { exact: true })).toBeEnabled();
+  await page.getByLabel("Navn på kontaktperson", { exact: true }).fill("Ada Testfamilie ");
+  await page.unroute("**/api/household-admin");
   let persistedBeforeRetry: number | undefined;
+  let originalCreationBody: string | null = null;
   await page.route("**/api/household-admin", async (route) => {
+    originalCreationBody = route.request().postData();
     const persisted = await route.fetch();
     assert.equal(persisted.status(), 201);
     persistedBeforeRetry = (await persisted.json()).householdId;
@@ -189,11 +218,22 @@ try {
   });
   await page.getByRole("button", { name: "Opprett husstand", exact: true }).click();
   await expect(page.locator("form").getByRole("alert")).toContainText("samme forespørsel brukes trygt på nytt");
+  await expect(page.getByLabel("Navn på kontaktperson", { exact: true })).toBeDisabled();
+  await expect(page.getByLabel("E-postadresse", { exact: true })).toBeDisabled();
+  await expect(page.getByLabel("Navn på familiemedlem 2", { exact: true })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Legg til familiemedlem", exact: true })).toBeDisabled();
+  // Even a later definite rejection does not resolve the earlier uncertain save.
+  await page.unroute("**/api/household-admin");
+  await page.route("**/api/household-admin", (route) => route.fulfill({ status: 403, json: { error: "Test: tilgang avvist" } }));
+  await page.getByRole("button", { name: "Opprett husstand", exact: true }).click();
+  await expect(page.locator("form").getByRole("alert")).toContainText("Test: tilgang avvist");
+  await expect(page.getByLabel("Navn på kontaktperson", { exact: true })).toBeDisabled();
   await page.unroute("**/api/household-admin");
   const creationResponse = page.waitForResponse((response) => response.url().endsWith("/api/household-admin") && response.request().method() === "POST");
   await page.getByRole("button", { name: /Opprett husstand|Lagre husstand/, exact: true }).click();
   const created = await creationResponse;
   assert.equal(created.status(), 201, await created.text());
+  assert.equal(created.request().postData(), originalCreationBody, "Retry must preserve the exact submitted snapshot and key");
   const manualId: number = (await created.json()).householdId;
   assert.equal(manualId, persistedBeforeRetry, "A lost response must reuse the original creation request");
   await expect(page).toHaveURL(new RegExp(`/admin/collections/households/${manualId}$`));

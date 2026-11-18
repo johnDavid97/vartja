@@ -52,6 +52,7 @@ import { default as default_231477f0faa4368be46fd47ffb9da4d9 } from '../../../co
 import { default as default_91a09b539d3c86b0aebf520e7564ce08 } from '../../../components/admin/Logo'
 import { default as default_72e830871eb26c77002633e2e2cc9dea } from '../../../components/admin/Welcome'
 import { default as default_cb49dda676d2592cf77058ed51337441 } from '../../../components/admin/editor/PostEditorProvider'
+import { default as default_4c29980d2c939ce652f7ceabe1c8ddb9 } from '../../../components/admin/households/HouseholdSummaryProvider'
 import { CollectionCards as CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1 } from '@payloadcms/next/rsc'
 
 /** @type import('payload').ImportMap */
@@ -110,5 +111,6 @@ export const importMap = {
   "/components/admin/Logo#default": default_91a09b539d3c86b0aebf520e7564ce08,
   "/components/admin/Welcome#default": default_72e830871eb26c77002633e2e2cc9dea,
   "/components/admin/editor/PostEditorProvider#default": default_cb49dda676d2592cf77058ed51337441,
+  "/components/admin/households/HouseholdSummaryProvider#default": default_4c29980d2c939ce652f7ceabe1c8ddb9,
   "@payloadcms/next/rsc#CollectionCards": CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1
 }
