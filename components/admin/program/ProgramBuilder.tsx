@@ -3,16 +3,16 @@
 import { useId, useRef, useState } from "react";
 import { FieldError, useField } from "@payloadcms/ui";
 import type { JSONFieldClientComponent } from "payload";
-import { ArrowDown, ArrowUp, BedDouble, Bus, GripVertical, Heart, Info, Plane, Plus, TrainFront } from "lucide-react";
+import { ArrowDown, ArrowUp, GripVertical, Plus } from "lucide-react";
+import { ProgramKindIcon } from "@/components/program/ProgramKindIcon";
 import { AdminButton } from "../AdminButton";
 import { AdminDatePicker } from "../AdminDatePicker";
+import { ProgramDayActivity } from "./ProgramDayActivity";
 import { MAX_PROGRAM_DAYS, MAX_PROGRAM_ITEMS, moveProgramItem, programDayLabel, programKinds, programLabels, type ProgramData, type ProgramDay, type ProgramItem, type ProgramKind } from "@/lib/program";
 
-const icons = { flight: Plane, train: TrainFront, bus: Bus, hotel: BedDouble, event: Heart, info: Info };
 const MIME = "application/x-sammen-program-item";
 function KindIcon({ kind }: { kind: ProgramKind }) {
-  const Icon = icons[kind];
-  return <span className={`program-icon program-icon--${kind}`}><Icon size={21} aria-hidden="true" /></span>;
+  return <span className={`program-icon program-icon--${kind}`}><ProgramKindIcon kind={kind} /></span>;
 }
 
 const ProgramBuilder: JSONFieldClientComponent = ({ path, readOnly, field }) => {
@@ -68,6 +68,7 @@ const ProgramBuilder: JSONFieldClientComponent = ({ path, readOnly, field }) => 
           {day.items.length === 0 && <p className="program-hint">Ingen punkter ennå. Velg en type ovenfor.</p>}
           <p className="program-hint">Dra i håndtaket eller bruk pilene for å endre rekkefølge. På nettsiden sorteres dagene etter dato og punktene etter klokkeslett. Punkter uten tid vises sist.</p>
           <p className="program-hint">Endringene lagres først når du velger «Lagre utkast» eller «Publiser» øverst.</p>
+          <ProgramDayActivity key={day.id} day={day} locked={locked} onChange={updateDay} />
         </div>
         {item ? <aside className="program-card program-item-editor" aria-label="Rediger programpunkt">
           <header><KindIcon kind={item.kind} /><div><small>{programLabels[item.kind]}</small><h2 ref={panel} tabIndex={-1}>{item.title || "Nytt punkt"}</h2></div></header>
