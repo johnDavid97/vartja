@@ -1,6 +1,9 @@
 import { sql } from "@payloadcms/db-postgres";
 import type { Payload } from "payload";
 import type { Household } from "../../../payload-types";
+import { trustedAdminHouseholdCreationContext } from "../../../collections/Households";
+import type { ApprovedHouseholdRepository } from "../application/CreateApprovedHousehold";
+import type { HouseholdSummary, HouseholdSummaryRepository } from "../application/GetHouseholdSummary";
 import type {
   CreateRegistrationResult, ProtectedHouseholdCode, RegistrationRepository, StoredRegistration,
 } from "../application/HouseholdRegistration";
@@ -32,35 +35,26 @@ function isUniqueConstraintError(error: unknown): boolean {
 }
 
 /** Server-only persistence. Ordinary Payload reads never receive credential fields. */
-export class PayloadHouseholdRepository implements RegistrationRepository, HouseholdCodeRepository {
+export class PayloadHouseholdRepository implements
+  RegistrationRepository, ApprovedHouseholdRepository, HouseholdCodeRepository, HouseholdSummaryRepository {
   constructor(private readonly payload: Payload) {}
 
   async create(input: Parameters<RegistrationRepository["create"]>[0]): Promise<CreateRegistrationResult> {
-    const existing = await this.findByRequestDigest(input.requestDigest);
-    if (existing) return { kind: "existing", registration: existing };
+    return this.createInitial(input, "pending");
+  }
 
-    try {
-      // Payload persists the household and its member array in one transaction.
-      const household = await this.payload.create({
-        collection: "households", overrideAccess: true, showHiddenFields: true,
-        context: { householdTrustedRegistration: true },
-        data: {
-          publicId: input.publicId, contactName: input.contactName, email: input.email,
-          status: "pending", members: input.members, revision: 0, credentialVersion: 1,
-          accessCodeDigest: input.code.digest, accessCodeEncrypted: input.code.encrypted,
-          registrationRequestDigest: input.requestDigest,
-          registrationRequestFingerprint: input.requestFingerprint,
-        },
-      });
-      return { kind: "created", registration: asStoredRegistration(household) };
-    } catch (error) {
-      // Payload may wrap a unique violation in a field ValidationError. Checking
-      // the request digest also covers that wrapper and concurrent retries.
-      const winner = await this.findByRequestDigest(input.requestDigest);
-      if (winner) return { kind: "existing", registration: winner };
-      if (isUniqueConstraintError(error)) return { kind: "credential-conflict" };
-      throw error;
-    }
+  async createApproved(input: Parameters<ApprovedHouseholdRepository["createApproved"]>[0]): Promise<CreateRegistrationResult> {
+    return this.createInitial(input, "approved");
+  }
+
+  async getSummary(): Promise<HouseholdSummary> {
+    // Both counts must describe one snapshot, even while registrations arrive.
+    const result = await this.payload.db.drizzle.execute(sql`
+      SELECT count(*) AS total,
+             count(*) FILTER (WHERE "status" = 'pending') AS pending
+      FROM "households"
+    `);
+    return { total: Number(result.rows[0].total), pending: Number(result.rows[0].pending) };
   }
 
   async findCredentials(householdId: number): Promise<HouseholdCodeRecord | null> {
@@ -106,6 +100,41 @@ export class PayloadHouseholdRepository implements RegistrationRepository, House
       });
     } catch (error) {
       if (isUniqueConstraintError(error)) return false;
+      throw error;
+    }
+  }
+
+  private async createInitial(
+    input: Parameters<RegistrationRepository["create"]>[0] | Parameters<ApprovedHouseholdRepository["createApproved"]>[0],
+    status: "pending" | "approved",
+  ): Promise<CreateRegistrationResult> {
+    const existing = await this.findByRequestDigest(input.requestDigest);
+    if (existing) return { kind: "existing", registration: existing };
+
+    try {
+      // One Payload create transaction persists the complete household, credential,
+      // and member rows; an approved household is never stored in a pending state.
+      const context = status === "approved"
+        ? trustedAdminHouseholdCreationContext()
+        : { householdTrustedRegistration: true };
+      const household = await this.payload.create({
+        collection: "households", overrideAccess: true, showHiddenFields: true,
+        context,
+        data: {
+          publicId: input.publicId, contactName: input.contactName, email: input.email,
+          status, members: input.members, revision: 0, credentialVersion: 1,
+          accessCodeDigest: input.code.digest, accessCodeEncrypted: input.code.encrypted,
+          registrationRequestDigest: input.requestDigest,
+          registrationRequestFingerprint: input.requestFingerprint,
+        },
+      });
+      return { kind: "created", registration: asStoredRegistration(household) };
+    } catch (error) {
+      // The unique request digest serializes concurrent retries. Return the winner
+      // without updating status or credentials, including after revocation.
+      const winner = await this.findByRequestDigest(input.requestDigest);
+      if (winner) return { kind: "existing", registration: winner };
+      if (isUniqueConstraintError(error)) return { kind: "credential-conflict" };
       throw error;
     }
   }

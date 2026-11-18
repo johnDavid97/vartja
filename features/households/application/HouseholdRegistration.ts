@@ -1,5 +1,6 @@
 import { HouseholdError } from "../domain/errors";
-import { MAX_MEMBERS, validateHouseholdInput, validateMemberId } from "../domain/validation";
+import { validateInitialHousehold } from "../domain/initial-household";
+import { provisionInitialHousehold } from "./InitialHouseholdProvisioning";
 
 export type RegistrationErrorCode =
   | "INVALID_INPUT"
@@ -94,8 +95,6 @@ export interface RegistrationIdentifierSource {
 }
 
 const registrationFields = ["invitationKey", "requestKey", "contactName", "email", "additionalMembers"] as const;
-const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -112,35 +111,14 @@ function validateRegistration(value: unknown): { invitationKey: string; registra
   if (fields.length !== registrationFields.length || registrationFields.some((field) => !Object.hasOwn(value, field))) {
     throw new HouseholdRegistrationError("INVALID_INPUT");
   }
-  if (typeof value.requestKey !== "string" || !uuidPattern.test(value.requestKey)) {
-    throw new HouseholdRegistrationError("INVALID_INPUT");
-  }
-  if (!Array.isArray(value.additionalMembers) || value.additionalMembers.length >= MAX_MEMBERS) {
-    throw new HouseholdRegistrationError("INVALID_INPUT");
-  }
-  if (value.additionalMembers.some((member) =>
-    !isRecord(member) || Object.keys(member).length !== 1 || !Object.hasOwn(member, "name")
-  )) {
-    throw new HouseholdRegistrationError("INVALID_INPUT");
-  }
-
   try {
-    // Reuse the domain's normalization and strict member shape validation. The
-    // contact is prepended here, once, rather than in general household edits.
-    const details = validateHouseholdInput({
+    const registration = validateInitialHousehold({
+      requestKey: value.requestKey,
       contactName: value.contactName,
       email: value.email,
-      members: [{ name: value.contactName }, ...value.additionalMembers],
+      additionalMembers: value.additionalMembers,
     });
-    return {
-      invitationKey: value.invitationKey,
-      registration: {
-        requestKey: value.requestKey.toLowerCase(),
-        contactName: details.contactName,
-        email: details.email,
-        memberNames: details.members.map(({ name }) => name),
-      },
-    };
+    return { invitationKey: value.invitationKey, registration };
   } catch (error) {
     if (error instanceof HouseholdError) throw new HouseholdRegistrationError("INVALID_INPUT");
     throw error;
@@ -190,25 +168,15 @@ export class RegisterHousehold {
     }
 
     for (let attempt = 0; attempt < 3; attempt += 1) {
-      let publicId: string;
-      let accessCode: string;
-      let code: ProtectedHouseholdCode;
-      let members: { memberId: string; name: string; status: "pending" }[];
+      let provisioned;
       try {
-        publicId = this.identifiers.publicId();
-        if (!uuidPattern.test(publicId)) throw new Error("Invalid public identifier");
-        accessCode = this.credentials.generateCode();
-        code = this.credentials.protectCode(accessCode, publicId);
-        const allocatedMemberIds = new Set<string>();
-        members = registration.memberNames.map((name) => {
-          const memberId = validateMemberId(this.identifiers.memberId());
-          if (allocatedMemberIds.has(memberId)) throw new Error("Duplicate member identifier");
-          allocatedMemberIds.add(memberId);
-          return { memberId, name, status: "pending" as const };
-        });
+        provisioned = provisionInitialHousehold(
+          registration.memberNames, "pending", this.credentials, this.identifiers,
+        );
       } catch {
         throw new HouseholdRegistrationError("IDENTIFIER_FAILURE");
       }
+      const { publicId, accessCode, code, members } = provisioned;
 
       let result: CreateRegistrationResult;
       try {

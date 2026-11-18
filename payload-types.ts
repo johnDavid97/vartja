@@ -287,6 +287,7 @@ export interface Household {
     status: 'pending' | 'approved';
     id?: string | null;
   }[];
+  updatedAt: string;
   revision: number;
   credentialVersion: number;
   publicId: string;
@@ -294,7 +295,6 @@ export interface Household {
   accessCodeEncrypted: string;
   registrationRequestDigest: string;
   registrationRequestFingerprint: string;
-  updatedAt: string;
   createdAt: string;
 }
 /**
@@ -530,6 +530,7 @@ export interface HouseholdsSelect<T extends boolean = true> {
         status?: T;
         id?: T;
       };
+  updatedAt?: T;
   revision?: T;
   credentialVersion?: T;
   publicId?: T;
@@ -537,7 +538,6 @@ export interface HouseholdsSelect<T extends boolean = true> {
   accessCodeEncrypted?: T;
   registrationRequestDigest?: T;
   registrationRequestFingerprint?: T;
-  updatedAt?: T;
   createdAt?: T;
 }
 /**

@@ -23,7 +23,7 @@ try {
   postId = (await payload.create({ collection: "posts", draft: true, data: { title: "Design test", description: "En liten oppdatering til gjestene.", theme: searchTheme } })).id;
   draftId = (await payload.create({ collection: "posts", draft: true, data: { title: "Test av tabellutkast", description: "Et upublisert testinnlegg.", theme: "Praktisk info" } })).id;
   browser = await chromium.launch();
-  const context = await browser.newContext({ baseURL: "http://localhost:3000", viewport: { width: 1440, height: 1200 }, locale: "nb-NO", timezoneId: "America/New_York" });
+  const context = await browser.newContext({ baseURL: process.env.TEST_BASE_URL || "http://localhost:3000", viewport: { width: 1440, height: 1200 }, locale: "nb-NO", timezoneId: "America/New_York" });
   assert((await context.request.post("/api/users/login", { data: { email, password } })).ok());
   const page = await context.newPage();
   const errors: string[] = [];

@@ -22,7 +22,7 @@ export default function AdminList(props: ListViewClientProps) {
     <div className="admin-list">
       <DefaultListView
         {...props}
-        Description={<span className="admin-list__count" aria-live="polite">{count} {count === 1 ? label.one : label.many}</span>}
+        Description={props.Description ?? <span className="admin-list__count" aria-live="polite">{count} {count === 1 ? label.one : label.many}</span>}
         Table={<AdminTable label={label.table}>{props.Table}</AdminTable>}
         AfterListTable={<>
           {props.AfterListTable}
