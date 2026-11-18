@@ -52,10 +52,10 @@ Avoid creating classes around trivial pure functions or React components. Do not
 ### HA-03 — Login, pending status and logout
 **As a registered family**, I can log in using my access code and see whether we are approved.
 - [x] High-entropy generated code; encrypted recovery copy plus independent lookup hash; no plaintext database storage.
-- [ ] Expiring server-validated sessions, HttpOnly/SameSite cookies, Secure in production.
-- [ ] Durable login throttling, generic invalid-login errors and safe origin checks.
-- [ ] Pending families can see only their own minimal account/status information, not wedding content.
-- [ ] Logout, expiry, code replacement and revocation checked server-side.
+- [x] Expiring server-validated sessions, HttpOnly/SameSite cookies, Secure in production.
+- [x] Durable login throttling, generic invalid-login errors and safe origin checks.
+- [x] Pending families can see only their own minimal account/status information, not wedding content.
+- [x] Logout, expiry, code replacement and revocation checked server-side.
 
 ### HA-04 — Couple's administration
 **As the couple**, we approve households and additional members without granting admin privileges.
@@ -64,7 +64,8 @@ Avoid creating classes around trivial pure functions or React components. Do not
 - [x] Create households via the invitation form (also usable by the couple), approve/edit via native admin fields; native uncredentialed creation disabled.
 - [x] Explicit authenticated reveal/copy and confirmed code replacement; code fields never included in ordinary lists/API responses.
 - [x] Audit code reveal/replacement without credentials; replacement and audit are transactional.
-- [ ] Approval/revocation audit and session invalidation (sessions not implemented yet).
+- [x] Session invalidation on approval withdrawal/revocation.
+- [ ] Dedicated approval/revocation audit (credential reveal/replacement auditing is implemented).
 
 ### HA-05 — Household self-service
 **As a family**, we can edit our own details and add/remove members.
@@ -108,4 +109,4 @@ Registration slice is now implemented: `/register` with invitation fragment; per
 
 Local development already had the additive registration tables; columns were checked against the new migration without resetting data. Automatic future schema pushing is disabled. Existing dev-synced databases need a deliberate migration baseline, not replay of old migrations.
 
-Still NOT connected: guest login/sessions, private website/media enforcement, household self-service, RSVP and household poll identity. Existing wedding content remains public. The original edit-details use case remains a tested foundation, not a guest-facing endpoint. Do not describe this registration slice as a complete private guest account system.
+Guest login/sessions and private website/API/media enforcement are now connected; see `features/households/README.md`. Login ignores name casing and whitespace; duplicate names are distinguished by codes. Remembered sessions last 12 months per device and survive name changes, but not code replacement or loss of approval. Anonymous visitors see only public homepage content and login; pending households see their status. Household self-service, RSVP and household poll identity remain unconnected. The original edit-details use case remains a tested foundation, not a guest-facing endpoint.

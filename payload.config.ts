@@ -10,6 +10,8 @@ import { PollVotes } from "./collections/PollVotes";
 import { Households } from "./collections/Households";
 import { HouseholdCredentialAudits } from "./collections/HouseholdCredentialAudits";
 import { HouseholdRegistrationLimits } from "./collections/HouseholdRegistrationLimits";
+import { HouseholdSessions } from "./collections/HouseholdSessions";
+import { HouseholdLoginLimits } from "./collections/HouseholdLoginLimits";
 import sharp from "sharp";
 import { Wedding } from "./globals/Wedding";
 import { Program } from "./globals/Program";
@@ -37,7 +39,7 @@ export default buildConfig({
       graphics: { Logo: "/components/admin/Logo#default" },
     },
   },
-  collections: [Users, Posts, Media, PollVotes, Households, HouseholdCredentialAudits, HouseholdRegistrationLimits],
+  collections: [Users, Posts, Media, PollVotes, Households, HouseholdCredentialAudits, HouseholdRegistrationLimits, HouseholdSessions, HouseholdLoginLimits],
   sharp,
   upload: { limits: { fileSize: 10 * 1024 * 1024 } },
   globals: [Wedding, Program],

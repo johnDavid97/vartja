@@ -45,7 +45,11 @@ export async function runIsolatedIntegration(options: IsolatedIntegrationOptions
     await runNode(["node_modules/payload/bin.js", "migrate"]);
     control = new Client({ connectionString: databaseUrl.toString() });
     await control.connect();
-    await control.query("UPDATE payload_migrations SET batch = 2 WHERE name = $1", [options.migration]);
+    const target = await control.query("SELECT id FROM payload_migrations WHERE name = $1", [options.migration]);
+    assert.equal(target.rows.length, 1, "Feature migration must exist before rollback");
+    // Roll back dependent later migrations too: recreating an earlier table alone would
+    // lose columns/constraints that later, still-recorded migrations added to it.
+    await control.query("UPDATE payload_migrations SET batch = 2 WHERE id >= $1", [target.rows[0].id]);
     await runNode(["node_modules/payload/bin.js", "migrate:down"]);
     await options.verifyRollback(control);
     await runNode(["node_modules/payload/bin.js", "migrate"]);

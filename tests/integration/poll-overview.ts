@@ -4,6 +4,7 @@ import { chromium, expect, type Browser } from "@playwright/test";
 import { getPayload } from "payload";
 import config from "../../payload.config";
 import type { PollDefinition } from "../../lib/polls";
+import { createAuthenticatedGuest } from "./authenticated-guest";
 
 const baseURL = process.env.TEST_BASE_URL || "http://localhost:3000";
 assert(["localhost", "127.0.0.1"].includes(new URL(process.env.DATABASE_URL || "").hostname));
@@ -11,13 +12,15 @@ const payload = await getPayload({ config });
 const posts: number[] = [];
 let userId: number | undefined;
 let browser: Browser | undefined;
+let resultsGuestCleanup: (() => Promise<void>) | undefined;
 let code = 0;
 const poll = (id: string, question: string, open = true): PollDefinition => ({ id, question, open, options: [{ id: "yes", label: "Ja" }, { id: "no", label: "Nei" }] });
 const body = (...polls: PollDefinition[]) => ({ root: { type: "root", version: 1, format: "" as const, indent: 0, direction: null, children: polls.map((item) => ({ type: "block", version: 2, format: "", fields: { ...item, blockType: "poll" } })) } });
 try {
   const email = `poll-overview-${randomBytes(8).toString("hex")}@example.invalid`;
   const password = randomBytes(24).toString("hex");
-  userId = (await payload.create({ collection: "users", data: { email, password, name: "Poll overview test" } })).id;
+  const administrator = await payload.create({ collection: "users", data: { email, password, name: "Poll overview test" } });
+  userId = administrator.id;
   browser = await chromium.launch();
   const admin = await browser.newContext({ baseURL, viewport: { width: 1440, height: 1000 } });
   assert((await admin.request.post("/api/users/login", { data: { email, password } })).ok());
@@ -102,11 +105,18 @@ try {
   await guestPage.goto("/admin/polls");
   await expect(guestPage).toHaveURL(/\/admin\/login/);
   assert.equal((await guest.request.get("/api/poll-votes")).status(), 403);
-  assert.equal((await guest.request.get(`/api/posts/${privatePost.id}/polls/live`)).status(), 404);
-  assert.equal((await guest.request.get(`/api/posts/${draft.id}/polls/draft`)).status(), 404);
-  const publicResults = await (await guest.request.get(`/api/posts/${live.id}/polls/live`)).json();
+  assert.equal((await guest.request.get("/api/posts")).status(), 403);
+  assert.equal((await guest.request.get(`/api/posts/${privatePost.id}/polls/live`)).status(), 403);
+  assert.equal((await guest.request.get(`/api/posts/${draft.id}/polls/draft`)).status(), 403);
+  assert.equal((await guest.request.get(`/api/posts/${live.id}/polls/live`)).status(), 403);
+  const resultsGuest = await browser.newContext({ baseURL });
+  resultsGuestCleanup = (await createAuthenticatedGuest({ payload, context: resultsGuest, administratorId: administrator.id, baseURL })).cleanup;
+  const publicResultsResponse = await resultsGuest.request.get(`/api/posts/${live.id}/polls/live`);
+  assert(publicResultsResponse.ok());
+  const publicResults = await publicResultsResponse.json();
   assert.equal(publicResults.total, 3);
   assert.equal(publicResults.open, true);
+  await resultsGuest.close();
   await page.setViewportSize({ width: 1440, height: 1000 });
   await resultsButton.click();
   await dialog.getByRole("link", { name: "Rediger i innlegget" }).click();
@@ -119,6 +129,7 @@ try {
   console.error(error); code = 1;
 } finally {
   await browser?.close();
+  await resultsGuestCleanup?.();
   for (const id of posts) await payload.delete({ collection: "posts", id }).catch(() => undefined);
   if (userId) await payload.delete({ collection: "users", id: userId }).catch(() => undefined);
   await payload.destroy();

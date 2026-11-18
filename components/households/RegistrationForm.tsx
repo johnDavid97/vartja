@@ -2,10 +2,13 @@
 
 import { useRef, useState, useSyncExternalStore, type FormEvent } from "react"
 
-import { Button } from "@/components/ui/button"
+import Link from "next/link"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { HouseholdContactFields } from "@/components/households/HouseholdContactFields"
+import { HouseholdNameField } from "@/components/households/HouseholdNameField"
 import { MemberListFields, type MemberFormRow } from "@/components/households/MemberListFields"
+import { normalizeHouseholdName } from "@/features/households/domain/household-name"
 import { MAX_MEMBERS } from "@/features/households/domain/validation"
 
 import styles from "./registration.module.css"
@@ -16,6 +19,7 @@ type RegistrationRequest = {
   invitationKey: string
   requestKey: string
   contactName: string
+  displayName: string
   email: string
   additionalMembers: Array<{ name: string }>
 }
@@ -87,7 +91,7 @@ function getServerFragmentSnapshot() {
   return ""
 }
 
-export function RegistrationSuccess({ accessCode }: { accessCode: string }) {
+export function RegistrationSuccess({ accessCode, displayName }: { accessCode: string; displayName?: string }) {
   const [copyMessage, setCopyMessage] = useState("")
 
   async function copyAccessCode() {
@@ -108,6 +112,7 @@ export function RegistrationSuccess({ accessCode }: { accessCode: string }) {
         </CardDescription>
       </CardHeader>
       <CardContent className={styles.successContent}>
+        {displayName ? <p><strong>Husstandsnavn:</strong> {displayName}</p> : null}
         <p className={styles.codeLabel}>Husstandskode</p>
         <output className={styles.accessCode}>{accessCode}</output>
         <div className={styles.successActions}>
@@ -116,7 +121,8 @@ export function RegistrationSuccess({ accessCode }: { accessCode: string }) {
         </div>
         {copyMessage ? <p className={styles.copyMessage} aria-live="polite">{copyMessage}</p> : null}
         <p>Lagre, skriv ned eller skriv ut koden nå. Av sikkerhetsgrunner vises den ikke automatisk igjen.</p>
-        <p>Innlogging med koden blir koblet til senere. Koden kan derfor ikke brukes til innlogging ennå.</p>
+        <p>Bruk husstandsnavnet og koden for å logge inn. Innholdet åpnes når brudeparet har godkjent dere.</p>
+        <Link href="/login" className={buttonVariants({ variant: "outline" })}>Gå til innlogging</Link>
       </CardContent>
     </Card>
   )
@@ -126,6 +132,7 @@ export default function RegistrationForm() {
   const fragment = useSyncExternalStore(subscribeToFragmentChange, getFragmentSnapshot, getServerFragmentSnapshot)
   const invitationKey = invitationKeyFromFragment(fragment)
   const [contactDetails, setContactDetails] = useState<ContactDetails>({ contactName: "", email: "" })
+  const [displayName, setDisplayName] = useState("")
   const [additionalMembers, setAdditionalMembers] = useState<MemberFormRow[]>([])
   const [pending, setPending] = useState(false)
   const [errorMessage, setErrorMessage] = useState("")
@@ -144,6 +151,12 @@ export default function RegistrationForm() {
     setAdditionalMembers(allMembers.slice(1))
   }
 
+  function updateDisplayName(nextDisplayName: string) {
+    retryRequestKey.current = null
+    setErrorMessage("")
+    setDisplayName(nextDisplayName)
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (!invitationKey || pending || result) return
@@ -158,6 +171,7 @@ export default function RegistrationForm() {
         invitationKey,
         requestKey,
         contactName: contactDetails.contactName.trim(),
+        displayName,
         email: contactDetails.email.trim(),
         additionalMembers: additionalMembers.map(({ name }) => ({ name: name.trim() })),
       })
@@ -186,7 +200,7 @@ export default function RegistrationForm() {
     )
   }
 
-  if (result) return <RegistrationSuccess accessCode={result.accessCode} />
+  if (result) return <RegistrationSuccess accessCode={result.accessCode} displayName={normalizeHouseholdName(displayName)} />
 
   const members: MemberFormRow[] = [
     { rowKey: "registration-contact", name: contactDetails.contactName },
@@ -202,6 +216,13 @@ export default function RegistrationForm() {
       <CardContent>
         <form className={styles.form} onSubmit={handleSubmit} aria-busy={pending}>
           <HouseholdContactFields value={contactDetails} onChange={updateContactDetails} disabled={pending} />
+          <HouseholdNameField
+            value={displayName}
+            onChange={updateDisplayName}
+            contactName={contactDetails.contactName}
+            additionalMemberNames={additionalMembers.map(({ name }) => name)}
+            disabled={pending}
+          />
           <MemberListFields
             value={members}
             onChange={updateAdditionalMembers}

@@ -5,6 +5,7 @@ import { chromium, expect, type Browser } from "@playwright/test";
 import { getPayload } from "payload";
 import config from "../../payload.config";
 import type { ProgramData } from "../../lib/program";
+import { createAuthenticatedGuest } from "./authenticated-guest";
 
 assert(["localhost", "127.0.0.1"].includes(new URL(process.env.DATABASE_URL || "").hostname));
 const baseURL = process.env.TEST_BASE_URL || "http://localhost:3000";
@@ -16,6 +17,7 @@ assert.equal(versions.totalDocs, 0, "Use an empty development Program; existing 
 assert.equal((original.itinerary as ProgramData | undefined)?.days?.length ?? 0, 0, "Refusing to modify a real program");
 let userId: number | undefined;
 let browser: Browser | undefined;
+let guestFixture: Awaited<ReturnType<typeof createAuthenticatedGuest>> | undefined;
 let code = 0;
 try {
   const token = randomBytes(6).toString("hex");
@@ -107,6 +109,7 @@ try {
   const draftData = draft.itinerary as ProgramData;
   assert.equal(draftData.days.length, 2);
   const guest = await browser.newContext({ baseURL });
+  guestFixture = await createAuthenticatedGuest({ payload, context: guest, administratorId: userId, baseURL });
   assert([401, 403].includes((await guest.request.get("/api/globals/program?draft=true")).status()));
   assert([401, 403].includes((await guest.request.post("/api/globals/program", { data: { itinerary: { days: [] } } })).status()));
   const publicPage = await guest.newPage();
@@ -155,6 +158,7 @@ try {
   code = 1;
 } finally {
   if (browser) await browser.close();
+  await guestFixture?.cleanup();
   // The precondition above guarantees these are only this test's versions.
   await payload.db.updateGlobal({ slug: "program", data: { itinerary: original.itinerary ?? { days: [] }, _status: original._status ?? "draft" } });
   await payload.db.deleteVersions({ globalSlug: "program", where: { id: { exists: true } } });

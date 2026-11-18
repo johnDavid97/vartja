@@ -1,13 +1,14 @@
 import { Suspense } from "react";
-import { connection } from "next/server";
+import { requireApprovedViewer } from "@/features/households/auth/server";
+import { withWebsiteAccess } from "@/components/households/withWebsiteAccess";
 import { getPayload } from "payload";
 import config from "@payload-config";
 import { programDayLabel, programError, programLabels, sortedProgram, type ProgramData } from "@/lib/program";
 
 async function PublishedProgram() {
-  await connection();
+  await requireApprovedViewer();
   const payload = await getPayload({ config });
-  // Deliberate privileged read: the public API cannot read drafts or versions.
+  // Authorized page read only: the public API still cannot read drafts or versions.
   // Never accept a draft flag from the visitor, and fail closed on status/schema.
   const program = await payload.findGlobal({ slug: "program", draft: false, overrideAccess: true, depth: 0 });
   const data = program._status === "published" && !programError(program.itinerary, true) ? program.itinerary as ProgramData : { days: [] };
@@ -26,6 +27,7 @@ async function PublishedProgram() {
     {!day.items.length && <p className="mt-4 text-stone-600">Detaljer kommer.</p>}
   </section>)}</div>;
 }
-export default function ProgramPage() {
+export default withWebsiteAccess(ProgramPage);
+function ProgramPage() {
   return <main className="mx-auto max-w-4xl px-4 py-12 sm:px-6"><h1 className="mb-10 text-center font-serif text-4xl">Program</h1><Suspense fallback={<p>Laster programmet …</p>}><PublishedProgram /></Suspense></main>;
 }

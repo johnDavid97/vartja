@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import PostContent from "@/components/PostContent";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { connection } from "next/server";
+import { requireApprovedViewer } from "@/features/households/auth/server";
+import { publishedGuestPosts } from "@/features/households/auth/access";
+import { withWebsiteAccess } from "@/components/households/withWebsiteAccess";
 import { Suspense } from "react";
 import { getPayload } from "payload";
 import config from "@payload-config";
@@ -12,10 +14,12 @@ export const metadata: Metadata = {
   title: "Nytt fra oss — Andrea & Martin",
 };
 
+export default withWebsiteAccess(ArticlePage);
+
 type Props = { params: Promise<{ id: string }> };
 
 async function Article({ params }: Props) {
-  await connection();
+  const viewer = await requireApprovedViewer();
   const { id } = await params;
   const postId = Number(id);
   if (!/^\d+$/.test(id) || !Number.isSafeInteger(postId) || postId < 1)
@@ -24,7 +28,8 @@ async function Article({ params }: Props) {
   const payload = await getPayload({ config });
   const { docs } = await payload.find({
     collection: "posts",
-    where: { id: { equals: postId } },
+    where: { and: [{ id: { equals: postId } }, publishedGuestPosts] },
+    req: viewer.req,
     overrideAccess: false,
     draft: false,
     depth: 1,
@@ -64,7 +69,7 @@ async function Article({ params }: Props) {
   );
 }
 
-export default function ArticlePage({ params }: Props) {
+function ArticlePage({ params }: Props) {
   return (
     <main className="min-h-svh px-4 py-8 sm:px-6 sm:py-16">
       <div className="mx-auto max-w-4xl">

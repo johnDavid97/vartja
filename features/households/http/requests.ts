@@ -9,7 +9,8 @@ export class HouseholdRequestError extends Error {
 }
 
 /** Reject cross-origin mutations and read a bounded body before invoking any use case. */
-export async function readHouseholdRequest(request: Request, maximumBytes = 16_384): Promise<unknown> {
+export async function readHouseholdRequest(request: Pick<Request, "headers"> & Partial<Pick<Request, "url" | "body">>, maximumBytes = 16_384): Promise<unknown> {
+  if (!request.url) throw new HouseholdRequestError(403, "Ugyldig forespørsel.");
   const expectedOrigin = new URL(request.url).origin;
   if (request.headers.get("origin") !== expectedOrigin || request.headers.get("sec-fetch-site") === "cross-site") {
     throw new HouseholdRequestError(403, "Ugyldig forespørsel. Åpne siden på nytt og prøv igjen.");
