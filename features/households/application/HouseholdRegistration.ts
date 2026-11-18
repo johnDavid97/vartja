@@ -37,6 +37,7 @@ export class HouseholdRegistrationError extends Error {
 export interface ValidatedRegistration {
   requestKey: string;
   contactName: string;
+  displayName?: string;
   email: string;
   memberNames: string[];
 }
@@ -64,6 +65,7 @@ export interface RegistrationRepository {
   create(input: {
     publicId: string;
     contactName: string;
+    displayName?: string;
     email: string;
     members: { memberId: string; name: string; status: "pending" }[];
     requestDigest: string;
@@ -94,7 +96,8 @@ export interface RegistrationIdentifierSource {
   memberId(): string;
 }
 
-const registrationFields = ["invitationKey", "requestKey", "contactName", "email", "additionalMembers"] as const;
+const requiredRegistrationFields = ["invitationKey", "requestKey", "contactName", "email", "additionalMembers"] as const;
+const registrationFields = [...requiredRegistrationFields, "displayName"] as const;
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -108,13 +111,15 @@ function validateRegistration(value: unknown): { invitationKey: string; registra
   if (!Object.hasOwn(value, "invitationKey") || typeof value.invitationKey !== "string") {
     throw new HouseholdRegistrationError("INVALID_INVITATION");
   }
-  if (fields.length !== registrationFields.length || registrationFields.some((field) => !Object.hasOwn(value, field))) {
+  if ((fields.length !== requiredRegistrationFields.length && fields.length !== registrationFields.length)
+    || requiredRegistrationFields.some((field) => !Object.hasOwn(value, field))) {
     throw new HouseholdRegistrationError("INVALID_INPUT");
   }
   try {
     const registration = validateInitialHousehold({
       requestKey: value.requestKey,
       contactName: value.contactName,
+      ...(Object.hasOwn(value, "displayName") ? { displayName: value.displayName } : {}),
       email: value.email,
       additionalMembers: value.additionalMembers,
     });
@@ -155,6 +160,7 @@ export class RegisterHousehold {
 
     const normalizedContent = {
       contactName: registration.contactName,
+      ...(registration.displayName === undefined ? {} : { displayName: registration.displayName }),
       email: registration.email,
       memberNames: registration.memberNames,
     };
@@ -183,6 +189,7 @@ export class RegisterHousehold {
         result = await this.repository.create({
           publicId,
           contactName: registration.contactName,
+          ...(registration.displayName === undefined ? {} : { displayName: registration.displayName }),
           email: registration.email,
           members,
           requestDigest,

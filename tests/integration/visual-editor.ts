@@ -5,6 +5,7 @@ import { chromium, expect, type Browser } from "@playwright/test";
 import { getPayload } from "payload";
 import sharp from "sharp";
 import config from "../../payload.config";
+import { createAuthenticatedGuest } from "./authenticated-guest";
 
 const baseURL = process.env.TEST_BASE_URL || "http://localhost:3000";
 const databaseHost = new URL(process.env.DATABASE_URL || "").hostname;
@@ -15,6 +16,7 @@ let postId: number | undefined;
 let mediaId: number | undefined;
 let uploadedMediaId: number | undefined;
 let browser: Browser | undefined;
+const guestCleanups: Array<() => Promise<void>> = [];
 let exitCode = 0;
 
 try {
@@ -118,14 +120,22 @@ try {
   await settings.click();
   // Payload serializes rich-text form state during browser idle time (up to 500 ms).
   await page.waitForTimeout(650);
-  const anonymousBeforePublish = await browser.newContext({ baseURL });
-  assert(!(await anonymousBeforePublish.request.get(`/api/posts/${postId}`)).ok(), "Drafts must remain private");
-  await anonymousBeforePublish.close();
+  const anonymous = await browser.newContext({ baseURL });
+  assert.equal((await anonymous.request.get(`/api/posts/${postId}`)).status(), 403, "Anonymous post reads must be denied");
+  const anonymousPage = await anonymous.newPage();
+  await anonymousPage.goto(`/news/${postId}`);
+  await expect(anonymousPage).toHaveURL(/\/login$/);
+  await anonymous.close();
+  const beforePublication = await browser.newContext({ baseURL });
+  guestCleanups.push((await createAuthenticatedGuest({ payload, context: beforePublication, administratorId: user.id, baseURL })).cleanup);
+  assert.equal((await beforePublication.request.get(`/api/posts/${postId}`)).status(), 404, "Drafts must remain private from approved households");
+  await beforePublication.close();
   const save = page.waitForResponse((response) => response.url().includes(`/api/posts/${postId}`) && response.request().method() === "PATCH");
   await page.getByRole("button", { name: "Publiser endringer", exact: true }).click();
   const saved = await save;
   assert(saved.ok(), "Editor changes must save successfully");
   const guest = await browser.newContext({ baseURL });
+  guestCleanups.push((await createAuthenticatedGuest({ payload, context: guest, administratorId: user.id, baseURL })).cleanup);
   const article = await guest.newPage();
   await article.goto(`/news/${postId}`);
   await expect(article.getByRole("heading", { name: "Original heading" })).toBeVisible();
@@ -149,7 +159,7 @@ try {
     data: { visibility: "private", _status: "published" },
   });
   assert(makePrivate.ok(), "Visibility update must save");
-  assert(!(await guest.request.get(`/api/posts/${postId}`)).ok(), "Private posts must not be readable anonymously");
+  assert.equal((await guest.request.get(`/api/posts/${postId}`)).status(), 404, "Private posts must not be readable by approved households");
   assert((await context.request.get(`/api/posts/${postId}`)).ok(), "Editors can still read private posts");
   const publicList = await guest.request.get(`/api/posts?where[id][equals]=${postId}`);
   assert.equal((await publicList.json()).docs.length, 0, "Private posts must be excluded from public listings");
@@ -162,6 +172,7 @@ try {
   exitCode = 1;
 } finally {
   if (browser) await browser.close();
+  await Promise.all(guestCleanups.map((cleanup) => cleanup()));
   if (postId) await payload.delete({ collection: "posts", id: postId });
   if (uploadedMediaId) await payload.delete({ collection: "media", id: uploadedMediaId });
   if (mediaId) await payload.delete({ collection: "media", id: mediaId });

@@ -8,7 +8,15 @@ import {
   REST_PUT,
 } from "@payloadcms/next/routes";
 
-export const GET = REST_GET(config);
+const payloadGet = REST_GET(config);
+export async function GET(...args: Parameters<typeof payloadGet>) {
+  const response = await payloadGet(...args);
+  // Reads can now depend on household cookies, including uploaded image bytes.
+  response.headers.set("Cache-Control", "private, no-store");
+  const vary = response.headers.get("Vary");
+  response.headers.set("Vary", vary ? `${vary}, Cookie` : "Cookie");
+  return response;
+}
 export const POST = REST_POST(config);
 export const DELETE = REST_DELETE(config);
 export const PATCH = REST_PATCH(config);

@@ -5,6 +5,7 @@ import { chromium, expect, type Browser } from "@playwright/test";
 import { getPayload } from "payload";
 import config from "../../payload.config";
 import { getPolls } from "../../lib/polls";
+import { createAuthenticatedGuest } from "./authenticated-guest";
 
 const baseURL = process.env.TEST_BASE_URL || "http://localhost:3000";
 assert(["localhost", "127.0.0.1"].includes(new URL(process.env.DATABASE_URL || "").hostname));
@@ -12,6 +13,7 @@ const payload = await getPayload({ config });
 let userId: number | undefined;
 let postId: number | undefined;
 let browser: Browser | undefined;
+const guestCleanups: Array<() => Promise<void>> = [];
 let code = 0;
 try {
   const email = `poll-test-${randomBytes(8).toString("hex")}@example.invalid`;
@@ -78,6 +80,7 @@ try {
   await expect(answers.nth(0)).toHaveValue("Kylling");
   await expect(answers.nth(1)).toHaveValue("Vegetar");
   const beforePublication = await browser.newContext({ baseURL });
+  guestCleanups.push((await createAuthenticatedGuest({ payload, context: beforePublication, administratorId: userId, baseURL })).cleanup);
   const draftEndpoint = `/api/posts/${postId}/polls/${draftPoll.id}`;
   assert.equal((await beforePublication.request.get(draftEndpoint)).status(), 404);
   assert.equal((await beforePublication.request.post(draftEndpoint, { headers: { Origin: baseURL }, data: { optionId: draftPoll.options[0].id } })).status(), 404);
@@ -90,7 +93,12 @@ try {
   assert(poll, "Poll must be persisted by the editor");
   assert.deepEqual(poll.options.map((option) => option.id), draftPoll.options.map((option) => option.id), "Answer IDs must survive editing, reload and publishing");
   const endpoint = `/api/posts/${postId}/polls/${poll.id}`;
+  const anonymous = await browser.newContext({ baseURL });
+  assert.equal((await anonymous.request.get(endpoint)).status(), 403);
+  assert.equal((await anonymous.request.get(`/api/posts/${postId}`)).status(), 403);
+  await anonymous.close();
   const guest = await browser.newContext({ baseURL });
+  guestCleanups.push((await createAuthenticatedGuest({ payload, context: guest, administratorId: userId, baseURL })).cleanup);
   const article = await guest.newPage();
   await article.goto(`/news/${postId}`);
   const widget = article.getByRole("region", { name: "Hva vil dere spise?" });
@@ -106,7 +114,8 @@ try {
   assert(duplicate.ok());
   assert.equal((await duplicate.json()).selectedOption, poll.options[1].id, "Duplicate attempts must not change the first ballot");
   const second = await browser.newContext({ baseURL });
-  assert((await second.request.get(endpoint)).ok()); // Establish one shared browser cookie.
+  guestCleanups.push((await createAuthenticatedGuest({ payload, context: second, administratorId: userId, baseURL })).cleanup);
+  assert((await second.request.get(endpoint)).ok()); // Establish one shared browser voting cookie.
   const concurrent = await Promise.all([sendVote(second, poll.options[0].id), sendVote(second, poll.options[0].id)]);
   assert(concurrent.every((response) => response.ok()));
   assert.equal((await (await second.request.get(endpoint)).json()).total, 2, "Concurrent votes count once per browser");
@@ -150,6 +159,7 @@ try {
   code = 1;
 } finally {
   if (browser) await browser.close();
+  await Promise.all(guestCleanups.map((cleanup) => cleanup()));
   if (postId) {
     await payload.delete({ collection: "posts", id: postId });
     assert.equal((await payload.count({ collection: "poll-votes", where: { post: { equals: postId } } })).totalDocs, 0);

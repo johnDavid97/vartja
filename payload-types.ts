@@ -74,6 +74,8 @@ export interface Config {
     households: Household;
     'household-credential-audits': HouseholdCredentialAudit;
     'household-registration-limits': HouseholdRegistrationLimit;
+    'household-sessions': HouseholdSession;
+    'household-login-limits': HouseholdLoginLimit;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -88,6 +90,8 @@ export interface Config {
     households: HouseholdsSelect<false> | HouseholdsSelect<true>;
     'household-credential-audits': HouseholdCredentialAuditsSelect<false> | HouseholdCredentialAuditsSelect<true>;
     'household-registration-limits': HouseholdRegistrationLimitsSelect<false> | HouseholdRegistrationLimitsSelect<true>;
+    'household-sessions': HouseholdSessionsSelect<false> | HouseholdSessionsSelect<true>;
+    'household-login-limits': HouseholdLoginLimitsSelect<false> | HouseholdLoginLimitsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -202,7 +206,7 @@ export interface Post {
   _status?: ('draft' | 'published') | null;
 }
 /**
- * Bilder til nettsiden. Opplastede bilder er offentlige – ikke last opp private dokumenter.
+ * Bilder deles med godkjente gjester. Det valgte forsidebildet er offentlig. Ikke last opp fortrolige dokumenter.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "media".
@@ -279,6 +283,10 @@ export interface PollVote {
 export interface Household {
   id: number;
   contactName: string;
+  /**
+   * Brukes ved innlogging og som navn ved kommentarer. Kan endres av administrator.
+   */
+  displayName: string;
   email: string;
   status: 'pending' | 'approved' | 'revoked';
   /**
@@ -293,6 +301,7 @@ export interface Household {
   updatedAt: string;
   revision: number;
   credentialVersion: number;
+  sessionVersion: number;
   publicId: string;
   accessCodeDigest: string;
   accessCodeEncrypted: string;
@@ -320,6 +329,32 @@ export interface HouseholdCredentialAudit {
 export interface HouseholdRegistrationLimit {
   id: number;
   windowKey: string;
+  windowStart: string;
+  attempts: number;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "household-sessions".
+ */
+export interface HouseholdSession {
+  id: number;
+  tokenDigest: string;
+  household?: (number | null) | Household;
+  credentialVersion: number;
+  sessionVersion: number;
+  expiresAt: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "household-login-limits".
+ */
+export interface HouseholdLoginLimit {
+  id: number;
+  bucketDigest: string;
   windowStart: string;
   attempts: number;
   updatedAt: string;
@@ -523,6 +558,7 @@ export interface PollVotesSelect<T extends boolean = true> {
  */
 export interface HouseholdsSelect<T extends boolean = true> {
   contactName?: T;
+  displayName?: T;
   email?: T;
   status?: T;
   members?:
@@ -536,6 +572,7 @@ export interface HouseholdsSelect<T extends boolean = true> {
   updatedAt?: T;
   revision?: T;
   credentialVersion?: T;
+  sessionVersion?: T;
   publicId?: T;
   accessCodeDigest?: T;
   accessCodeEncrypted?: T;
@@ -561,6 +598,30 @@ export interface HouseholdCredentialAuditsSelect<T extends boolean = true> {
  */
 export interface HouseholdRegistrationLimitsSelect<T extends boolean = true> {
   windowKey?: T;
+  windowStart?: T;
+  attempts?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "household-sessions_select".
+ */
+export interface HouseholdSessionsSelect<T extends boolean = true> {
+  tokenDigest?: T;
+  household?: T;
+  credentialVersion?: T;
+  sessionVersion?: T;
+  expiresAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "household-login-limits_select".
+ */
+export interface HouseholdLoginLimitsSelect<T extends boolean = true> {
+  bucketDigest?: T;
   windowStart?: T;
   attempts?: T;
   updatedAt?: T;

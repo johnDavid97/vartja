@@ -11,7 +11,7 @@ export default function HouseholdHeading() {
     <div className="household-editor-heading">
       <div>
         <h1>Rediger husstand</h1>
-        <p>{typeof data?.contactName === "string" ? data.contactName : "Kontaktperson og familiemedlemmer"}</p>
+        <p>{typeof data?.displayName === "string" ? data.displayName : typeof data?.contactName === "string" ? data.contactName : "Kontaktperson og familiemedlemmer"}</p>
       </div>
       <HouseholdStatusBadge value={modified ? "pending" : data?.status} label={modified ? "Ulagrede endringer" : undefined} live />
     </div>

@@ -1,5 +1,7 @@
 import { randomUUID } from "node:crypto";
+import { lockHouseholdUpdates } from "../features/households/infrastructure/lockHouseholdUpdates";
 import { ValidationError, type CollectionConfig } from "payload";
+import { normalizeHouseholdName } from "../features/households/domain/household-name";
 import { validateHouseholdInput, validateMemberId } from "../features/households/domain/validation";
 
 const isAdministrator = ({ req }: { req: { user?: { collection?: string } | null } }) => req.user?.collection === "users";
@@ -11,7 +13,7 @@ function invalidField(path: string, message: string): never {
 }
 
 type MemberData = { id?: string; memberId?: string; name?: unknown; status?: unknown };
-type HouseholdData = Record<string, unknown> & { members?: MemberData[]; status?: unknown };
+type HouseholdData = Record<string, unknown> & { displayName?: unknown; members?: MemberData[]; status?: unknown };
 
 const trustedAdminCreationToken = Object.freeze({ purpose: "household-admin-creation" });
 
@@ -54,17 +56,17 @@ export const Households: CollectionConfig = {
   slug: "households",
   labels: { singular: "Husstand", plural: "Husstander" },
   admin: {
-    useAsTitle: "contactName",
+    useAsTitle: "displayName",
     group: "Brukere og admin",
     hideAPIURL: true,
-    defaultColumns: ["contactName", "members", "status", "updatedAt"],
-    listSearchableFields: ["contactName", "email"],
+    defaultColumns: ["displayName", "contactName", "members", "status", "updatedAt"],
+    listSearchableFields: ["displayName", "contactName", "email"],
     components: {
       views: { list: { Component: "/components/admin/households/HouseholdWorkspace#default" } },
       edit: { beforeDocumentControls: ["/components/admin/households/HouseholdHeading#default"] },
     },
   },
-  forceSelect: { contactName: true, email: true, members: true },
+  forceSelect: { displayName: true, contactName: true, email: true, members: true },
   versions: false,
   access: {
     admin: isAdministrator,
@@ -74,6 +76,7 @@ export const Households: CollectionConfig = {
     delete: isAdministrator,
   },
   hooks: {
+    beforeOperation: [lockHouseholdUpdates],
     beforeValidate: [({ data, originalDoc, operation, context }) => {
       if (!data) return data;
       const submitted = data as HouseholdData;
@@ -89,11 +92,12 @@ export const Households: CollectionConfig = {
         submitted.status = creationMode === "administrator" ? "approved" : "pending";
         submitted.revision = 0;
         submitted.credentialVersion = 1;
+        submitted.sessionVersion = 1;
       }
       if (operation === "update") {
         const protectedFields = [
           "publicId", "registrationRequestDigest", "registrationRequestFingerprint",
-          "accessCodeDigest", "accessCodeEncrypted", "credentialVersion",
+          "accessCodeDigest", "accessCodeEncrypted", "credentialVersion", "sessionVersion",
         ];
         // Payload may include defaults/previous values for hidden fields in its
         // native form submission. Never accept credential changes through CRUD;
@@ -112,6 +116,12 @@ export const Households: CollectionConfig = {
       if (previousStatus === "pending" && status === "approved") {
         members.forEach((member) => { member.status = "approved"; });
       }
+      if (operation === "update") {
+        const previousSessionVersion = Number(original?.sessionVersion ?? 1);
+        const revokesSessions = (previousStatus === "approved" && status === "pending")
+          || (previousStatus !== "revoked" && status === "revoked");
+        submitted.sessionVersion = previousSessionVersion + (revokesSessions ? 1 : 0);
+      }
 
       const details = validateHouseholdInput({
         contactName: merged.contactName,
@@ -119,6 +129,13 @@ export const Households: CollectionConfig = {
         members: members.map(({ name }) => ({ name })),
       });
       submitted.contactName = details.contactName;
+      try {
+        submitted.displayName = normalizeHouseholdName(
+          operation === "create" && merged.displayName === undefined ? details.contactName : merged.displayName,
+        );
+      } catch {
+        invalidField("displayName", "Husstandsnavnet er ugyldig.");
+      }
       submitted.email = details.email;
       submitted.status = status;
       submitted.members = members.map((member, index) => ({ ...member, name: details.members[index].name }));
@@ -133,6 +150,10 @@ export const Households: CollectionConfig = {
         {
           name: "contactName", label: "Kontaktperson", type: "text", required: true,
           admin: { components: { Cell: "/components/admin/households/HouseholdCells#HouseholdContactCell" } },
+        },
+        {
+          name: "displayName", label: "Husstandsnavn", type: "text", required: true, maxLength: 120,
+          admin: { description: "Brukes ved innlogging og som navn ved kommentarer. Kan endres av administrator." },
         },
         { name: "email", label: "E-post", type: "email", required: true },
       ],
@@ -180,6 +201,7 @@ export const Households: CollectionConfig = {
     { name: "accessCodeControls", type: "ui", admin: { position: "sidebar", components: { Field: "/components/admin/households/HouseholdAccessCode#default" } } },
     { name: "revision", type: "number", required: true, defaultValue: 0, admin: hiddenAdmin, access: { create: () => false, update: () => false } },
     { name: "credentialVersion", type: "number", required: true, defaultValue: 1, admin: hiddenAdmin, access: hiddenCredentialAccess },
+    { name: "sessionVersion", type: "number", required: true, defaultValue: 1, admin: hiddenAdmin, access: hiddenCredentialAccess },
     { name: "publicId", type: "text", required: true, unique: true, index: true, admin: hiddenAdmin, access: hiddenCredentialAccess },
     { name: "accessCodeDigest", type: "text", required: true, unique: true, index: true, admin: hiddenAdmin, access: hiddenCredentialAccess },
     { name: "accessCodeEncrypted", type: "text", required: true, admin: hiddenAdmin, access: hiddenCredentialAccess },

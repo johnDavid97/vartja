@@ -6,6 +6,7 @@ import * as migration_20261025_212144_post_polls from './20261025_212144_post_po
 import * as migration_20261108_220804_wedding_program from './20261108_220804_wedding_program';
 import * as migration_20261117_140805_household_registration from './20261117_140805_household_registration';
 import * as migration_20261117_211959_homepage_appearance from './20261117_211959_homepage_appearance';
+import * as migration_20261118_153059_household_login from './20261118_153059_household_login';
 
 export const migrations = [
   {
@@ -46,6 +47,11 @@ export const migrations = [
   {
     up: migration_20261117_211959_homepage_appearance.up,
     down: migration_20261117_211959_homepage_appearance.down,
-    name: '20261117_211959_homepage_appearance'
+    name: '20261117_211959_homepage_appearance',
+  },
+  {
+    up: migration_20261118_153059_household_login.up,
+    down: migration_20261118_153059_household_login.down,
+    name: '20261118_153059_household_login'
   },
 ];

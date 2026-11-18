@@ -1,6 +1,8 @@
 import type { Endpoint, PayloadRequest, Where } from "payload";
 import { getPolls, type PollDefinition, type PollResults } from "./polls";
 import { pollVoter, pollVoteKey } from "./poll-voter";
+import { canReadGuestContent } from "../features/households/auth/access";
+import { HouseholdRequestError, readHouseholdRequest } from "../features/households/http/requests";
 
 function reply(data: unknown, status = 200, cookie?: string | null) {
   const headers = new Headers({ "Cache-Control": "private, no-store", Vary: "Cookie" });
@@ -38,9 +40,10 @@ function handler(voting: boolean): Endpoint["handler"] {
       if (!req.headers.get("content-type")?.startsWith("application/json")) return reply({ error: "Forventet JSON." }, 415);
       if (Number(req.headers.get("content-length")) > 2048) return reply({ error: "Forespørselen er for stor." }, 413);
     }
+    if (!await canReadGuestContent({ req })) return reply({ error: "Logg inn med en godkjent husstand." }, 403);
     const { docs } = await req.payload.find({
       collection: "posts", where: { id: { equals: postId } },
-      draft: false, overrideAccess: false, user: null, limit: 1, depth: 0,
+      draft: false, overrideAccess: false, req, limit: 1, depth: 0,
     });
     const post = docs[0];
     // Never allow voting on drafts/private posts, even for an authenticated editor.
@@ -54,8 +57,12 @@ function handler(voting: boolean): Endpoint["handler"] {
     if (voting) {
       if (!poll.open) return reply({ error: "Avstemningen er avsluttet." }, 409, voter.cookie);
       let optionId: unknown;
-      try { optionId = (await req.json?.())?.optionId; }
-      catch { return reply({ error: "Ugyldig forespørsel." }, 400, voter.cookie); }
+      try {
+        const input = await readHouseholdRequest(req, 2048);
+        optionId = input && typeof input === "object" && "optionId" in input ? input.optionId : undefined;
+      } catch (error) {
+        return reply({ error: "Ugyldig forespørsel." }, error instanceof HouseholdRequestError ? error.status : 400, voter.cookie);
+      }
       if (typeof optionId !== "string" || !poll.options.some((option) => option.id === optionId)) {
         return reply({ error: "Velg et gyldig alternativ." }, 400, voter.cookie);
       }
