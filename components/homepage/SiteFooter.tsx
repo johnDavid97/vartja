@@ -1,5 +1,5 @@
 import type { HomepageSettings } from "@/features/homepage/models";
-import { formatWeddingDate } from "./WeddingHero";
+import { formatWeddingDate } from "@/lib/wedding-date";
 import styles from "./hero.module.css";
 
 export default function SiteFooter({ settings }: { settings: HomepageSettings }) {

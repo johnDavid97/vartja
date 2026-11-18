@@ -1,5 +1,6 @@
 import type { GlobalConfig } from "payload";
-import { DEFAULT_HERO_COLOR, isHexColor } from "../features/homepage/settings";
+import { DEFAULT_HERO_COLOR } from "../features/homepage/settings";
+import { isHexColor } from "../lib/colors";
 
 export const Wedding: GlobalConfig = {
   slug: "wedding",

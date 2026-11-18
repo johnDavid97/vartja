@@ -1,11 +1,9 @@
 import type { Wedding } from "@/payload-types";
 import type { HomepageSettings } from "./models";
+import { isHexColor } from "@/lib/colors";
 
 export const DEFAULT_HERO_COLOR = "#3c4641";
 export const DEFAULT_WEDDING_DATE = "2027-07-27T00:00:00+02:00";
-export function isHexColor(value: unknown): value is string {
-  return typeof value === "string" && /^#[0-9a-f]{6}$/i.test(value);
-}
 
 function focalPosition(value: number | null | undefined): number {
   return typeof value === "number" && Number.isFinite(value) ? Math.min(100, Math.max(0, value)) : 50;

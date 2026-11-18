@@ -50,6 +50,20 @@ try {
   await expect(page.getByText("Secret draft fixture")).toHaveCount(0);
   await expect(page.getByText("Secret private fixture")).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Forrige side", exact: true })).toBeDisabled();
+  // A manual one-card scroll stays nearest page one on desktop, but is not at the start.
+  const manualOffset = await carousel.evaluate((element) => {
+    const slides = element.querySelectorAll<HTMLElement>("[data-update-slide]");
+    const offset = slides[1].offsetLeft - slides[0].offsetLeft;
+    element.scrollTo({ left: offset, behavior: "instant" });
+    return offset;
+  });
+  await expect.poll(() => carousel.evaluate((element) => element.scrollLeft)).toBeGreaterThan(20);
+  await expect.poll(async () => Math.abs(await carousel.evaluate((element) => element.scrollLeft) - manualOffset)).toBeLessThan(3);
+  await expect(page.getByRole("button", { name: /^Gå til side 1 av/ })).toHaveAttribute("aria-current", "page");
+  await expect(page.getByRole("button", { name: "Forrige side", exact: true })).toBeEnabled();
+  await page.getByRole("button", { name: "Forrige side", exact: true }).click();
+  await expect.poll(() => carousel.evaluate((element) => element.scrollLeft)).toBeLessThan(2);
+  await expect(page.getByRole("button", { name: "Forrige side", exact: true })).toBeDisabled();
   await page.getByRole("button", { name: "Neste side", exact: true }).click();
   await expect.poll(() => carousel.evaluate((element) => element.scrollLeft)).toBeGreaterThan(20);
   await carousel.focus();
@@ -89,6 +103,7 @@ try {
   adminPage.on("pageerror", (error) => errors.push(error.message));
   await adminPage.goto("/admin/globals/wedding");
   await expect(adminPage.getByRole("radio", { name: "Farge", exact: true })).toBeChecked();
+  await expect(adminPage.locator(".field-description-heroBackgroundColor")).toHaveText("Brukes når du velger Farge, og som reserve hvis et bilde mangler.");
   await adminPage.getByRole("textbox", { name: /^Bakgrunnsfarge/ }).fill("#ffffff");
   await adminPage.getByRole("button", { name: "Lagre", exact: true }).click();
   await expect.poll(async () => (await payload.findGlobal({ slug: "wedding" })).heroBackgroundColor).toBe("#ffffff");
