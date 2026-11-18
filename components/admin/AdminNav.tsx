@@ -53,7 +53,7 @@ export default function AdminNav() {
         {link("/admin/globals/program", "Program", Clock3)}
         {link("/admin/collections/media", "Bilder", ImageIcon)}
         <h2>Aktivitet</h2>
-        {planned("Avstemninger", BarChart3)}
+        {link("/admin/polls", "Avstemninger", BarChart3)}
         {planned("Kommentarer", MessageCircle)}
         <div className="wedding-nav__settings">{link("/admin/globals/wedding", "Innstillinger", Settings2)}</div>
       </nav>

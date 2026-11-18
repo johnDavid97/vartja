@@ -28,6 +28,7 @@ export default buildConfig({
     meta: { titleSuffix: "— Andrea & Martin" },
     components: {
       Nav: "/components/admin/AdminNav#default",
+      views: { polls: { Component: "/components/admin/polls/PollOverviewView#default", path: "/polls", exact: true, meta: { title: "Avstemninger" } } },
       providers: [
         "/components/admin/editor/PostEditorProvider#default",
         "/components/admin/households/HouseholdSummaryProvider#default",
