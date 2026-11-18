@@ -117,8 +117,16 @@ try {
   await expect(publicPage.getByText("Programmet kommer snart.")).toBeVisible();
   await save("Publiser endringer");
   await publicPage.reload();
+  const welcomeTab = publicPage.getByRole("tab", { name: /Velkomst/ });
+  const weddingTab = publicPage.getByRole("tab", { name: /Bryllupsdagen/ });
+  await expect(welcomeTab).toHaveAttribute("aria-selected", "true");
+  await expect(publicPage.getByRole("heading", { name: busTitle, exact: true })).toHaveCount(0);
+  await welcomeTab.focus();
+  await publicPage.keyboard.press("ArrowRight");
+  await expect(weddingTab).toBeFocused();
+  await expect(weddingTab).toHaveAttribute("aria-selected", "true");
   await expect(publicPage.getByRole("heading", { name: busTitle, exact: true })).toBeVisible();
-  assert.deepEqual(await publicPage.locator("main section > h2").allTextContents(), ["Velkomst", "Bryllupsdagen"]);
+  assert.deepEqual(await publicPage.getByRole("tab").allTextContents(), ["Dag 1man. 26. juliVelkomst", "Dag 2tir. 27. juliBryllupsdagen"]);
   assert.deepEqual(await publicPage.getByRole("region", { name: "Bryllupsdagen", exact: true }).locator("h3").allTextContents(), [eventTitle, busTitle]);
   await expect(publicPage.getByText("neste dag", { exact: true })).toBeVisible();
   assert([401, 403].includes((await guest.request.get("/api/globals/program/versions")).status()));
@@ -130,6 +138,7 @@ try {
   await panel.getByLabel("Tittel", { exact: true }).fill(`HEMMELIG ${token}`);
   await save("Lagre utkast");
   await publicPage.reload();
+  await weddingTab.click();
   await expect(publicPage.getByText(`HEMMELIG ${token}`)).toHaveCount(0);
   await expect(publicPage.getByRole("heading", { name: busTitle, exact: true })).toBeVisible();
   const invalid = structuredClone(draftData);
@@ -141,9 +150,15 @@ try {
   await expect(calendar.getByRole("button", { name: "Bruk dato", exact: true })).toBeInViewport();
   await page.screenshot({ path: "/tmp/sammen-program-mobile.png", fullPage: true });
   await page.keyboard.press("Escape");
-  await publicPage.setViewportSize({ width: 390, height: 844 });
-  assert(await publicPage.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
-  await publicPage.screenshot({ path: "/tmp/sammen-program-public-mobile.png", fullPage: true });
+  for (const width of [1440, 1024, 768, 390, 320]) {
+    await publicPage.setViewportSize({ width, height: 950 });
+    assert(await publicPage.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+    await publicPage.screenshot({ path: `/tmp/sammen-program-guest-${width}.png`, fullPage: true });
+    await welcomeTab.click();
+    await expect(publicPage.getByRole("heading", { name: `Hotell ${token}`, exact: true })).toBeVisible();
+    await weddingTab.click();
+    await expect(publicPage.getByRole("heading", { name: busTitle, exact: true })).toBeVisible();
+  }
   page.on("dialog", (dialog) => dialog.accept());
   await panel.getByRole("button", { name: "Slett punkt", exact: true }).click();
   await expect(builder.locator(".program-items li")).toHaveCount(1);

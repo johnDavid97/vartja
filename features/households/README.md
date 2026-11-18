@@ -1,6 +1,6 @@
 # Reading the household code
 
-Registration, database storage, admin approval/creation, household overview, shared invitations, guest login and site privacy are connected. Household self-service and comments remain pending.
+Registration, database storage, admin approval/creation, household overview, shared invitations, guest login and site privacy are connected. Household self-service and comments on posts remain pending. Per-day Program comments now use the shared household identity; see [Program activity](../program/README.md).
 
 ## Guest authentication
 

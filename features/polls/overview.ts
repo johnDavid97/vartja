@@ -1,9 +1,9 @@
 import { getPolls, parsePoll, type PollDefinition } from "@/lib/polls";
 
-export type PollPost = { id: number; title: string; body?: unknown; _status?: string | null; visibility?: string | null };
-export type PollVoteCount = { postId: number; pollId: string; optionId: string; count: number; definition: unknown };
+export type PollPost = { id: number | string; title: string; body?: unknown; polls?: PollDefinition[]; editorHref?: string; _status?: string | null; visibility?: string | null };
+export type PollVoteCount = { postId: number | string; pollId: string; optionId: string; count: number; definition: unknown };
 export type PollOverviewRow = {
-  key: string; postId: number; postTitle: string; pollId: string; question: string;
+  key: string; postId: number | string; postTitle: string; pollId: string; question: string; editorHref?: string;
   status: "open" | "closed" | "draft" | "archived";
   private: boolean; hasDraftChanges: boolean; total: number;
   options: { id: string; label: string; count: number }[];
@@ -13,7 +13,8 @@ export interface PollOverviewRepository {
   readVoteCounts(): Promise<PollVoteCount[]>;
 }
 
-const keyFor = (postId: number, pollId: string) => JSON.stringify([postId, pollId]);
+const keyFor = (postId: number | string, pollId: string) => JSON.stringify([postId, pollId]);
+const sourcePolls = (source: PollPost) => source.polls ?? getPolls(source.body);
 
 /** Published definitions stay authoritative; drafts never masquerade as live voting settings. */
 export function buildPollOverview(saved: PollPost[], drafts: PollPost[], counts: PollVoteCount[]): PollOverviewRow[] {
@@ -24,24 +25,26 @@ export function buildPollOverview(saved: PollPost[], drafts: PollPost[], counts:
     const key = keyFor(post.id, poll.id);
     if (rows.has(key)) return;
     rows.set(key, { key, postId: post.id, postTitle: post.title, pollId: poll.id, question: poll.question, status,
+      ...(post.editorHref ? { editorHref: post.editorHref } : {}),
       private: post.visibility === "private", hasDraftChanges, total: 0,
       options: poll.options.map((option) => ({ ...option, count: 0 })) });
   }
   for (const post of saved) {
     if (post._status !== "published") continue;
     const latest = draftPosts.get(post.id);
-    const latestPolls = latest ? getPolls(latest.body) : getPolls(post.body);
-    for (const poll of getPolls(post.body)) {
+    const latestPolls = sourcePolls(latest ?? post);
+    for (const poll of sourcePolls(post)) {
       const draftPoll = latestPolls.find((candidate) => candidate.id === poll.id);
       add(post, poll, poll.open ? "open" : "closed", JSON.stringify(draftPoll) !== JSON.stringify(poll));
     }
   }
-  for (const post of drafts) for (const poll of getPolls(post.body)) add(post, poll, "draft");
+  for (const post of drafts) for (const poll of sourcePolls(post)) add(post, poll, "draft");
   // A removed poll can still have ballots. Preserve their results using the stored definition.
   for (const count of counts) {
     const key = keyFor(count.postId, count.pollId);
     if (!rows.has(key)) {
-      const post = posts.get(count.postId);
+      const post = posts.get(count.postId) ?? (typeof count.postId === "string" && count.postId.startsWith("program-day:")
+        ? { id: count.postId, title: "Program · fjernet dag", editorHref: "/admin/globals/program" } : undefined);
       const definition = parsePoll(count.definition);
       if (post && definition) add(post, { ...definition, id: count.pollId }, "archived");
     }

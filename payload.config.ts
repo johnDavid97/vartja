@@ -15,6 +15,9 @@ import { HouseholdLoginLimits } from "./collections/HouseholdLoginLimits";
 import sharp from "sharp";
 import { Wedding } from "./globals/Wedding";
 import { Program } from "./globals/Program";
+import { ProgramPollVotes } from "./collections/ProgramPollVotes";
+import { ProgramComments } from "./collections/ProgramComments";
+import { ProgramActivityLimits } from "./collections/ProgramActivityLimits";
 import { nb } from "@payloadcms/translations/languages/nb";
 
 const directory = path.dirname(fileURLToPath(import.meta.url));
@@ -39,7 +42,7 @@ export default buildConfig({
       graphics: { Logo: "/components/admin/Logo#default" },
     },
   },
-  collections: [Users, Posts, Media, PollVotes, Households, HouseholdCredentialAudits, HouseholdRegistrationLimits, HouseholdSessions, HouseholdLoginLimits],
+  collections: [Users, Posts, Media, PollVotes, Households, HouseholdCredentialAudits, HouseholdRegistrationLimits, HouseholdSessions, HouseholdLoginLimits, ProgramPollVotes, ProgramComments, ProgramActivityLimits],
   sharp,
   upload: { limits: { fileSize: 10 * 1024 * 1024 } },
   globals: [Wedding, Program],

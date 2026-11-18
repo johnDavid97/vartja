@@ -1,10 +1,12 @@
 import { validCalendarDay } from "./calendar-date";
+import { parsePoll, type PollDefinition } from "./polls";
 
 export const programKinds = ["flight", "train", "bus", "hotel", "event", "info"] as const;
 export type ProgramKind = typeof programKinds[number];
 export const programLabels: Record<ProgramKind, string> = { flight: "Fly", train: "Tog", bus: "Buss", hotel: "Hotell", event: "Hendelse", info: "Info" };
 export type ProgramItem = { id: string; kind: ProgramKind; title: string; location: string; destination: string; time: string; endTime: string; notes: string };
-export type ProgramDay = { id: string; date: string; label: string; items: ProgramItem[] };
+export type ProgramDay = { id: string; date: string; label: string; items: ProgramItem[]; polls?: PollDefinition[]; commentsEnabled?: boolean };
+export const MAX_DAY_POLLS = 10;
 export type ProgramData = { days: ProgramDay[] };
 export const MAX_PROGRAM_DAYS = 30;
 export const MAX_PROGRAM_ITEMS = 100;
@@ -26,6 +28,21 @@ export function programError(value: unknown, publishing = false): string | null 
     if (publishing && !day.date) return "Alle dager må ha en dato før publisering.";
     if (day.date && dates.has(day.date)) return "To dager kan ikke ha samme dato.";
     if (day.date) dates.add(day.date);
+    if (day.commentsEnabled !== undefined && typeof day.commentsEnabled !== "boolean") return "Ugyldig kommentarinnstilling.";
+    if (day.polls !== undefined) {
+      if (!Array.isArray(day.polls) || day.polls.length > MAX_DAY_POLLS) return `En dag kan ha inntil ${MAX_DAY_POLLS} avstemninger.`;
+      for (const poll of day.polls) {
+        if (!record(poll) || !id(poll.id) || ids.has(poll.id)) return "Hver avstemning må ha en unik ID.";
+        ids.add(poll.id);
+        if (!text(poll.question, 200) || typeof poll.open !== "boolean" || !Array.isArray(poll.options) || poll.options.length < 2 || poll.options.length > 10) return "Kontroller avstemningen og svaralternativene.";
+        const optionIds = new Set<string>();
+        for (const option of poll.options) {
+          if (!record(option) || !id(option.id) || optionIds.has(option.id) || !text(option.label, 120)) return "Kontroller svaralternativene.";
+          optionIds.add(option.id);
+        }
+        if (publishing && !parsePoll(poll)) return "Hver avstemning trenger et spørsmål og 2–10 forskjellige svaralternativer før publisering.";
+      }
+    }
     if (!Array.isArray(day.items) || day.items.length > MAX_PROGRAM_ITEMS) return `Hver dag kan ha inntil ${MAX_PROGRAM_ITEMS} punkter.`;
     for (const item of day.items) {
       if (!record(item) || !id(item.id) || ids.has(item.id)) return "Hver dag og hvert punkt må ha en unik ID.";
