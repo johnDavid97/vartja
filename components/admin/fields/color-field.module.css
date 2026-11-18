@@ -1,0 +1,7 @@
+.controls { display: flex; align-items: center; gap: 12px; max-width: 100%; }
+.swatch { flex: 0 0 48px; width: 48px; height: 44px; padding: 3px !important; border: 1px solid #d7dfda; border-radius: 8px; background: white; cursor: pointer; }
+.swatch::-webkit-color-swatch-wrapper { padding: 0; }
+.swatch::-webkit-color-swatch { border: 0; border-radius: 5px; }
+.swatch::-moz-color-swatch { border: 0; border-radius: 5px; }
+.hex { width: 160px !important; min-width: 0; max-width: 100%; }
+.swatch:focus-visible { outline: 2px solid #2e5e53; outline-offset: 3px; }

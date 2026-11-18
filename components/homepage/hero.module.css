@@ -1,0 +1,230 @@
+.hero {
+  --wedding-paper: #fcfbf8;
+  --display-serif: var(--font-wedding-serif, Georgia, serif);
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  min-height: clamp(38rem, 47.3vw, 52rem);
+  padding: clamp(4.5rem, 9vw, 9rem) max(1.25rem, env(safe-area-inset-left));
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  background: var(--hero-background, #3c4641);
+  color: var(--hero-color, #fff);
+}
+
+.heroImage {
+  z-index: -3;
+  object-fit: cover;
+}
+
+.imageOverlay {
+  position: absolute;
+  z-index: -2;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(12, 25, 20, 0.62), rgba(12, 25, 20, 0.68)),
+    radial-gradient(circle at center, transparent 15%, rgba(9, 20, 16, 0.2) 100%);
+}
+
+.heroContent {
+  width: min(100%, 72rem);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.eyebrow {
+  margin: 0 0 clamp(1.25rem, 3vw, 2.25rem);
+  font-size: clamp(0.7rem, 1vw, 0.88rem);
+  font-weight: 650;
+  letter-spacing: 0.35em;
+  line-height: 1.5;
+  text-transform: uppercase;
+}
+
+.title {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  margin: 0;
+  font-family: var(--display-serif);
+  font-size: clamp(3.25rem, 6.8vw, 7rem);
+  font-weight: 400;
+  letter-spacing: -0.035em;
+  line-height: 0.82;
+  text-wrap: balance;
+}
+
+.title span,
+.title em {
+  display: block;
+}
+
+.title em {
+  margin-top: 0.3em;
+  font-size: 1em;
+  font-weight: 400;
+  line-height: 0.9;
+}
+
+.dateLine {
+  margin: clamp(2rem, 4vw, 3rem) 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.6rem;
+  font-family: var(--display-serif);
+  font-size: clamp(1.05rem, 1.8vw, 1.5rem);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.dateLine::before,
+.dateLine::after {
+  width: clamp(1.75rem, 4vw, 3.5rem);
+  height: 1px;
+  margin-inline: clamp(0.15rem, 1vw, 0.65rem);
+  background: currentColor;
+  content: "";
+  opacity: 0.55;
+}
+
+.dateLine span { max-width: 100%; overflow-wrap: anywhere; }
+
+.dateLine span + span::before {
+  margin-right: 0.6rem;
+  content: "·";
+}
+
+.countdown {
+  margin-top: clamp(2.5rem, 5vw, 4.5rem);
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.55rem clamp(1rem, 2.1vw, 2rem);
+  font-size: clamp(0.82rem, 1.35vw, 1.05rem);
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+}
+
+.countdownUnit {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.32rem;
+  white-space: nowrap;
+}
+
+.countdownUnit strong {
+  font-size: 1.25em;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+}
+
+.countdownMessage {
+  margin: clamp(2.5rem, 5vw, 4.5rem) 0 0;
+  font-size: 0.95rem;
+  letter-spacing: 0.04em;
+  opacity: 1;
+}
+
+.welcome {
+  max-width: 39rem;
+  margin: clamp(1.5rem, 3vw, 2.5rem) 0 0;
+  font-family: var(--display-serif);
+  font-size: clamp(1rem, 1.7vw, 1.25rem);
+  font-style: italic;
+  line-height: 1.5;
+  opacity: 1;
+  overflow-wrap: anywhere;
+  white-space: pre-line;
+  text-wrap: balance;
+}
+
+.imageHero .heroContent {
+  text-shadow: 0 1px 1.5rem rgba(0, 0, 0, 0.24);
+}
+
+.footer {
+  width: min(100%, 1480px);
+  min-height: 7.5rem;
+  margin-inline: auto;
+  padding: 2rem clamp(1.25rem, 5vw, 7.5rem);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  background: var(--wedding-paper, #fcfbf8);
+  border-top: 1px solid rgba(32, 55, 47, 0.1);
+  color: #575d59;
+  font-size: 0.9rem;
+}
+
+.footer p {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  margin: 0;
+}
+
+.footer p:first-child {
+  color: #285f50;
+  font-family: var(--font-wedding-serif, Georgia, serif);
+  font-size: clamp(1.3rem, 2vw, 1.75rem);
+  font-weight: 600;
+}
+
+@media (max-width: 600px) {
+  .hero {
+    min-height: max(36rem, calc(100svh - 4.6rem));
+    padding-block: 4rem;
+  }
+
+  .title {
+    font-size: clamp(3rem, 16vw, 5.25rem);
+    line-height: 0.88;
+  }
+
+  .dateLine {
+    max-width: 20rem;
+  }
+
+  .dateLine::before,
+  .dateLine::after {
+    display: none;
+  }
+
+  .dateLine span {
+    width: 100%;
+  }
+
+  .dateLine span + span::before {
+    display: none;
+  }
+
+  .countdown {
+    max-width: 20rem;
+    column-gap: 1.25rem;
+  }
+
+  .countdownUnit {
+    min-width: 7rem;
+    justify-content: center;
+  }
+
+  .footer {
+    min-height: 6.5rem;
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero *,
+  .footer * {
+    scroll-behavior: auto;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

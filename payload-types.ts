@@ -604,7 +604,7 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
   createdAt?: T;
 }
 /**
- * Navn, dato og velkomsttekst vises på forsiden. Dagsprogrammet redigeres under Program. Reiseinformasjon kobles til egen side senere.
+ * Tilpass den offentlige forsiden: navn, dato, sted, tekster og bilde eller bakgrunnsfarge. Dagsprogrammet redigeres under Program.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "wedding".
@@ -614,7 +614,21 @@ export interface Wedding {
   coupleNames: string;
   weddingDate: string;
   welcomeMessage?: string | null;
+  /**
+   * Vises sammen med datoen, f.eks. Skottland.
+   */
   venue?: string | null;
+  heroEyebrow?: string | null;
+  heroTitleSuffix?: string | null;
+  heroBackgroundMode: 'image' | 'color';
+  /**
+   * Velg eller last opp et bilde. Bruk bildeverktøyets fokuspunkt for å beholde ansikter i utsnittet på mobil. Uten bilde brukes bakgrunnsfargen. Forsidebildet er offentlig.
+   */
+  heroImage?: (number | null) | Media;
+  /**
+   * Brukes når du velger Farge, og som reserve hvis et bilde mangler.
+   */
+  heroBackgroundColor: string;
   travelInformation?: {
     root: {
       type: string;
@@ -672,6 +686,11 @@ export interface WeddingSelect<T extends boolean = true> {
   weddingDate?: T;
   welcomeMessage?: T;
   venue?: T;
+  heroEyebrow?: T;
+  heroTitleSuffix?: T;
+  heroBackgroundMode?: T;
+  heroImage?: T;
+  heroBackgroundColor?: T;
   travelInformation?: T;
   schedule?:
     | T
