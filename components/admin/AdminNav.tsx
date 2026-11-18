@@ -4,20 +4,22 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth, useNav } from "@payloadcms/ui";
 import { AdminButton, adminButtonStyles } from "./AdminButton";
-import { BarChart3, Clock3, ExternalLink, FileText, ImageIcon, LogOut, MessageCircle, Settings2, Users, X } from "lucide-react";
+import { useHouseholdSummary } from "./households/useHouseholdSummary";
+import householdStyles from "./households/household-workspace.module.css";
+import { BarChart3, Clock3, ExternalLink, FileText, Home, ImageIcon, LogOut, MessageCircle, Settings2, Users, X } from "lucide-react";
 
 export default function AdminNav() {
   const pathname = usePathname();
   const { user } = useAuth();
   const { navOpen, setNavOpen, navRef } = useNav();
+  const { summary: householdSummary } = useHouseholdSummary();
   const name = user?.name || user?.email || "Redaktør";
   const initials = name.split(/\s+/).slice(0, 2).map((word: string) => word[0]).join("").toUpperCase();
   const closeOnMobile = () => { if (window.matchMedia("(max-width: 1024px)").matches) setNavOpen(false); };
-  const active = (href: string) => pathname.startsWith(href)
-    || (href === "/admin/collections/households" && pathname.startsWith("/admin/collections/users"));
-  const link = (href: string, label: string, Icon: typeof FileText) => (
+  const active = (href: string) => pathname.startsWith(href.split("?")[0]);
+  const link = (href: string, label: string, Icon: typeof FileText, trailing?: React.ReactNode) => (
     <Link href={href} className="wedding-nav__item" aria-current={active(href) ? "page" : undefined} onClick={closeOnMobile}>
-      <Icon size={20} aria-hidden="true" /><span>{label}</span>
+      <Icon size={20} aria-hidden="true" /><span>{label}</span>{trailing}
     </Link>
   );
   const planned = (label: string, Icon: typeof FileText) => (
@@ -39,7 +41,13 @@ export default function AdminNav() {
       </Link>
       <AdminButton variant="ghost" size="icon-sm" className="wedding-nav__close" aria-label="Lukk meny" onClick={() => setNavOpen(false)}><X size={20} /></AdminButton>
       <nav aria-label="Administrasjon" className="wedding-nav__links">
-        {link("/admin/collections/households", "Brukere og admin", Users)}
+        <h2>Brukere og admin</h2>
+        {link("/admin/collections/households?tab=overview", "Husstander", Home, householdSummary ? (
+          <span className={householdStyles.navBadge} aria-label={`${householdSummary.pending} ventende husstander`}>
+            {householdSummary.pending}
+          </span>
+        ) : undefined)}
+        {link("/admin/collections/users", "Administratorer", Users)}
         <h2>Sider</h2>
         {link("/admin/collections/posts", "Innlegg", FileText)}
         {link("/admin/globals/program", "Program", Clock3)}

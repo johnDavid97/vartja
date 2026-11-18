@@ -58,6 +58,17 @@
   min-width: 0;
 }
 
+.lockedLabel { font-size: 0.875rem; font-weight: 500; line-height: 1; }
+.lockedContact {
+  margin: 0;
+  min-height: 2rem;
+  overflow-wrap: anywhere;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--muted);
+  padding: 0.5rem 0.625rem;
+}
+
 .actions {
   display: flex;
   align-items: center;
