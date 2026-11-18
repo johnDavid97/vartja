@@ -77,7 +77,7 @@ It uses Europe/Oslo time, supports quick dates, cancellation and **Sett automati
 Automatic dates are assigned when publishing. The description counter recommends 160
 characters but does not truncate or reject older, longer descriptions.
 
-- **Bryllupsinformasjon**: names, date and welcome text are connected to the homepage.
+- **Innstillinger → Bryllupsinformasjon**: names, date, place and welcome text are connected to the homepage. Under **Utseende på forsiden**, edit the two hero headings and choose **Bilde / Farge**. Select/upload an image using the existing media library, or choose a background colour. The chosen photo is retained when switching to colour. Missing photos fall back to the selected colour; text contrast adjusts automatically. Payload's existing image-editor focal point controls the responsive crop.
   Legacy schedule and travel fields are retained but are not displayed publicly. The new Program is separate; no legacy data is deleted or silently migrated.
 - **Program** (`/admin/globals/program`): create dated days and flight, train, bus, hotel,
   event or information items. Select a row to edit details; drag handles or arrow buttons reorder
@@ -187,6 +187,7 @@ npm run test:editor           # Local editor/publishing integration check; see b
 npm run test:polls            # Local poll editor/voting/privacy integration check
 npm run test:admin            # Local admin design, date picker and upload integration check
 npm run test:program          # Requires an empty local Program with no version history
+npm run test:homepage         # Builds and tests homepage/admin in a disposable database
 ```
 
 Browser tests use `http://localhost:3000` by default (override with `TEST_BASE_URL`).
@@ -208,6 +209,13 @@ editing, drag/keyboard ordering, draft isolation, publication, API permissions, 
 layouts. It restores the initial empty Program and removes its fixture versions/user afterward.
 Screenshots are saved to `/tmp/sammen-program-*.png`.
 Do not run these fixture tests against production.
+
+`test:homepage` checks native admin colour saving and media-library selection, image/colour switching,
+focal position, missing-image fallback, private/draft exclusion, carousel arrows/dots/keyboard,
+mobile navigation and resizing from 320 to 1440px. It tests fresh migrations and feature rollback/reapply
+while preserving pre-existing wedding fields. Screenshots are saved to `/tmp/sammen-homepage-*.png`.
+The shared isolated-database runner also powers the household registration tests. No existing local
+wedding content is replaced by these tests.
 
 Database data persists in the `sammen_postgres_data` Docker volume.
 **Do not run `docker compose down -v` unless you intend to delete the database.**
