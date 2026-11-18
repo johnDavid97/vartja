@@ -4,7 +4,8 @@ import { DefaultCell, useListDrawerContext } from "@payloadcms/ui"
 import type { DefaultCellComponentProps } from "payload"
 
 import { PublicationCell } from "@/components/admin/tables/Cells"
-import { householdMemberPresentation, householdStatus } from "@/lib/household-admin-presentation"
+import { householdMemberPresentation } from "@/lib/household-admin-presentation"
+import { HouseholdStatusBadge } from "./HouseholdStatusBadge"
 
 import styles from "./household-workspace.module.css"
 
@@ -48,8 +49,7 @@ export function HouseholdMembersCell({ cellData }: DefaultCellComponentProps) {
 }
 
 export function HouseholdStatusCell({ cellData }: DefaultCellComponentProps) {
-  const status = householdStatus(cellData)
-  return <span className={`${styles.status} ${styles[`status_${status.tone}`]}`}>{status.label}</span>
+  return <HouseholdStatusBadge value={cellData} />
 }
 
 export { PublicationCell as HouseholdDateCell }
