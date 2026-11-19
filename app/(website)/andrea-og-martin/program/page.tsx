@@ -7,6 +7,9 @@ import Poll from "@/components/Poll";
 import { Comments } from "@/components/comments/Comments";
 import { programError, sortedProgram, type ProgramData } from "@/lib/program";
 import styles from "@/components/program/program.module.css";
+import { weddingPageMetadata } from "@/features/wedding-site/branding-server";
+
+export async function generateMetadata() { return weddingPageMetadata("Program"); }
 
 const dayFormatter = new Intl.DateTimeFormat("nb-NO", {
   weekday: "short", day: "numeric", month: "long", timeZone: "Europe/Oslo",

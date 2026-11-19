@@ -30,7 +30,8 @@ export default buildConfig({
     dateFormat: "dd.MM.yyyy HH:mm",
     user: Users.slug,
     importMap: { baseDir: directory },
-    meta: { titleSuffix: "— Andrea & Martin" },
+    // Request-time metadata supplies the configured wedding name; avoid a static duplicate suffix.
+    meta: { titleSuffix: "" },
     components: {
       Nav: "/components/admin/AdminNav#default",
       views: {

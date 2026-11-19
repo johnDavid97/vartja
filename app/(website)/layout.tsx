@@ -2,21 +2,26 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { connection } from "next/server";
 import { geistSans, geistMono, weddingSerif } from "@/app/fonts";
-import { getHomepageSettings } from "@/features/homepage/composition-root";
+import { getWeddingBranding } from "@/features/wedding-site/branding-server";
+import { weddingIcons } from "@/features/wedding-site/icons";
 import "./globals.css";
 import Header from "@/components/Header";
 import { getWebsiteViewer } from "@/features/households/auth/server";
 
-export const metadata: Metadata = {
-  title: "Bryllupet vårt",
-  description: "Informasjon om bryllupet vårt – program, reise og feiring.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const branding = await getWeddingBranding();
+  return {
+    title: branding.names,
+    icons: weddingIcons(branding),
+    description: "Informasjon om bryllupet vårt – program, reise og feiring.",
+  };
+}
 
 async function WeddingHeader() {
   await connection();
-  const [settings, viewer] = await Promise.all([getHomepageSettings(), getWebsiteViewer()]);
+  const [branding, viewer] = await Promise.all([getWeddingBranding(), getWebsiteViewer()]);
   const access = viewer.administrator ? "administrator" : viewer.household?.status ?? "anonymous";
-  return <Header names={settings.names} access={access} />;
+  return <Header names={branding.names} access={access} />;
 }
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
