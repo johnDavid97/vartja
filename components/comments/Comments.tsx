@@ -2,20 +2,26 @@
 
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { HouseholdIdentity } from "@/components/households/HouseholdIdentity";
-import type { CommentInput, CommentPage, ProgramCommentView } from "@/features/program/activity/validation";
+import type { CommentInput, CommentPage, CommentView } from "@/features/comments/validation";
 import styles from "./comments.module.css";
 
 const dateFormatter = new Intl.DateTimeFormat("nb-NO", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Oslo" });
-function mergeComments(previous: ProgramCommentView[], incoming: ProgramCommentView[]) {
+function mergeComments(previous: CommentView[], incoming: CommentView[]) {
   const merged = new Map(previous.map((comment) => [comment.id, comment]));
   incoming.forEach((comment) => merged.set(comment.id, comment));
   return [...merged.values()].sort((a, b) => a.id - b.id);
 }
 
-export function DayComments({ dayId, authorName, administrator }: { dayId: string; authorName: string; administrator: boolean }) {
+interface CommentsProps { endpoint: string; authorName: string; administrator: boolean }
+
+/** Reset state between targets, while Program's visited panels preserve their own mounted instance. */
+export function Comments(props: CommentsProps) {
+  return <CommentThread key={props.endpoint} {...props} />;
+}
+
+function CommentThread({ endpoint, authorName, administrator }: CommentsProps) {
   const id = useId();
-  const endpoint = `/api/program-days/${encodeURIComponent(dayId)}/comments`;
-  const [comments, setComments] = useState<ProgramCommentView[]>([]);
+  const [comments, setComments] = useState<CommentView[]>([]);
   const [cursor, setCursor] = useState<number | null>(null);
   const [enabled, setEnabled] = useState(false);
   const [loaded, setLoaded] = useState(false);
@@ -64,7 +70,7 @@ export function DayComments({ dayId, authorName, administrator }: { dayId: strin
         const result = await response.json();
         throw new Error(result.error || "Kunne ikke sende kommentaren.");
       }
-      const comment: ProgramCommentView = await response.json();
+      const comment: CommentView = await response.json();
       setComments((previous) => mergeComments(previous, [comment])); setBody(""); setParentId(null);
       snapshot.current = null; setUncertain(false); setNotice("Kommentaren er lagt til.");
     } catch (cause) {
@@ -72,27 +78,27 @@ export function DayComments({ dayId, authorName, administrator }: { dayId: strin
       setError(cause instanceof Error ? cause.message : "Kunne ikke sende kommentaren.");
     } finally { setPending(false); }
   }
-  async function moderate(comment: ProgramCommentView) {
+  async function moderate(comment: CommentView) {
     if (pending) return;
     setPending(true); setError("");
     try {
       const response = await fetch(endpoint, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: comment.id, status: comment.hidden ? "published" : "hidden" }) });
       if (!response.ok) throw new Error();
-      const updated: ProgramCommentView = await response.json();
+      const updated: CommentView = await response.json();
       setComments((previous) => mergeComments(previous, [updated]));
     } catch { setError("Kunne ikke endre synlighet. Prøv igjen."); }
     finally { setPending(false); }
   }
-  function replyRoot(comment: ProgramCommentView) {
+  function replyRoot(comment: CommentView) {
     const root = comments.find((candidate) => candidate.id === (comment.parentId ?? comment.id));
     return root && !root.hidden && root.parentId === null ? root : null;
   }
-  function reply(comment: ProgramCommentView) {
+  function reply(comment: CommentView) {
     const root = replyRoot(comment);
     if (pending || uncertain || comment.hidden || !root) return;
     setParentId(root.id); textarea.current?.focus();
   }
-  function renderComment(comment: ProgramCommentView) {
+  function renderComment(comment: CommentView) {
     const canReply = enabled && !comment.hidden && replyRoot(comment) !== null;
     return <article className={styles.comment} key={comment.id}>
       {comment.hidden ? <p className={styles.hidden}>Kommentaren er skjult av brudeparet.</p> : <>
@@ -110,7 +116,7 @@ export function DayComments({ dayId, authorName, administrator }: { dayId: strin
   return <section className={styles.section} aria-labelledby={`${id}-heading`}>
     <h2 id={`${id}-heading`}>Kommentarer</h2>
     {!loaded && !error && <p role="status">Laster kommentarer …</p>}
-    {loaded && comments.length === 0 && <p className={styles.hint}>Ingen kommentarer ennå. Lurer dere på noe om denne dagen?</p>}
+    {loaded && comments.length === 0 && <p className={styles.hint}>Ingen kommentarer ennå. Har dere noen spørsmål?</p>}
     {comments.filter((comment) => comment.parentId === null).map((root) => <div className={styles.thread} key={root.id}>
       {renderComment(root)}
       <div className={styles.replies}>{comments.filter((comment) => comment.parentId === root.id).map(renderComment)}</div>
@@ -118,7 +124,7 @@ export function DayComments({ dayId, authorName, administrator }: { dayId: strin
     {cursor !== null && <button className={styles.secondary} type="button" disabled={loading} onClick={more}>{loading ? "Laster …" : "Vis flere kommentarer"}</button>}
     {error && <p role="alert" className={styles.error}>{error}</p>}
     {!loaded && error && <button type="button" className={styles.secondary} onClick={() => { setError(""); setReload((value) => value + 1); }}>Prøv igjen</button>}
-    {loaded && !enabled && <p className={styles.hint}>Kommentarer er stengt for denne dagen.</p>}
+    {loaded && !enabled && <p className={styles.hint}>Kommentarer er stengt her.</p>}
     {loaded && enabled && <form onSubmit={submit} className={styles.composer}>
       <HouseholdIdentity name={authorName} administrator={administrator} />
       {replyTarget && <p className={styles.hint}>Svar til {replyTarget.authorName || "kommentaren"} <button type="button" disabled={pending || uncertain} onClick={() => setParentId(null)}>Avbryt svar</button></p>}
