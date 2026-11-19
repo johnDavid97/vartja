@@ -5,8 +5,11 @@ import CheckApprovalButton from "@/components/households/CheckApprovalButton";
 import LogoutButton from "@/components/households/LogoutButton";
 import styles from "@/components/households/login.module.css";
 import { weddingPath } from "@/features/wedding-site/paths";
+import { weddingPageMetadata } from "@/features/wedding-site/branding-server";
 
-export const metadata = { title: "Venter på godkjenning — Andrea & Martin", robots: { index: false, follow: false } };
+export async function generateMetadata() {
+  return { ...await weddingPageMetadata("Venter på godkjenning"), robots: { index: false, follow: false } };
+}
 async function Waiting() {
   const viewer = await getWebsiteViewer();
   if (viewer.administrator || viewer.household?.status === "approved") redirect(weddingPath());

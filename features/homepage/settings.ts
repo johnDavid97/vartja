@@ -1,6 +1,7 @@
 import type { Wedding } from "@/payload-types";
 import type { HomepageSettings } from "./models";
 import { isHexColor } from "@/lib/colors";
+import { weddingBranding } from "@/features/wedding-site/branding";
 
 export const DEFAULT_HERO_COLOR = "#3c4641";
 export const DEFAULT_WEDDING_DATE = "2027-07-27T00:00:00+02:00";
@@ -13,7 +14,7 @@ function focalPosition(value: number | null | undefined): number {
 export function toHomepageSettings(wedding: Wedding): HomepageSettings {
   const photo = typeof wedding.heroImage === "object" ? wedding.heroImage : null;
   return {
-    names: wedding.coupleNames?.trim() || "Andrea & Martin",
+    names: weddingBranding(wedding.coupleNames).names,
     date: wedding.weddingDate || DEFAULT_WEDDING_DATE,
     venue: wedding.venue?.trim() || "",
     welcomeMessage: wedding.welcomeMessage?.trim() || "",
