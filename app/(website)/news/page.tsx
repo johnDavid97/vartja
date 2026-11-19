@@ -9,6 +9,9 @@ import { getPayload } from "payload";
 import config from "@payload-config";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import SiteFooter from "@/components/homepage/SiteFooter";
+import { getHomepageSettings } from "@/features/homepage/composition-root";
+import styles from "./news.module.css";
 
 export const metadata: Metadata = {
   title: "Innlegg — Andrea & Martin",
@@ -35,7 +38,7 @@ async function Posts({ searchParams }: Props) {
     where: publishedGuestPosts,
     overrideAccess: false,
     draft: false,
-    sort: "-createdAt",
+    sort: ["-publishedAt", "-id"],
     limit: 9,
     page,
     depth: 1,
@@ -46,7 +49,7 @@ async function Posts({ searchParams }: Props) {
       <Card className="mx-auto max-w-xl bg-white p-6 text-center sm:p-10">
         <CardHeader>
           <CardTitle>
-            <h2 className="font-serif text-2xl">
+            <h2 className={`${styles.serifHeading} text-2xl`}>
               {page > 1 ? "Ingen innlegg på denne siden" : "Snart kommer det nytt fra oss"}
             </h2>
           </CardTitle>
@@ -87,21 +90,27 @@ async function Posts({ searchParams }: Props) {
   );
 }
 
+async function WebsiteFooter() {
+  await requireApprovedViewer();
+  return <SiteFooter settings={await getHomepageSettings()} />;
+}
+
 function PostsPage({ searchParams }: Props) {
   return (
-    <main className="min-h-svh px-4 py-12 sm:px-6 sm:py-20">
-      <div className="mx-auto max-w-7xl">
-        <header className="mx-auto mb-12 max-w-2xl text-center sm:mb-16">
-          <p className="mb-4 text-xs uppercase tracking-[0.2em] text-stone-500">Frem mot den store dagen</p>
-          <h1 className="font-serif text-4xl text-stone-800 sm:text-6xl">Nytt fra oss</h1>
-          <p className="mt-5 text-base leading-relaxed text-stone-600 sm:text-lg">
-            Her finner dere nyheter, små oppdateringer og informasjon om bryllupet.
-          </p>
-        </header>
-        <Suspense fallback={<p role="status" className="py-12 text-center text-stone-600">Laster innlegg…</p>}>
-          <Posts searchParams={searchParams} />
-        </Suspense>
-      </div>
-    </main>
+    <>
+      <main className="min-h-svh px-4 py-12 sm:px-6 sm:py-20">
+        <div className="mx-auto max-w-7xl">
+          <header className="mb-12 text-center sm:mb-16">
+            <h1 className={`${styles.serifHeading} text-4xl text-stone-800 sm:text-6xl`}>Innlegg</h1>
+          </header>
+          <Suspense fallback={<p role="status" className="py-12 text-center text-stone-600">Laster innlegg…</p>}>
+            <Posts searchParams={searchParams} />
+          </Suspense>
+        </div>
+      </main>
+      <Suspense fallback={null}>
+        <WebsiteFooter />
+      </Suspense>
+    </>
   );
 }

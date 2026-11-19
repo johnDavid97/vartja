@@ -1,6 +1,107 @@
+.defaultArticle,
 .homepageArticle {
   min-width: 0;
   height: 100%;
+}
+
+.defaultLink {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  overflow: hidden;
+  color: #222622;
+  text-decoration: none;
+  background: #fff;
+  border: 1px solid #e4e3de;
+  border-radius: 1rem;
+  transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+
+.defaultLink:hover {
+  border-color: #b9c9c3;
+  box-shadow: 0 0.75rem 2rem rgb(46 94 83 / 9%);
+  transform: translateY(-2px);
+}
+
+.defaultLink:focus-visible {
+  outline: 3px solid #2e5e53;
+  outline-offset: 4px;
+}
+
+.defaultMedia {
+  position: relative;
+  flex: none;
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  overflow: hidden;
+  background: #a9b8af;
+}
+
+.defaultImage {
+  object-fit: cover;
+  transition: transform 300ms ease;
+}
+
+.defaultLink:hover .defaultImage {
+  transform: scale(1.025);
+}
+
+.defaultBody {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 1.3rem 1.35rem 1.45rem;
+}
+
+.defaultTheme {
+  max-width: 100%;
+  padding: 0.3rem 0.75rem;
+  overflow-wrap: anywhere;
+  color: #2e5e53;
+  font-size: 0.78rem;
+  font-weight: 650;
+  line-height: 1.2;
+  background: #edf3f0;
+  border-radius: 999px;
+}
+
+.defaultTitle {
+  margin: 0.9rem 0 0;
+  overflow-wrap: anywhere;
+  color: #20231f;
+  font-family: var(--font-wedding-serif, Georgia, serif);
+  font-size: clamp(1.35rem, 2vw, 1.7rem);
+  font-weight: 400;
+  line-height: 1.15;
+}
+
+.defaultDescription {
+  display: -webkit-box;
+  margin: 0.75rem 0 1.35rem;
+  overflow: hidden;
+  color: #4f5551;
+  font-size: 0.98rem;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+  white-space: pre-line;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.defaultReadMore {
+  display: inline-flex;
+  gap: 0.55rem;
+  align-items: center;
+  margin-top: auto;
+  color: #2e5e53;
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.defaultLink:hover .defaultReadMore {
+  text-decoration: underline;
+  text-underline-offset: 0.25rem;
 }
 
 .homepageLink {
@@ -113,11 +214,15 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .defaultLink,
+  .defaultImage,
   .homepageLink,
   .homepageImage {
     transition: none;
   }
 
+  .defaultLink:hover,
+  .defaultLink:hover .defaultImage,
   .homepageLink:hover,
   .homepageLink:hover .homepageImage {
     transform: none;
