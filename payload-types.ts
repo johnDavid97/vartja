@@ -289,20 +289,17 @@ export interface PollVote {
  */
 export interface Household {
   id: number;
-  contactName: string;
   /**
-   * Brukes ved innlogging og som navn ved kommentarer. Kan endres av administrator.
+   * Navnet husstanden bruker ved innlogging og kommentarer.
    */
   displayName: string;
+  contactName: string;
   email: string;
   status: 'pending' | 'approved' | 'revoked';
-  /**
-   * Alle som hører til husstanden. Nye familiemedlemmer får status Venter til du godkjenner dem.
-   */
   members: {
     memberId: string;
     name: string;
-    status: 'pending' | 'approved';
+    status: 'pending' | 'approved' | 'revoked';
     id?: string | null;
   }[];
   updatedAt: string;
@@ -634,8 +631,8 @@ export interface PollVotesSelect<T extends boolean = true> {
  * via the `definition` "households_select".
  */
 export interface HouseholdsSelect<T extends boolean = true> {
-  contactName?: T;
   displayName?: T;
+  contactName?: T;
   email?: T;
   status?: T;
   members?:

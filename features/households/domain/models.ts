@@ -1,6 +1,6 @@
 export type HouseholdStatus = "pending" | "approved" | "revoked";
 
-export type MemberStatus = "pending" | "approved";
+export type MemberStatus = "pending" | "approved" | "revoked";
 
 export interface HouseholdMember {
   id: string;

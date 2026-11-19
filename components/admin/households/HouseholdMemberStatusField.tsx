@@ -18,6 +18,7 @@ const HouseholdMemberStatusField: SelectFieldClientComponent = ({ path, field, r
         {[
           { value: "pending", label: "Venter" },
           { value: "approved", label: "Godkjent" },
+          { value: "revoked", label: "Avslått" },
         ].map((option) => (
           <label key={option.value} className={`household-member-status__option household-member-status__option--${option.value}`}>
             <input type="radio" name={id} value={option.value} checked={value === option.value} onChange={() => setValue(option.value)} />

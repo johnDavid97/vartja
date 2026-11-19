@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createHouseholdApplication } from "../../features/households/composition-root";
-import type { HouseholdDetails, HouseholdRecord, HouseholdRepository, MemberIdGenerator } from "../../features/households/application/ports";
+import type { HouseholdDetailsUpdate, HouseholdRecord, HouseholdRepository, MemberIdGenerator } from "../../features/households/application/ports";
 
 class FakeHouseholds implements HouseholdRepository {
   writes = 0;
@@ -11,7 +11,7 @@ class FakeHouseholds implements HouseholdRepository {
     return this.record?.id === id ? structuredClone(this.record) : null;
   }
 
-  async updateDetails(id: string, revision: number, details: HouseholdDetails) {
+  async updateDetails(id: string, revision: number, details: HouseholdDetailsUpdate) {
     if (this.concurrentChange || !this.record || this.record.id !== id || this.record.revision !== revision) return false;
     this.record = { ...this.record, ...structuredClone(details), revision: revision + 1 };
     this.writes += 1;
@@ -59,6 +59,7 @@ describe("UpdateHouseholdDetails", () => {
   it("allows pending households to correct their own details without approving them", async () => {
     const { app, record, principal, input } = setup();
     record.status = "pending";
+    record.members.forEach((member) => { member.status = "pending"; });
     const result = await app.updateDetails.execute(principal, 3, input);
     expect(result.status).toBe("pending");
   });
@@ -68,6 +69,26 @@ describe("UpdateHouseholdDetails", () => {
     input.members = [{ id: "member-2", name: "Sam Example" }];
     const result = await app.updateDetails.execute(principal, 3, input);
     expect(result.members).toEqual([{ id: "member-2", name: "Sam Example", status: "pending" }]);
+  });
+
+  it("preserves rejection on a name correction", async () => {
+    const { app, record, input, principal } = setup();
+    record.members[1].status = "revoked";
+    input.members = [
+      { id: "member-1", name: "Alex" },
+      { id: "member-2", name: "Sam Rejected" },
+    ];
+    const result = await app.updateDetails.execute(principal, 3, input);
+    expect(result.members[1]).toEqual({ id: "member-2", name: "Sam Rejected", status: "revoked" });
+    expect(result.status).toBe("approved");
+  });
+
+  it("derives pending after removing the last approved member", async () => {
+    const { app, input, principal } = setup();
+    input.members = [{ id: "member-2", name: "Sam" }];
+    const result = await app.updateDetails.execute(principal, 3, input);
+    expect(result.members).toEqual([{ id: "member-2", name: "Sam", status: "pending" }]);
+    expect(result.status).toBe("pending");
   });
 
   it("never accepts household identity or approval in guest input", async () => {

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { HouseholdError, type HouseholdErrorCode } from "@/features/households/domain/errors";
 import {
+  deriveHouseholdStatus,
   hasApprovedHouseholdAccess,
   reconcileMembers,
 } from "@/features/households/domain/member-policy";
@@ -159,6 +160,17 @@ describe("member reconciliation", () => {
     });
   });
 
+  it("preserves rejection on a name correction", () => {
+    const rejected: readonly HouseholdMember[] = [
+      { id: "rejected-member", name: "Nora", status: "revoked" },
+    ];
+    expect(reconcileMembers(rejected, [{ id: "rejected-member", name: "Nora Nordmann" }])).toEqual({
+      updates: [{ id: "rejected-member", name: "Nora Nordmann", status: "revoked" }],
+      additions: [],
+      removals: [],
+    });
+  });
+
   it("removes omitted existing members", () => {
     expect(reconcileMembers(existing, [{ id: "approved-member", name: "Kari" }])).toEqual({
       updates: [],
@@ -198,6 +210,23 @@ describe("member reconciliation", () => {
     const plan = reconcileMembers(existing, [{ name: "New member" }]);
     expect(plan.additions).toEqual([{ name: "New member", status: "pending" }]);
     expect(plan.additions[0]).not.toHaveProperty("id");
+  });
+});
+
+describe("household status derivation", () => {
+  it.each([
+    [["approved"], "approved"],
+    [["revoked", "approved", "pending"], "approved"],
+    [["revoked", "pending"], "pending"],
+    [["pending", "pending"], "pending"],
+    [["revoked"], "revoked"],
+    [["revoked", "revoked"], "revoked"],
+  ] as const)("derives %s as %s", (statuses, expected) => {
+    expect(deriveHouseholdStatus(statuses.map((status) => ({ status })))).toBe(expected);
+  });
+
+  it("rejects an empty member list", () => {
+    expectHouseholdError(() => deriveHouseholdStatus([]), "INVALID_MEMBERS");
   });
 });
 

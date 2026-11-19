@@ -84,18 +84,42 @@
   font: inherit;
 }
 
-.maskedCode { padding: 14px; border: 1px dashed #ccd5ce; border-radius: 10px; background: #f7f9f7; color: #737d78; font-size: 20px; letter-spacing: 3px; text-align: center; }
+.codeDisplay {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  min-width: 0;
+  min-height: 58px;
+  border: 1px solid #e2e4e1;
+  border-radius: 12px;
+  background: #f7f8f6;
+}
 
-.accessField .description { color: #62686e; font-size: 13px; }
-.accessField .actions > * { flex: 1 1 auto; justify-content: center; }
-
+.maskedCode,
 .code {
   box-sizing: border-box;
-  display: block;
+  min-width: 0;
+  padding: 14px 4px 14px 16px;
+  overflow: hidden;
+  color: #303633;
   font-family: monospace;
-  font-size: 18px;
-  user-select: all;
+  font-size: 17px;
+  letter-spacing: 2px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
+
+.code { display: block; width: 100%; user-select: all; }
+.revealButton { margin-right: 8px; color: #626a66; }
+.accessField .description { color: #62686e; font-size: 13px; }
+.accessField .actions > * { flex: 1 1 auto; justify-content: center; }
+.accessField .rotateButton { color: #a12e29; }
+.accessField .rotateButton:hover { background: #fff0ef; color: #8d2723; }
+.immediateNote { margin: 0; color: #737a76; font-size: 12px; line-height: 1.5; }
+.metadata { display: grid; gap: 7px; margin: 0 4px 24px; color: #62686e; font-size: 13px; }
+.metadata div { display: flex; gap: 5px; }
+.metadata dt { font-weight: 400; }
+.metadata dd { margin: 0; color: #343b38; font-weight: 650; }
 
 .qrImage {
   display: block;

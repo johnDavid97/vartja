@@ -10,7 +10,7 @@ import { HOUSEHOLD_SESSION_COOKIE } from "../../features/households/http/session
 
 const databaseUrl = new URL(process.env.DATABASE_URL || "");
 assert(["localhost", "127.0.0.1"].includes(databaseUrl.hostname));
-assert(/^\/sammen_household_login_test_/.test(databaseUrl.pathname), "Disposable login DB only");
+assert(/^\/sammen_household_(login|members)_test_\d+_[a-f0-9]+$/.test(databaseUrl.pathname), "Disposable login DB only");
 const baseURL = process.env.TEST_BASE_URL || "http://localhost:3107";
 const payload = await getPayload({ config });
 let browser: Browser | undefined;
@@ -38,6 +38,15 @@ try {
     return context.request.post("/api/household-login", { headers, data: { householdName, accessCode, remember } });
   }
   async function session(context: BrowserContext) { return (await (await context.request.get("/api/household-session")).json()).household; }
+  async function setMemberStatuses(householdId: number, statuses: readonly ("pending" | "approved" | "revoked")[]) {
+    const current = await payload.findByID({ collection: "households", id: householdId });
+    assert.equal(statuses.length, current.members.length);
+    return payload.update({
+      collection: "households",
+      id: householdId,
+      data: { members: current.members.map((member, index) => ({ ...member, status: statuses[index] })) },
+    });
+  }
   const image = await sharp({ create: { width: 80, height: 60, channels: 3, background: "#3c6555" } }).png().toBuffer();
   async function upload(name: string) {
     const media = await payload.create({ collection: "media", data: { alt: name }, file: { data: image, name: `${name}-${randomUUID()}.png`, mimetype: "image/png", size: image.length } });
@@ -128,7 +137,9 @@ try {
   }
   assert.equal((await otherDevice.request.get(privateImage.url!)).status(), 403);
   assert.equal((await otherDevice.request.get("/api/posts")).status(), 403);
-  await payload.update({ collection: "households", id: pending.householdId, data: { status: "approved" } });
+  const pendingBeforeApproval = await payload.findByID({ collection: "households", id: pending.householdId });
+  const approvedPendingHousehold = await setMemberStatuses(pending.householdId, pendingBeforeApproval.members.map(() => "approved"));
+  assert.equal(approvedPendingHousehold.status, "approved");
   await pendingPage.getByRole("button", { name: "Sjekk godkjenning" }).click(); await expect(pendingPage).toHaveURL(baseURL + "/");
   assert((await otherDevice.request.get("/api/posts")).ok());
 
@@ -157,15 +168,28 @@ try {
   assert.equal((await guest.request.get(privateImage.url!)).status(), 403);
   assert.equal((await login(guest, firstCode, "Familien Hansen")).status(), 401);
   assert((await login(guest, rotated, "Familien Hansen")).ok());
-  await payload.update({ collection: "households", id: first.householdId, data: { status: "revoked" } });
+  assert((await login(remembered, rotated, "Familien Hansen")).ok());
+  const beforeMemberRejection = await payload.findByID({ collection: "households", id: first.householdId });
+  assert.equal(beforeMemberRejection.members.length, 2);
+  const partiallyRejected = await setMemberStatuses(first.householdId, ["revoked", "approved"]);
+  assert.equal(partiallyRejected.status, "approved");
+  assert.equal((await session(guest)).householdId, first.householdId);
+  assert.equal((await session(remembered)).householdId, first.householdId, "Another-device approved session must remain valid while another member is approved");
+  const fullyRejected = await setMemberStatuses(first.householdId, ["revoked", "revoked"]);
+  assert.equal(fullyRejected.status, "revoked");
   assert.equal(await session(guest), null);
+  assert.equal(await session(remembered), null);
   assert.equal((await login(guest, rotated, "Familien Hansen")).status(), 401);
-  await payload.update({ collection: "households", id: first.householdId, data: { status: "approved" } });
-  assert.equal(await session(guest), null, "Reapproval must not resurrect sessions");
+  const reapprovedAfterRejection = await setMemberStatuses(first.householdId, ["approved", "revoked"]);
+  assert.equal(reapprovedAfterRejection.status, "approved");
+  assert.equal(await session(guest), null, "A rejected household session must remain revoked after later member approval");
+  assert.equal(await session(remembered), null, "Reapproval must not resurrect another device's revoked session");
   assert((await login(guest, rotated, "Familien Hansen")).ok());
-  await payload.update({ collection: "households", id: first.householdId, data: { status: "pending" } });
-  assert.equal(await session(guest), null, "Downgrading approval revokes existing sessions");
-  await payload.update({ collection: "households", id: first.householdId, data: { status: "approved" } });
+  const pendingMembers = await setMemberStatuses(first.householdId, ["pending", "pending"]);
+  assert.equal(pendingMembers.status, "pending");
+  assert.equal(await session(guest), null, "Removing the last approval revokes existing sessions");
+  const approvedAgain = await setMemberStatuses(first.householdId, ["approved", "pending"]);
+  assert.equal(approvedAgain.status, "approved");
   assert((await login(guest, rotated, "Familien Hansen")).ok());
   const staleCookie = (await guest.cookies()).find((item) => item.name === HOUSEHOLD_SESSION_COOKIE)!;
   assert.equal((await guest.request.post("/api/household-logout", { headers: { Origin: "https://evil.invalid" }, data: {} })).status(), 403);
@@ -183,7 +207,7 @@ try {
   assert.equal((await login(guest, secondCode, "Wrong name for quota")).status(), 429);
   assert.equal((await guest.request.get("/api/household-login-limits")).status(), 403);
   assert.deepEqual(errors, []);
-  console.log("PASS: family name/code login, duplicate names, cookies, remembered device, pending/approval, rename, rotation/rejection/logout/expiry/deletion revocation, durable quota, protected pages/APIs/media, public hero and mobile login.");
+  console.log("PASS: family name/code login, duplicate names, cookies, remembered devices, member-derived pending/approval/rejection, session retention/revocation, rename, rotation/logout/expiry/deletion, durable quota, protected pages/APIs/media, public hero and mobile login.");
 } catch (error) { console.error(error); exitCode = 1; }
 finally {
   await browser?.close();

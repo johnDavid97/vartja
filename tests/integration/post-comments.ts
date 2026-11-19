@@ -159,7 +159,10 @@ try {
   // Quota is shared with Program activity, not reset by moving between surfaces.
   await payload.db.drizzle.execute(sql`UPDATE program_activity_limits SET attempts=20, window_start=date_trunc('minute', now())`);
   assert.equal((await guest.request.post(secondEndpoint, { headers, data: input("Limited") })).status(), 429);
-  await payload.update({ collection: "households", id: household.householdId, data: { status: "pending" } });
+  const beforeWithdrawal = await payload.findByID({ collection: "households", id: household.householdId });
+  await payload.update({ collection: "households", id: household.householdId, data: {
+    members: beforeWithdrawal.members.map((member) => ({ ...member, status: "pending" as const })),
+  } });
   assert.equal((await guest.request.get(secondEndpoint)).status(), 403);
   assert.deepEqual(errors, []);
   console.log("PASS: shared post comments/replies/moderation, per-post/day isolation, published/private/draft access, retry safety, draft-aware controls, visibility/write serialization, retained deletion history, quota and responsive layouts.");
