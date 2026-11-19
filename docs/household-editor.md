@@ -1,26 +1,45 @@
-# Household editor refinement
+# Household editor
 
-The administrator's individual household edit screen now matches the existing wedding admin cards, buttons and colours. Overview, shared invitation and guest registration flows are not redesigned.
+The administrator's household edit screen follows `husstand-rediger.pdf`. The approved extension keeps **Husstandsnavn** above a paired **Kontaktperson / E-post** row. Overview, shared invitation and guest registration flows are not redesigned.
+
+## Member decisions and household access
+
+Each member has **Venter / Godkjent / Avslått** (`pending / approved / revoked`). Household status is derived:
+
+- At least one approved member → approved household.
+- No approved members, but at least one pending → pending household.
+- Everyone rejected → rejected household.
+
+`deriveHouseholdStatus` is the shared pure rule. The collection derives and persists household status from validated members, ignoring submitted household status. A status-only API update is not a bulk command. **Godkjenn alle** explicitly updates all member fields, including rejected members, in native form state; changes take effect only on **Lagre**.
+
+Removing the last approved member can withdraw access. Existing sessions are invalidated when approval is lost or a household becomes rejected. Reapproval does not resurrect old sessions. Changing one member leaves household sessions valid if another member remains approved. Registration still creates pending members; administrator creation still creates approved members. Name corrections preserve decisions, and additions default to pending.
 
 ## Layout and responsibilities
 
-- `HouseholdHeading` supplies the title and saved/unsaved indicator inside native Payload document controls. Native Save, validation, permissions, locking and document actions remain intact.
-- An **unnamed** contact group provides a card without nesting `contactName` or `email` in stored data.
-- `HouseholdMembersField` displays an always-visible list: each row has a native name input and inline **Venter / Godkjent** radio toggles, with add/remove controls. Reordering is optional through Payload's existing `admin.isSortable` setting (default `true`); households explicitly set it to `false`, so no up/down controls are shown. It reuses Payload `RenderFields` and native array operations, preserving stable row/member IDs and field permissions without a second form state. Narrow screens wrap the controls within each row.
-- `HouseholdMemberStatusField` supports keyboard radio navigation and follows Payload's live field path when rows move. Status changes remain unsaved until **Lagre**.
-- `HouseholdApprovalField` writes only native form state via `useField`. Approve, reject and pending choices take effect only on **Lagre**. Read-only and disabled form states are respected. Existing collection approval hooks are unchanged.
-- `HouseholdStatusBadge` shares the overview's existing presentation rules and CSS across the table, header and approval card.
-- The code panel stays separate from form persistence. Reveal/copy/replace retain the existing authenticated endpoints, audit trail and confirmation. A new Hide action clears the displayed code. Copy explicitly explains that replacement is immediate and does not require Save.
-- Desktop uses two columns; smaller screens stack the cards. A redundant single native edit tab is hidden only on this document type; multiple tabs would remain visible.
+- `HouseholdHeading` shows the live household name and derived status, with unsaved changes indicated separately. Payload owns Save, validation, permissions, locking and document actions.
+- The unnamed contact group does not nest persisted fields. Household name spans both desktop columns; contact name/email share the next row and stack on mobile.
+- `HouseholdMembersField` keeps native `RenderFields`, array operations and stable row/member IDs. Flat rows have initials, names, three-state radio choices and remove controls. The card shows an approved count and explicit approve-all action. Read-only and child status permissions apply to bulk actions too.
+- `HouseholdMemberStatusField` uses keyboard-accessible native radios. Rejected members remain visible/editable, rather than being deleted.
+- `householdFormPresentation` selects live member fields without introducing competing form state. Initials reuse the shared presentation helper.
+- `HouseholdApprovalField` retains native field registration/error handling but does not present an independent approval control or mark the form modified on mount.
+- The code panel provides eye reveal/hide, copy, confirmed immediate replacement and document timestamps. Existing authenticated endpoints and credential auditing are unchanged. Revealed codes remain in component memory and clear on document navigation.
+- **Deletion remains in Payload's native document-action menu**, rather than the PDF's sidebar link. The installed public UI API does not export its native deletion component; no private import or parallel deletion workflow was introduced.
 
-No new endpoint, database migration, guest permission or approval rule was introduced. Generated household types retain the same field shape.
+No guest self-service endpoint was added. The deferred edit-details service now derives status after member reconciliation; any future repository implementation must atomically persist status and session-version consequences alongside revision checks.
+
+## Migration and compatibility
+
+`20261119_120845_household_member_rejection` adds the rejected member enum value. Enum recreation allows legacy rejected households to be backfilled to rejected members within the same transaction. Household status, credentials, IDs and versions are preserved.
+
+The migration refuses inconsistent legacy approvals (including empty households) rather than silently granting or withdrawing access. Review such records explicitly before retrying. Rollback refuses when rejected members exist, since reverting would otherwise lose their decisions.
+
+Back up populated databases and apply only this outstanding reviewed migration. Never replay initial migrations against populated databases.
 
 ## Verification
 
-- 212 unit tests (including sortable, non-sortable and default component configuration), strict TypeScript, production build and lint (only four pre-existing migration warnings).
-- Isolated PostgreSQL/browser registration suite: initial approval; unsaved approval/rejection; contact/member edits; stable member IDs and order; no reorder controls for households; persisted add/remove; new members pending; keyboard toggles and individual approval; rejection/reapproval; reveal/copy/hide; cancellation and confirmed immediate code replacement; existing credential and access regressions.
-- Existing household admin, native admin, visual editor and poll browser suites pass against a disposable database and production server.
-- Screenshots reviewed at 320, 390, 768, 1024 and 1440px. Tests check page width, card gutters, desktop overlap and account-link visibility.
-- Independent read-only review reported no actionable findings in the scoped changes.
-
-Implemented on `feature/household-editor-design`.
+- 282 unit tests pass, including all aggregate-status combinations, empty lists, rejected-name preservation, removal of the last approved member, native UI controls and read-only/permission states. Build and TypeScript pass; lint has only four existing initial-migration warnings.
+- `npm run test:household-members`: production build, disposable migration/rollback/backfill checks, editor/registration, login/Program and admin/editor/poll regressions. Suites use separate databases because registration deliberately exhausts durable quotas.
+- Browser checks cover individual/bulk approval and rejection, save-only persistence, contradictory status submissions, session revocation/reapproval, credential rotation/auditing, stable IDs and 320–1440px layouts. Desktop assertions verify full-width household name and paired contact/email fields.
+- An older visual-editor assertion was scoped to the article body so the separately added comments heading does not count as saved rich-text content.
+- Independent read-only review found no blocking issues. All 14 browser smoke checks pass; separate disposable Program-activity and post-comment suites confirm access withdrawal still protects their endpoints.
+- The local migration was applied after a private backup, with all existing table-content fingerprints unchanged. Its operational helper timed out during cleanup after reporting success; a separate connection confirmed the committed migration record and enum. No initial migrations were replayed.

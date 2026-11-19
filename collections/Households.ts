@@ -2,6 +2,8 @@ import { randomUUID } from "node:crypto";
 import { lockHouseholdUpdates } from "../features/households/infrastructure/lockHouseholdUpdates";
 import { ValidationError, type CollectionConfig } from "payload";
 import { normalizeHouseholdName } from "../features/households/domain/household-name";
+import { deriveHouseholdStatus } from "../features/households/domain/member-policy";
+import type { MemberStatus } from "../features/households/domain/models";
 import { validateHouseholdInput, validateMemberId } from "../features/households/domain/validation";
 
 const isAdministrator = ({ req }: { req: { user?: { collection?: string } | null } }) => req.user?.collection === "users";
@@ -13,6 +15,7 @@ function invalidField(path: string, message: string): never {
 }
 
 type MemberData = { id?: string; memberId?: string; name?: unknown; status?: unknown };
+type ValidatedMemberData = Omit<MemberData, "status"> & { status: MemberStatus };
 type HouseholdData = Record<string, unknown> & { displayName?: unknown; members?: MemberData[]; status?: unknown };
 
 const trustedAdminCreationToken = Object.freeze({ purpose: "household-admin-creation" });
@@ -26,7 +29,7 @@ function validatedMembers(
   data: HouseholdData,
   original: HouseholdData | undefined,
   creationMode: "registration" | "administrator" | null,
-): MemberData[] {
+): ValidatedMemberData[] {
   if (!Array.isArray(data.members)) invalidField("members", "Husstanden må ha medlemmer.");
   const originalMembers = Array.isArray(original?.members) ? original.members : [];
   const originalByMemberId = new Map(originalMembers.map((member) => [member.memberId, member]));
@@ -43,11 +46,11 @@ function validatedMembers(
     memberIds.add(memberId);
 
     // Guest registration is always pending; the separate trusted administrator
-    // creation path is approved. Native CRUD may explicitly approve new members.
+    // creation path is approved. Native CRUD may decide each new member's status.
     const status = creationMode === "registration"
       ? "pending"
       : creationMode === "administrator" ? "approved" : submittedMember.status ?? "pending";
-    if (status !== "pending" && status !== "approved") invalidField("members", "Ugyldig medlemsstatus.");
+    if (status !== "pending" && status !== "approved" && status !== "revoked") invalidField("members", "Ugyldig medlemsstatus.");
     return { ...submittedMember, memberId, status };
   });
 }
@@ -109,20 +112,6 @@ export const Households: CollectionConfig = {
       const merged = { ...original, ...submitted } as HouseholdData;
       const members = validatedMembers(merged, original, creationMode);
       const previousStatus = original?.status;
-      const status = creationMode === "registration"
-        ? "pending"
-        : creationMode === "administrator" ? "approved" : merged.status;
-      if (status !== "pending" && status !== "approved" && status !== "revoked") invalidField("status", "Ugyldig husstandsstatus.");
-      if (previousStatus === "pending" && status === "approved") {
-        members.forEach((member) => { member.status = "approved"; });
-      }
-      if (operation === "update") {
-        const previousSessionVersion = Number(original?.sessionVersion ?? 1);
-        const revokesSessions = (previousStatus === "approved" && status === "pending")
-          || (previousStatus !== "revoked" && status === "revoked");
-        submitted.sessionVersion = previousSessionVersion + (revokesSessions ? 1 : 0);
-      }
-
       const details = validateHouseholdInput({
         contactName: merged.contactName,
         email: merged.email,
@@ -136,24 +125,35 @@ export const Households: CollectionConfig = {
       } catch {
         invalidField("displayName", "Husstandsnavnet er ugyldig.");
       }
+      const normalizedMembers = members.map((member, index) => ({
+        ...member,
+        name: details.members[index].name,
+      }));
+      const status = deriveHouseholdStatus(normalizedMembers);
+      if (operation === "update") {
+        const previousSessionVersion = Number(original?.sessionVersion ?? 1);
+        const revokesSessions = (previousStatus === "approved" && status !== "approved")
+          || (previousStatus !== "revoked" && status === "revoked");
+        submitted.sessionVersion = previousSessionVersion + (revokesSessions ? 1 : 0);
+      }
       submitted.email = details.email;
       submitted.status = status;
-      submitted.members = members.map((member, index) => ({ ...member, name: details.members[index].name }));
+      submitted.members = normalizedMembers;
       return submitted;
     }],
   },
   fields: [
     {
       type: "group", label: "Kontaktopplysninger",
-      admin: { className: "household-contact", description: "Én kontaktperson for hele husstanden. E-postadressen er kun kontaktinformasjon – ingen e-post sendes herfra." },
+      admin: { className: "household-contact" },
       fields: [
+        {
+          name: "displayName", label: "Husstandsnavn", type: "text", required: true, maxLength: 120,
+          admin: { description: "Navnet husstanden bruker ved innlogging og kommentarer." },
+        },
         {
           name: "contactName", label: "Kontaktperson", type: "text", required: true,
           admin: { components: { Cell: "/components/admin/households/HouseholdCells#HouseholdContactCell" } },
-        },
-        {
-          name: "displayName", label: "Husstandsnavn", type: "text", required: true, maxLength: 120,
-          admin: { description: "Brukes ved innlogging og som navn ved kommentarer. Kan endres av administrator." },
         },
         { name: "email", label: "E-post", type: "email", required: true },
       ],
@@ -175,7 +175,6 @@ export const Households: CollectionConfig = {
       labels: { singular: "Familiemedlem", plural: "Familiemedlemmer" },
       admin: {
         className: "household-members", isSortable: false,
-        description: "Alle som hører til husstanden. Nye familiemedlemmer får status Venter til du godkjenner dem.",
         components: {
           Cell: "/components/admin/households/HouseholdCells#HouseholdMembersCell",
           Field: "/components/admin/households/HouseholdMembersField#default",
@@ -186,7 +185,11 @@ export const Households: CollectionConfig = {
         { name: "name", label: "Navn", type: "text", required: true },
         {
           name: "status", label: "Godkjenning", type: "select", required: true, defaultValue: "pending",
-          options: [{ label: "Venter", value: "pending" }, { label: "Godkjent", value: "approved" }],
+          options: [
+            { label: "Venter", value: "pending" },
+            { label: "Godkjent", value: "approved" },
+            { label: "Avslått", value: "revoked" },
+          ],
           admin: { components: { Field: "/components/admin/households/HouseholdMemberStatusField#default" } },
         },
       ],

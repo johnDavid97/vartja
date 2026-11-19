@@ -18,6 +18,7 @@
     "test:post-comments": "npm run build && node --env-file=.env --import tsx tests/integration/post-comments-isolated.ts",
     "test:program-activity": "npm run build && node --env-file=.env --import tsx tests/integration/program-activity-isolated.ts",
     "test:household-login": "npm run build && node --env-file=.env --import tsx tests/integration/household-login-isolated.ts",
+    "test:household-members": "npm run build && node --env-file=.env --import tsx tests/integration/household-members-isolated.ts && node --env-file=.env --import tsx tests/integration/household-login-isolated.ts && node --env-file=.env --import tsx tests/integration/household-admin-isolated.ts",
     "test:poll-overview": "npm run build && node --env-file=.env --import tsx tests/integration/poll-overview-isolated.ts",
     "test:household-admin": "npm run build && node --env-file=.env --import tsx tests/integration/household-admin-isolated.ts",
     "test:households": "npm run build && node --env-file=.env --import tsx tests/integration/household-registration-isolated.ts",

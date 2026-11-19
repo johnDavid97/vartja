@@ -14,14 +14,20 @@ export interface HouseholdDetails {
   members: HouseholdMember[];
 }
 
+export interface HouseholdDetailsUpdate extends HouseholdDetails {
+  status: HouseholdStatus;
+}
+
 export interface HouseholdRepository {
   findById(householdId: string): Promise<HouseholdRecord | null>;
   /**
-   * Atomically compare revision, update only contact/members and increment revision.
-   * Return false if deleted or changed since read. Every admin/guest mutation must
-   * advance revision, so concurrent approval cannot be overwritten by a guest edit.
+   * Atomically compare revision, update contact/members/materialized status and
+   * increment revision. The implementation must also increment the persisted
+   * session version when approved access is lost or a non-revoked household becomes
+   * revoked. Return false if deleted or changed since read. Every admin/guest
+   * mutation must advance revision so concurrent member decisions are not overwritten.
    */
-  updateDetails(householdId: string, expectedRevision: number, updatedDetails: HouseholdDetails): Promise<boolean>;
+  updateDetails(householdId: string, expectedRevision: number, updatedDetails: HouseholdDetailsUpdate): Promise<boolean>;
 }
 
 export interface MemberIdGenerator {
