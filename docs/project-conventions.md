@@ -1,0 +1,31 @@
+# VårtJa project conventions
+
+Project-specific context. Read the sections relevant to the task; the general engineering agreement is in [engineering-guide.md](engineering-guide.md).
+
+## Product and presentation
+
+- Conversation defaults to English; application labels are Norwegian.
+- Guest flows should be straightforward across ages and levels of technical experience. This is a product constraint, not a universal engineering rule.
+- Follow the agreed PDF/screenshots and reuse the wedding site's visual identity and shared components.
+- Date/time presentation follows the existing Norwegian / Europe/Oslo conventions.
+- The current ordered backlog is [remaining-tasks.md](remaining-tasks.md). Clarify the final domain/suffix requirement before choosing a URL architecture.
+
+## Framework and persistence
+
+- Keep native Payload permissions, validation, form state, drafts and publication unless a specific approved requirement needs something different.
+- Read the relevant installed Next.js documentation before framework changes; this project's version may differ from remembered APIs.
+- Preserve existing households, credentials, Program content/version history, posts, comments and votes. Use the disposable integration runners for data-writing tests.
+
+## Identity and privacy
+
+- Administrators and guest households are separate identities. Email is contact information, not proof of identity. Real email delivery/recovery is deferred until explicitly designed.
+- Approved guests can see guest content; private posts and drafts remain protected. Enforce privacy on APIs, data loaders and media, not just navigation.
+- Preserve and securely back up `HOUSEHOLD_ACCESS_SECRET` alongside the database. Changing it requires a deliberate migration/recovery plan.
+
+## Feature references
+
+- [Households](../features/households/README.md)
+- [Program](../features/program/README.md)
+- [Shared comments](../features/comments/README.md)
+- [Polls](../features/polls/README.md)
+- [Future considerations](future-considerations.md)
