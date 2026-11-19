@@ -26,6 +26,8 @@ The scaling follow-up is tracked in [Future considerations](../../docs/future-co
 
 No migration is required. Nothing modifies existing posts or ballots while viewing the overview.
 
-## Future comments design reference
+## Shared guest poll presentation
 
-The supplied `nettside-program.pdf` shows comments below Program, not only posts: initials avatars with display names, relative timestamps, indented replies, and a bottom comment composer. Reuse the shared identity/display-name presentation when implementing comments. Program comments, replies and guest authentication are future work, not part of this poll overview.
+`components/Poll.tsx` and `components/poll.module.css` now match `Nettside-innlegg.pdf` on both posts and Program: compact question/icon header, pale result fills inside answer rows, counts/percentages and mobile stacking. Voting remains native radio selection followed by **Stem**. Loading/retry, pending, selected-answer, closed and administrator read-only states are retained.
+
+This visual update does not change existing post/browser ballots or Program/household ballots, result visibility or persistence. Scoped styles override surrounding article typography without stripping nested-list formatting from authored content. Shared comments are implemented separately; see [comments](../comments/README.md) and [posts presentation](../posts/README.md).

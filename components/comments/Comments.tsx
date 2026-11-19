@@ -2,10 +2,12 @@
 
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { HouseholdIdentity } from "@/components/households/HouseholdIdentity";
+import { formatCommentAge } from "@/features/comments/timestamp";
 import type { CommentInput, CommentPage, CommentView } from "@/features/comments/validation";
 import styles from "./comments.module.css";
 
 const dateFormatter = new Intl.DateTimeFormat("nb-NO", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Oslo" });
+const fullDateFormatter = new Intl.DateTimeFormat("nb-NO", { dateStyle: "long", timeStyle: "short", timeZone: "Europe/Oslo" });
 function mergeComments(previous: CommentView[], incoming: CommentView[]) {
   const merged = new Map(previous.map((comment) => [comment.id, comment]));
   incoming.forEach((comment) => merged.set(comment.id, comment));
@@ -33,8 +35,18 @@ function CommentThread({ endpoint, authorName, administrator }: CommentsProps) {
   const [uncertain, setUncertain] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [now, setNow] = useState<Date | null>(null);
   const snapshot = useRef<CommentInput | null>(null);
   const textarea = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    const initialClock = window.setTimeout(() => setNow(new Date()), 0);
+    const clock = window.setInterval(() => setNow(new Date()), 60_000);
+    return () => {
+      window.clearTimeout(initialClock);
+      window.clearInterval(clock);
+    };
+  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -100,21 +112,26 @@ function CommentThread({ endpoint, authorName, administrator }: CommentsProps) {
   }
   function renderComment(comment: CommentView) {
     const canReply = enabled && !comment.hidden && replyRoot(comment) !== null;
+    const createdAt = new Date(comment.createdAt);
     return <article className={styles.comment} key={comment.id}>
-      {comment.hidden ? <p className={styles.hidden}>Kommentaren er skjult av brudeparet.</p> : <>
-        <HouseholdIdentity name={comment.authorName} administrator={comment.administrator} />
-        <p className={styles.body}>{comment.body}</p>
-      </>}
-      <div className={styles.actions}>
-        <time dateTime={comment.createdAt}>{dateFormatter.format(new Date(comment.createdAt))}</time>
+      {comment.hidden ? <p className={styles.hidden}>Kommentaren er skjult av brudeparet.</p> :
+        <HouseholdIdentity name={comment.authorName} administrator={comment.administrator}>
+          <p className={styles.body}>{comment.body}</p>
+        </HouseholdIdentity>}
+      <div className={`${styles.actions} ${comment.hidden ? styles.hiddenActions : ""}`}>
+        <time dateTime={comment.createdAt} title={fullDateFormatter.format(createdAt)}>{now ? formatCommentAge(createdAt, now) : dateFormatter.format(createdAt)}</time>
         {canReply && <button type="button" disabled={pending || uncertain} onClick={() => reply(comment)}>Svar</button>}
         {administrator && <button type="button" disabled={pending} onClick={() => moderate(comment)}>{comment.hidden ? "Vis kommentar" : "Skjul kommentar"}</button>}
       </div>
     </article>;
   }
   const replyTarget = comments.find((comment) => comment.id === parentId);
-  return <section className={styles.section} aria-labelledby={`${id}-heading`}>
-    <h2 id={`${id}-heading`}>Kommentarer</h2>
+  return <section className={styles.section} aria-labelledby={`${id}-heading`} aria-describedby={loaded ? `${id}-count` : undefined}>
+    <h2 id={`${id}-heading`}>
+      Kommentarer
+      {loaded && <span className={styles.count} aria-hidden="true">({comments.length}{cursor !== null ? "+" : ""})</span>}
+    </h2>
+    {loaded && <span id={`${id}-count`} className={styles.visuallyHidden}>Lastet: {comments.length} diskusjonsinnlegg. Skjulte kommentarer kan inngå.{cursor !== null ? " Flere finnes." : ""}</span>}
     {!loaded && !error && <p role="status">Laster kommentarer …</p>}
     {loaded && comments.length === 0 && <p className={styles.hint}>Ingen kommentarer ennå. Har dere noen spørsmål?</p>}
     {comments.filter((comment) => comment.parentId === null).map((root) => <div className={styles.thread} key={root.id}>
@@ -129,9 +146,11 @@ function CommentThread({ endpoint, authorName, administrator }: CommentsProps) {
       <HouseholdIdentity name={authorName} administrator={administrator} />
       {replyTarget && <p className={styles.hint}>Svar til {replyTarget.authorName || "kommentaren"} <button type="button" disabled={pending || uncertain} onClick={() => setParentId(null)}>Avbryt svar</button></p>}
       <label htmlFor={`${id}-body`} className="sr-only">{parentId ? "Skriv et svar" : "Legg til en kommentar"}</label>
-      <textarea ref={textarea} id={`${id}-body`} value={body} maxLength={2000} rows={2} placeholder={parentId ? "Skriv et svar …" : "Legg til en kommentar …"} disabled={pending || uncertain} onChange={(event) => setBody(event.target.value)} />
+      <div className={styles.editor}>
+        <textarea ref={textarea} id={`${id}-body`} value={body} maxLength={2000} rows={2} placeholder={parentId ? "Skriv et svar …" : "Legg til en kommentar …"} disabled={pending || uncertain} onChange={(event) => setBody(event.target.value)} />
+        <button className={styles.submit} type="submit" disabled={pending || !body.trim()}>{pending ? "Sender …" : uncertain ? "Prøv igjen" : parentId ? "Send svar" : "Kommenter"}</button>
+      </div>
       {uncertain && <p className={styles.hint}>Kommentaren kan ha blitt lagret. Prøv igjen med samme tekst for å unngå dobbelt innsending.</p>}
-      <button className={styles.submit} type="submit" disabled={pending || !body.trim()}>{pending ? "Sender …" : uncertain ? "Prøv igjen" : parentId ? "Send svar" : "Kommenter"}</button>
     </form>}
     {notice && <p role="status" className={styles.hint}>{notice}</p>}
   </section>;

@@ -39,9 +39,11 @@ export const Posts: CollectionConfig = {
   endpoints: pollEndpoints,
   hooks: {
     afterRead: [
-      ({ doc }) => {
-        // Preserve old records while presenting a single editor for all posts.
-        if (doc.body == null) doc.body = legacyPostToEditor(doc);
+      ({ doc, context }) => {
+        // The article layout renders its own intro/cover. Preserve the raw legacy
+        // body there so those fallback fields are not synthesized a second time.
+        // Admin editing and ordinary API reads still receive the legacy adapter.
+        if (doc.body == null && context.skipLegacyBodyConversion !== true) doc.body = legacyPostToEditor(doc);
         return doc;
       },
     ],
