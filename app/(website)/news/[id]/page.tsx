@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import PostContent from "@/components/PostContent";
+import { Comments } from "@/components/comments/Comments";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireApprovedViewer } from "@/features/households/auth/server";
@@ -65,6 +66,11 @@ async function Article({ params }: Props) {
         </h1>
       </header>
       <PostContent post={post} />
+      <Comments
+        endpoint={`/api/posts/${post.id}/comments`}
+        authorName={viewer.administrator ? viewer.req.user?.name || "Brudeparet" : viewer.household!.displayName}
+        administrator={viewer.administrator}
+      />
     </article>
   );
 }

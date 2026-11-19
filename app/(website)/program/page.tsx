@@ -4,7 +4,7 @@ import { withWebsiteAccess } from "@/components/households/withWebsiteAccess";
 import { ProgramDays } from "@/components/program/ProgramDays";
 import { ProgramTimeline } from "@/components/program/ProgramTimeline";
 import Poll from "@/components/Poll";
-import { DayComments } from "@/components/program/DayComments";
+import { Comments } from "@/components/comments/Comments";
 import { programError, sortedProgram, type ProgramData } from "@/lib/program";
 import styles from "@/components/program/program.module.css";
 
@@ -29,7 +29,7 @@ async function PublishedProgram() {
     content: <>
       <ProgramTimeline day={day} />
       {day.polls?.map((poll) => <Poll key={poll.id} poll={poll} endpoint={`/api/program-days/${encodeURIComponent(day.id)}/polls/${encodeURIComponent(poll.id)}`} />)}
-      <DayComments dayId={day.id} authorName={authorName} administrator={administrator} />
+      <Comments endpoint={`/api/program-days/${encodeURIComponent(day.id)}/comments`} authorName={authorName} administrator={administrator} />
     </>,
   }))} />;
 }

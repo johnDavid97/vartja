@@ -186,6 +186,7 @@ export interface Post {
    */
   theme?: string | null;
   publishedAt?: string | null;
+  commentsEnabled?: boolean | null;
   description: string;
   photo?: (number | null) | Media;
   /**
@@ -389,14 +390,16 @@ export interface ProgramPollVote {
   createdAt: string;
 }
 /**
- * Kommentarer per programdag. Skjul eller vis kommentarer her. Svar fra brudeparet skrives på Program-siden mens du er logget inn som administrator.
+ * Kommentarer på innlegg og programdager. Skjul eller vis kommentarer her. Svar fra brudeparet skrives på nettsiden mens du er logget inn som administrator.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "program-comments".
  */
 export interface ProgramComment {
   id: number;
-  dayId: string;
+  source: 'program-day' | 'post';
+  dayId?: string | null;
+  postId?: number | null;
   dayLabel: string;
   authorName: string;
   household?: (number | null) | Household;
@@ -561,6 +564,7 @@ export interface PostsSelect<T extends boolean = true> {
   visibility?: T;
   theme?: T;
   publishedAt?: T;
+  commentsEnabled?: T;
   description?: T;
   photo?: T;
   body?: T;
@@ -718,7 +722,9 @@ export interface ProgramPollVotesSelect<T extends boolean = true> {
  * via the `definition` "program-comments_select".
  */
 export interface ProgramCommentsSelect<T extends boolean = true> {
+  source?: T;
   dayId?: T;
+  postId?: T;
   dayLabel?: T;
   authorName?: T;
   household?: T;

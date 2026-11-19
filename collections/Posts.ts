@@ -12,6 +12,7 @@ import { validatePostPolls } from "../lib/validate-post-polls";
 import { SidebarBlocksFeature } from "../components/admin/editor/SidebarBlocksFeature";
 import { editorTextSizes } from "../lib/editor-text-sizes";
 import { legacyPostToEditor } from "../lib/legacy-post-editor";
+import { lockGuestActivity } from "../features/guest-activity/transaction";
 
 export const Posts: CollectionConfig = {
   slug: "posts",
@@ -45,9 +46,11 @@ export const Posts: CollectionConfig = {
       },
     ],
     beforeDelete: [async ({ id, req }) => {
+      await lockGuestActivity(req);
       await req.payload.delete({ collection: "poll-votes", where: { post: { equals: id } }, overrideAccess: true, req });
     }],
     beforeChange: [
+      async ({ data, req }) => { await lockGuestActivity(req); return data; },
       validatePostPolls,
       ({ data, originalDoc }) => {
         if (data._status === "published" && !data.publishedAt && (!originalDoc?.publishedAt || data.publishedAt === null)) {
@@ -102,6 +105,10 @@ export const Posts: CollectionConfig = {
           },
         },
       ],
+    },
+    {
+      name: "commentsEnabled", label: "Tillat kommentarer", type: "checkbox", defaultValue: true,
+      admin: { position: "sidebar", components: { Description: "/components/admin/fields/PostCommentsDescription#default" } },
     },
     {
       name: "postBuilder",
