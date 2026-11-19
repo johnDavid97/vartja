@@ -5,6 +5,7 @@ import { chromium, expect, type Browser } from "@playwright/test";
 import { getPayload } from "payload";
 import config from "../../payload.config";
 import type { ProgramData } from "../../lib/program";
+import { weddingPath } from "../../features/wedding-site/paths";
 import { createAuthenticatedGuest } from "./authenticated-guest";
 
 assert(["localhost", "127.0.0.1"].includes(new URL(process.env.DATABASE_URL || "").hostname));
@@ -113,7 +114,7 @@ try {
   assert([401, 403].includes((await guest.request.get("/api/globals/program?draft=true")).status()));
   assert([401, 403].includes((await guest.request.post("/api/globals/program", { data: { itinerary: { days: [] } } })).status()));
   const publicPage = await guest.newPage();
-  await publicPage.goto("/program");
+  await publicPage.goto(weddingPath("/program"));
   await expect(publicPage.getByText("Programmet kommer snart.")).toBeVisible();
   await save("Publiser endringer");
   await publicPage.reload();

@@ -3,6 +3,7 @@ import { randomBytes } from "node:crypto";
 import { spawn, type ChildProcess } from "node:child_process";
 import { Client } from "pg";
 import { runSubprocess, terminateSubprocess } from "./subprocess";
+import { weddingPath } from "../../features/wedding-site/paths";
 
 interface IsolatedIntegrationOptions {
   name: string;
@@ -67,7 +68,7 @@ export async function runIsolatedIntegration(options: IsolatedIntegrationOptions
       if (server.exitCode !== null || server.signalCode !== null) throw new Error("Isolated server exited before readiness");
       if (serverOutput.includes("Ready")) {
         try {
-          if ((await fetch(`${baseURL}/register`, { signal: AbortSignal.timeout(5000) })).ok) { ready = true; break; }
+          if ((await fetch(`${baseURL}${weddingPath("/register")}`, { signal: AbortSignal.timeout(5000) })).ok) { ready = true; break; }
         } catch { /* May still be starting. */ }
       }
       await new Promise((resolve) => setTimeout(resolve, 250));

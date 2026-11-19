@@ -4,6 +4,7 @@ import { randomBytes } from "node:crypto";
 import { chromium, expect, type Browser } from "@playwright/test";
 import { getPayload } from "payload";
 import config from "../../payload.config";
+import { weddingPath } from "../../features/wedding-site/paths";
 import { getPolls } from "../../lib/polls";
 import { createAuthenticatedGuest } from "./authenticated-guest";
 
@@ -100,7 +101,7 @@ try {
   const guest = await browser.newContext({ baseURL });
   guestCleanups.push((await createAuthenticatedGuest({ payload, context: guest, administratorId: userId, baseURL })).cleanup);
   const article = await guest.newPage();
-  await article.goto(`/news/${postId}`);
+  await article.goto(weddingPath(`/news/${postId}`));
   const widget = article.getByRole("region", { name: "Hva vil dere spise?" });
   await widget.getByRole("radio", { name: "Vegetar" }).check();
   await widget.getByRole("button", { name: "Stem", exact: true }).click();

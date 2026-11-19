@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { weddingPath } from "@/features/wedding-site/paths";
 
 export default function LogoutButton() {
   const [pending, setPending] = useState(false);
@@ -14,8 +15,7 @@ export default function LogoutButton() {
       const response = await fetch("/api/household-logout", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
       if (!response.ok) throw new Error("Logout failed");
       // A full navigation clears the previous authenticated Router Cache.
-      // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- Discard cached private routes after logout.
-      window.location.assign("/");
+      window.location.assign(weddingPath());
     } catch {
       setError("Kunne ikke logge ut. Prøv igjen.");
       setPending(false);

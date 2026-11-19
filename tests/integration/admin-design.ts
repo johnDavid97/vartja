@@ -6,6 +6,7 @@ import { getPayload } from "payload";
 import sharp from "sharp";
 import config from "../../payload.config";
 import { publicationParts } from "../../lib/publication-date";
+import { weddingPath } from "../../features/wedding-site/paths";
 
 assert(["localhost", "127.0.0.1"].includes(new URL(process.env.DATABASE_URL || "").hostname));
 const payload = await getPayload({ config });
@@ -37,6 +38,7 @@ try {
   await expect(page.getByRole("link", { name: "Program", exact: true })).toHaveAttribute("href", "/admin/globals/program");
   await expect(page.getByRole("link", { name: "Kommentarer", exact: true })).toHaveAttribute("href", "/admin/collections/program-comments");
   await expect(page.getByRole("link", { name: "Avstemninger", exact: true })).toHaveAttribute("href", "/admin/polls");
+  await expect(page.getByRole("link", { name: "Se nettsiden", exact: true })).toHaveAttribute("href", weddingPath());
   await expect(page.getByRole("navigation", { name: "Administrasjon" })).toBeVisible();
   const editorBox = await page.locator('.post-visual-editor').boundingBox();
   const publishingBox = await page.locator('.wedding-publishing').boundingBox();

@@ -5,6 +5,7 @@ import { chromium, expect, type Browser } from "@playwright/test";
 import { getPayload } from "payload";
 import sharp from "sharp";
 import config from "../../payload.config";
+import { weddingPath } from "../../features/wedding-site/paths";
 import { createAuthenticatedGuest } from "./authenticated-guest";
 
 const baseURL = process.env.TEST_BASE_URL || "http://localhost:3000";
@@ -123,8 +124,8 @@ try {
   const anonymous = await browser.newContext({ baseURL });
   assert.equal((await anonymous.request.get(`/api/posts/${postId}`)).status(), 403, "Anonymous post reads must be denied");
   const anonymousPage = await anonymous.newPage();
-  await anonymousPage.goto(`/news/${postId}`);
-  await expect(anonymousPage).toHaveURL(/\/login$/);
+  await anonymousPage.goto(weddingPath(`/news/${postId}`));
+  await expect(anonymousPage).toHaveURL(/\/andrea-og-martin\/login$/);
   await anonymous.close();
   const beforePublication = await browser.newContext({ baseURL });
   guestCleanups.push((await createAuthenticatedGuest({ payload, context: beforePublication, administratorId: user.id, baseURL })).cleanup);
@@ -137,7 +138,7 @@ try {
   const guest = await browser.newContext({ baseURL });
   guestCleanups.push((await createAuthenticatedGuest({ payload, context: guest, administratorId: user.id, baseURL })).cleanup);
   const article = await guest.newPage();
-  await article.goto(`/news/${postId}`);
+  await article.goto(weddingPath(`/news/${postId}`));
   await expect(article.getByRole("heading", { name: "Original heading" })).toBeVisible();
   // Article cover/intro and comments sit outside the saved rich-text body.
   const articleBody = article.getByRole("region", { name: "Artikkelinnhold", exact: true });

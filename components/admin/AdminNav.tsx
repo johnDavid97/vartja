@@ -7,6 +7,7 @@ import { AdminButton, adminButtonStyles } from "./AdminButton";
 import { useHouseholdSummary } from "./households/useHouseholdSummary";
 import householdStyles from "./households/household-workspace.module.css";
 import { BarChart3, Clock3, ExternalLink, FileText, Home, ImageIcon, LogOut, MessageCircle, Settings2, Users, X } from "lucide-react";
+import { weddingPath } from "@/features/wedding-site/paths";
 
 export default function AdminNav() {
   const pathname = usePathname();
@@ -53,7 +54,7 @@ export default function AdminNav() {
         <div className="wedding-nav__settings">{link("/admin/globals/wedding", "Innstillinger", Settings2)}</div>
       </nav>
       <footer className="wedding-nav__footer">
-        <a className={adminButtonStyles({ variant: "secondary", className: "wedding-nav__website" })} href="/" target="_blank" rel="noopener noreferrer"><ExternalLink size={18} aria-hidden="true" />Se nettsiden</a>
+        <a className={adminButtonStyles({ variant: "secondary", className: "wedding-nav__website" })} href={weddingPath()} target="_blank" rel="noopener noreferrer"><ExternalLink size={18} aria-hidden="true" />Se nettsiden</a>
         <div className="wedding-nav__account">
           <Link href="/admin/account" onClick={closeOnMobile}><span className="wedding-avatar">{initials}</span><span><strong>{name}</strong><small>Redaktør</small></span></Link>
           <Link className={adminButtonStyles({ variant: "ghost", size: "icon-sm" })} href="/admin/logout" aria-label="Logg ut" title="Logg ut"><LogOut size={19} /></Link>
