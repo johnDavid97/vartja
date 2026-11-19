@@ -9,7 +9,7 @@ import { PayloadHouseholdRepository } from "../../features/households/infrastruc
 
 const databaseUrl = new URL(process.env.DATABASE_URL || "");
 assert(["localhost", "127.0.0.1"].includes(databaseUrl.hostname));
-assert(databaseUrl.pathname.startsWith("/sammen_households_test_"), "This test requires its disposable database runner");
+assert(/^\/sammen_(households|household_members)_test_\d+_[a-f0-9]+$/.test(databaseUrl.pathname), "This test requires its disposable database runner");
 const baseURL = process.env.TEST_BASE_URL || "http://localhost:3103";
 assert(["localhost", "127.0.0.1"].includes(new URL(baseURL).hostname));
 const payload = await getPayload({ config });
@@ -88,39 +88,81 @@ try {
   await expect(adminPage.getByRole("link", { name: "Åpne registreringsskjema", exact: true })).toHaveAttribute("href", invitation.registrationUrl);
   await adminPage.goto(`/admin/collections/households/${household.id}`);
   await expect(adminPage.getByRole("heading", { name: "Familiemedlemmer", exact: true })).toBeVisible();
-  await expect(adminPage.getByRole("button", { name: "Legg til Familiemedlem", exact: true })).toBeVisible();
-  await expect(adminPage.getByRole("heading", { name: "Rediger husstand", exact: true })).toBeVisible();
-  await expect(adminPage.getByRole("button", { name: "Godkjenn husstanden", exact: true })).toBeEnabled();
+  await expect(adminPage.getByRole("button", { name: "Legg til familiemedlem", exact: true })).toBeVisible();
+  await expect(adminPage.getByRole("heading", { name: "Familien Example", exact: true })).toBeVisible();
+  await expect(adminPage.getByRole("button", { name: "Godkjenn alle", exact: true })).toBeEnabled();
+  await expect(adminPage.locator(".household-editor-heading")).not.toContainText("Ikke lagret");
+  await expect(adminPage.locator(".household-member-avatar")).toHaveCount(2);
+  await expect(adminPage.locator(".household-member-avatar").nth(0)).toHaveText("AE");
+  for (const row of await adminPage.locator(".household-member-row").all()) {
+    await expect(row.getByRole("radio", { name: "Venter", exact: true })).toBeVisible();
+    await expect(row.getByRole("radio", { name: "Godkjent", exact: true })).toBeVisible();
+    await expect(row.getByRole("radio", { name: "Avslått", exact: true })).toBeVisible();
+  }
+  await adminPage.locator("#field-displayName").fill("Familien Example Live");
+  await expect(adminPage.getByRole("heading", { name: "Familien Example Live", exact: true })).toBeVisible();
+  await adminPage.locator("#field-displayName").fill("Familien Example");
   await adminPage.waitForLoadState("networkidle");
   for (const width of [1440, 1024, 768, 390, 320]) {
     await adminPage.setViewportSize({ width, height: 1100 });
     assert(await adminPage.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `Household editor must fit ${width}px`);
     const contactCard = await adminPage.locator(".household-contact").boundingBox();
-    const approvalCard = await adminPage.locator(".household-approval").boundingBox();
+    const membersCard = await adminPage.locator("section.household-members").boundingBox();
+    const sidebar = await adminPage.locator(".document-fields__sidebar-wrap").boundingBox();
     const accountLink = await adminPage.locator(".app-header__account").boundingBox();
-    assert(contactCard && approvalCard && accountLink);
+    assert(contactCard && membersCard && sidebar && accountLink);
     assert(contactCard.x >= 10 && contactCard.x + contactCard.width <= width - 10, "Contact card needs a visible outer gutter");
     assert(accountLink.x + accountLink.width <= width, "Account link must remain on screen");
-    if (width === 1440) assert(approvalCard.x >= contactCard.x + contactCard.width + 20, "Sidebar cards must not overlap the form");
+    assert(membersCard.x >= 10 && membersCard.x + membersCard.width <= width - 10, "Member rows need a visible outer gutter");
+    if (width === 1440) {
+      assert(sidebar.x >= contactCard.x + contactCard.width + 20, "Sidebar cards must not overlap the form");
+      const nameField = await adminPage.locator("#field-displayName").boundingBox();
+      const contactField = await adminPage.locator("#field-contactName").boundingBox();
+      const emailField = await adminPage.locator("#field-email").boundingBox();
+      assert(nameField && contactField && emailField);
+      assert(Math.abs(contactField.y - emailField.y) < 2, "Contact name and email must share a row");
+      assert(emailField.x > contactField.x + contactField.width, "Contact fields need a visible column gap");
+      assert(nameField.width > contactField.width * 1.8, "Household name must span the contact columns");
+    }
     await adminPage.screenshot({ path: `/tmp/sammen-household-editor-${width}.png`, fullPage: true });
   }
   await adminPage.setViewportSize({ width: 1440, height: 1100 });
-  await adminPage.getByRole("button", { name: "Godkjenn husstanden", exact: true }).click();
-  await expect(adminPage.locator(".household-editor-heading")).toContainText("Ulagrede endringer");
-  assert.equal((await payload.findByID({ collection: "households", id: household.id })).status, "pending", "Approval must wait for the explicit save");
-  const approvalResponse = adminPage.waitForResponse((response) => response.url().includes(`/api/households/${household.id}`) && response.request().method() === "PATCH");
-  await adminPage.getByRole("button", { name: "Lagre", exact: true }).click();
-  const approval = await approvalResponse;
-  assert(approval.ok(), await approval.text());
-  const approved = await payload.findByID({ collection: "households", id: household.id });
-  assert.equal(approved.status, "approved");
-  assert(approved.members.every((member) => member.status === "approved"));
-  assert.deepEqual(approved.members.map((member) => member.memberId), household.members.map((member) => member.memberId));
+  const firstMemberRow = adminPage.locator(".household-member-row").nth(0);
+  await firstMemberRow.getByRole("radio", { name: "Godkjent", exact: true }).check();
+  await expect(adminPage.locator(".household-editor-heading")).toContainText("Ikke lagret");
+  assert.equal((await payload.findByID({ collection: "households", id: household.id })).status, "pending", "Individual approval must wait for the explicit save");
+  await saveDetails();
+  const individuallyApproved = await payload.findByID({ collection: "households", id: household.id });
+  assert.equal(individuallyApproved.status, "approved");
+  assert.deepEqual(individuallyApproved.members.map((member) => member.status), ["approved", "pending"], "Individual approval must not approve other members");
+  assert.deepEqual(individuallyApproved.members.map((member) => member.memberId), household.members.map((member) => member.memberId));
+
+  await firstMemberRow.getByRole("radio", { name: "Avslått", exact: true }).check();
+  await saveDetails();
+  const mixedPendingAndRejected = await payload.findByID({ collection: "households", id: household.id });
+  assert.deepEqual(mixedPendingAndRejected.members.map((member) => member.status), ["revoked", "pending"]);
+  assert.equal(mixedPendingAndRejected.status, "pending", "A pending member keeps a household with rejected members pending");
+  const secondMemberRow = adminPage.locator(".household-member-row").nth(1);
+  await secondMemberRow.getByRole("radio", { name: "Avslått", exact: true }).check();
+  await saveDetails();
+  assert.equal((await payload.findByID({ collection: "households", id: household.id })).status, "revoked", "All rejected members revoke the household");
+  await adminPage.locator('#field-members__1__name').fill("Robin Rejected Rename");
+  await saveDetails();
+  const rejectedRename = await payload.findByID({ collection: "households", id: household.id });
+  assert.equal(rejectedRename.members[1].name, "Robin Rejected Rename");
+  assert.equal(rejectedRename.members[1].status, "revoked", "Editing a rejected member's name must retain rejection");
+
+  await adminPage.getByRole("button", { name: "Godkjenn alle", exact: true }).click();
   await expect(adminPage.locator(".household-member-row").nth(0).getByRole("radio", { name: "Godkjent", exact: true })).toBeChecked();
   await expect(adminPage.locator(".household-member-row").nth(1).getByRole("radio", { name: "Godkjent", exact: true })).toBeChecked();
+  assert.equal((await payload.findByID({ collection: "households", id: household.id })).status, "revoked", "Approve all must wait for Save");
+  await saveDetails();
+  const approved = await payload.findByID({ collection: "households", id: household.id });
+  assert.equal(approved.status, "approved");
+  assert(approved.members.every((member) => member.status === "approved"), "Approve all must reapprove rejected members");
   await adminPage.locator("#field-email").fill("updated@example.invalid");
   await adminPage.locator('#field-members__1__name').fill("Robin Updated");
-  await adminPage.getByRole("button", { name: "Legg til Familiemedlem", exact: true }).click();
+  await adminPage.getByRole("button", { name: "Legg til familiemedlem", exact: true }).click();
   await adminPage.locator('#field-members__2__name').fill("Added in editor");
   await saveDetails();
   const edited = await payload.findByID({ collection: "households", id: household.id });
@@ -146,37 +188,54 @@ try {
   assert.deepEqual(memberApproved.members.map((member) => member.memberId), edited.members.map((member) => member.memberId));
   assert.equal(memberApproved.members[2].status, "approved");
   assert.equal(memberApproved.members[1].status, "pending", "Toggles must update the intended member without changing order");
-  await adminPage.getByRole("button", { name: "Legg til Familiemedlem", exact: true }).click();
+  await adminPage.getByRole("button", { name: "Legg til familiemedlem", exact: true }).click();
   await adminPage.locator('#field-members__3__name').fill("Temporary member");
   await saveDetails();
   assert.equal((await payload.findByID({ collection: "households", id: household.id })).members.length, 4);
   await adminPage.getByRole("button", { name: "Fjern familiemedlem 4", exact: true }).click();
   await saveDetails();
   assert.deepEqual((await payload.findByID({ collection: "households", id: household.id })).members.map((member) => member.memberId), memberApproved.members.map((member) => member.memberId));
-  await adminPage.getByRole("button", { name: "Avslå husstanden", exact: true }).click();
-  assert.equal((await payload.findByID({ collection: "households", id: household.id })).status, "approved");
+  for (const row of await adminPage.locator(".household-member-row").all()) {
+    await row.getByRole("radio", { name: "Avslått", exact: true }).check();
+  }
+  assert.equal((await payload.findByID({ collection: "households", id: household.id })).status, "approved", "Rejection must wait for Save");
   await saveDetails();
   assert.equal((await payload.findByID({ collection: "households", id: household.id })).status, "revoked");
-  await adminPage.getByRole("button", { name: "Godkjenn husstanden", exact: true }).click();
+  await adminPage.getByRole("button", { name: "Godkjenn alle", exact: true }).click();
   await saveDetails();
+  const beforeAddition = await payload.findByID({ collection: "households", id: household.id });
   const addedMemberResponse = await admin.request.patch(`/api/households/${household.id}`, {
     headers,
-    data: { members: [...memberApproved.members, { name: "New Family Member", status: "pending" }], accessCodeEncrypted: "must-not-be-saved", credentialVersion: 999 },
+    data: { members: [...beforeAddition.members, { name: "New Family Member", status: "pending" }], accessCodeEncrypted: "must-not-be-saved", credentialVersion: 999 },
   });
   assert(addedMemberResponse.ok(), await addedMemberResponse.text());
   const withAddition = await payload.findByID({ collection: "households", id: household.id });
   assert.equal(withAddition.members.length, 4);
   assert.equal(withAddition.members[3].status, "pending");
   assert(withAddition.members[3].memberId);
+  assert.equal(withAddition.status, "approved", "Any approved member makes the household approved");
   assert.equal(withAddition.credentialVersion, household.credentialVersion);
   assert.equal(withAddition.accessCodeEncrypted, household.accessCodeEncrypted);
+  const ignoredStatusPatch = await admin.request.patch(`/api/households/${household.id}`, { headers, data: { status: "revoked" } });
+  assert(ignoredStatusPatch.ok(), await ignoredStatusPatch.text());
+  const afterIgnoredStatusPatch = await payload.findByID({ collection: "households", id: household.id });
+  assert.equal(afterIgnoredStatusPatch.status, "approved", "A status-only native PATCH must not override the member-derived status");
+  assert.deepEqual(afterIgnoredStatusPatch.members, withAddition.members, "A status-only native PATCH must not change members");
+  const contradictoryPatch = await admin.request.patch(`/api/households/${household.id}`, {
+    headers,
+    data: { status: "approved", members: afterIgnoredStatusPatch.members.map((member) => ({ ...member, status: "revoked" })) },
+  });
+  assert(contradictoryPatch.ok(), await contradictoryPatch.text());
+  const afterContradictoryPatch = await payload.findByID({ collection: "households", id: household.id });
+  assert.equal(afterContradictoryPatch.status, "revoked", "Submitted household status cannot override rejected member statuses");
+  assert(afterContradictoryPatch.members.every((member) => member.status === "revoked"));
   assert.equal((await guest.request.patch(`/api/households/${household.id}`, { headers, data: { status: "approved" } })).status(), 403);
-  await adminPage.getByRole("button", { name: "Vis husstandskode", exact: true }).click();
+  await adminPage.getByRole("button", { name: "Vis husstandskoden", exact: true }).click();
   await expect(adminPage.locator("output[aria-label='Husstandskode']")).toHaveText(receipt.accessCode);
   await admin.grantPermissions(["clipboard-read", "clipboard-write"]);
   await adminPage.getByRole("button", { name: "Kopier koden", exact: true }).click();
   assert.equal(await adminPage.evaluate(() => navigator.clipboard.readText()), receipt.accessCode);
-  await adminPage.getByRole("button", { name: "Skjul koden", exact: true }).click();
+  await adminPage.getByRole("button", { name: "Skjul husstandskoden", exact: true }).click();
   await expect(adminPage.locator("output[aria-label='Husstandskode']")).toHaveCount(0);
   adminPage.once("dialog", (dialog) => dialog.dismiss());
   await adminPage.getByRole("button", { name: "Lag ny kode", exact: true }).click();
@@ -187,7 +246,7 @@ try {
   const rotatedInEditor = await payload.findByID({ collection: "households", id: household.id });
   assert.equal(rotatedInEditor.credentialVersion, 2, "Code replacement is immediate and independent of Save");
   assert.notEqual(await adminPage.locator("output[aria-label='Husstandskode']").textContent(), receipt.accessCode);
-  await expect(adminPage.locator(".household-editor-heading")).not.toContainText("Ulagrede endringer");
+  await expect(adminPage.locator(".household-editor-heading")).not.toContainText("Ikke lagret");
 
   const requestData = { invitationKey, requestKey: randomUUID(), contactName: "Retry Family", email: "retry@example.invalid", additionalMembers: [] };
   const concurrent = await Promise.all(Array.from({ length: 3 }, () => guest.request.post("/api/household-registration", { headers, data: requestData })));
@@ -253,7 +312,7 @@ try {
   const limited = await guest.request.post("/api/household-registration", { headers, data: { ...requestData, requestKey: randomUUID() } });
   assert.equal(limited.status(), 429);
   assert.deepEqual(browserErrors, []);
-  console.log("PASS: browser registration, automatic contact member, real persistence, native admin approval, QR/link, private credentials, concurrent retries, code recovery/rotation, CAS, audit rollback, throttling and mobile layout.");
+  console.log("PASS: browser registration, member-derived approval/rejection, save-only member controls, native status isolation, QR/link, private credentials, concurrent retries, code recovery/rotation, CAS, audit rollback, throttling and mobile layout.");
 } catch (error) {
   console.error(error);
   exitCode = 1;

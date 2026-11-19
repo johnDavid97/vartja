@@ -7,7 +7,7 @@ import config from "../../payload.config";
 
 const databaseUrl = new URL(process.env.DATABASE_URL || "");
 assert(["localhost", "127.0.0.1"].includes(databaseUrl.hostname));
-assert(/^\/sammen_household_admin_test_\d+_[a-f0-9]+$/.test(databaseUrl.pathname), "Disposable admin test database only");
+assert(/^\/sammen_household_(admin|members)_test_\d+_[a-f0-9]+$/.test(databaseUrl.pathname), "Disposable admin test database only");
 const baseURL = process.env.TEST_BASE_URL || "http://localhost:3105";
 assert(["localhost", "127.0.0.1"].includes(new URL(baseURL).hostname));
 const payload = await getPayload({ config });
@@ -27,6 +27,15 @@ try {
   const guest = await browser.newContext({ baseURL });
   const headers = { Origin: baseURL };
   assert((await admin.request.post("/api/users/login", { data: { email, password } })).ok());
+  async function setEveryMemberStatus(householdId: number, status: "pending" | "approved" | "revoked") {
+    const current = await payload.findByID({ collection: "households", id: householdId });
+    const response = await admin.request.patch(`/api/households/${householdId}`, {
+      headers,
+      data: { members: current.members.map((member) => ({ ...member, status })) },
+    });
+    assert(response.ok(), await response.text());
+    return payload.findByID({ collection: "households", id: householdId });
+  }
   const sample = creationData("Not created", "none@example.invalid");
   assert.equal((await guest.request.post("/api/household-admin", { headers, data: sample })).status(), 403);
   assert.equal((await guest.request.get("/api/household-summary")).status(), 403);
@@ -73,7 +82,14 @@ try {
     assert.equal(household.credentialVersion, 1);
     assert(household.accessCodeEncrypted && household.accessCodeDigest);
   }
-  assert((await admin.request.patch(`/api/households/${approvedIds[2]}`, { headers, data: { status: "revoked" } })).ok());
+  const beforeIgnoredStatusPatch = await payload.findByID({ collection: "households", id: approvedIds[2] });
+  const ignoredStatusPatch = await admin.request.patch(`/api/households/${approvedIds[2]}`, { headers, data: { status: "revoked" } });
+  assert(ignoredStatusPatch.ok(), await ignoredStatusPatch.text());
+  const afterIgnoredStatusPatch = await payload.findByID({ collection: "households", id: approvedIds[2] });
+  assert.equal(afterIgnoredStatusPatch.status, "approved", "A status-only PATCH must be ignored");
+  assert.deepEqual(afterIgnoredStatusPatch.members, beforeIgnoredStatusPatch.members, "A status-only PATCH must not change members");
+  const rejectedApprovedFixture = await setEveryMemberStatus(approvedIds[2], "revoked");
+  assert.equal(rejectedApprovedFixture.status, "revoked");
   assert.deepEqual(await (await admin.request.get("/api/household-summary")).json(), { total: 6, pending: 3 });
 
   const page = await admin.newPage();
@@ -136,7 +152,7 @@ try {
   await firstCheckbox.uncheck();
   await table.getByRole("link", { name: "Kari Nordmann", exact: true }).click();
   await expect(page).toHaveURL(new RegExp(`/admin/collections/households/${pendingIds[0]}$`));
-  await expect(page.getByRole("button", { name: "Vis husstandskode", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Vis husstandskoden", exact: true })).toBeVisible();
 
   // A pending member in an approved household is not a pending household.
   const approved = await payload.findByID({ collection: "households", id: approvedIds[0] });
@@ -240,7 +256,7 @@ try {
   const manual = await payload.findByID({ collection: "households", id: manualId });
   assert.equal(manual.status, "approved");
   assert.deepEqual(manual.members.map((member) => [member.name, member.status]), [["Ada Testfamilie", "approved"], ["Per Testfamilie", "approved"]]);
-  await page.getByRole("button", { name: "Vis husstandskode", exact: true }).click();
+  await page.getByRole("button", { name: "Vis husstandskoden", exact: true }).click();
   await expect(page.locator("output[aria-label='Husstandskode']")).not.toBeEmpty();
 
   const retryData = creationData("Retry admin family", "retry-admin@example.invalid", ["Extra person"]);
@@ -250,7 +266,8 @@ try {
   assert(receipts.every((receipt) => receipt.householdId === receipts[0].householdId));
   const retryId = receipts[0].householdId;
   assert.equal((await admin.request.post("/api/household-admin", { headers, data: { ...retryData, email: "changed@example.invalid" } })).status(), 409);
-  assert((await admin.request.patch(`/api/households/${retryId}`, { headers, data: { status: "revoked" } })).ok());
+  const rejectedRetry = await setEveryMemberStatus(retryId, "revoked");
+  assert.equal(rejectedRetry.status, "revoked");
   assert((await admin.request.post("/api/household-code", { headers, data: { householdId: retryId, action: "rotate" } })).ok());
   assert.equal((await admin.request.post("/api/household-admin", { headers, data: retryData })).status(), 201);
   const afterRetry = await payload.findByID({ collection: "households", id: retryId });
@@ -262,7 +279,7 @@ try {
   const ordinaryRead = await (await admin.request.get(`/api/households/${manualId}`)).json();
   for (const field of ["accessCodeDigest", "accessCodeEncrypted", "registrationRequestDigest", "registrationRequestFingerprint", "credentialVersion", "publicId"]) assert(!Object.hasOwn(ordinaryRead, field));
   assert.deepEqual(errors, []);
-  console.log("PASS: household tabs/shared list, search/filter/selection, invitation PNG/SVG, responsive form, approved admin creation, pending-only counts, private credentials and concurrent namespaced retries.");
+  console.log("PASS: household tabs/shared list, search/filter/selection, invitation PNG/SVG, responsive form, approved admin creation, member-derived rejection and status-only PATCH isolation, pending-only counts, private credentials and concurrent namespaced retries.");
 } catch (error) {
   console.error(error);
   exitCode = 1;

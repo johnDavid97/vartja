@@ -1,5 +1,5 @@
 import type { HouseholdMember, MemberInput } from "../domain/models";
-import { reconcileMembers } from "../domain/member-policy";
+import { deriveHouseholdStatus, reconcileMembers } from "../domain/member-policy";
 import { validateHouseholdInput, validateMemberId } from "../domain/validation";
 import { HouseholdOperationError } from "./errors";
 import type {
@@ -9,7 +9,7 @@ import type {
   MemberIdGenerator,
 } from "./ports";
 
-/** Updates household contact details and members, never approval or credentials. */
+/** Updates details and derives status from preserved member decisions; never accepts approval or credentials. */
 export class UpdateHouseholdDetails {
   constructor(
     private readonly householdRepository: HouseholdRepository,
@@ -31,6 +31,7 @@ export class UpdateHouseholdDetails {
       contactName: validatedDetails.contactName,
       email: validatedDetails.email,
       members: updatedMembers,
+      status: deriveHouseholdStatus(updatedMembers),
     };
 
     // The repository checks the revision again atomically when saving: an admin
