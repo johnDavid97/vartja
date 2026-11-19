@@ -146,6 +146,9 @@ try {
     await page.goto(route);
     await page.waitForLoadState("networkidle");
     assert(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), `${route} must fit the screen`);
+    if (route === "/admin/globals/wedding") {
+      await expect(page.getByText("Eldre tidsplan (ikke publisert)", { exact: true })).toHaveCount(0);
+    }
     if (route === "/admin/globals/program") {
       await expect(page.getByRole("link", { name: /Versjoner/ })).toHaveCount(0);
       await expect(page.getByRole("button", { name: "Lagre utkast", exact: true })).toBeVisible();

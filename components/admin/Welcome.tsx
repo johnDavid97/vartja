@@ -1,22 +1,30 @@
-import Link from "next/link";
-import { adminButtonStyles } from "./AdminButton";
+import { Gutter } from "@payloadcms/ui";
+import { redirect } from "next/navigation";
+import type { AdminViewServerProps } from "payload";
+import { getHouseholdSummaryServices } from "@/features/households/composition-root";
+import { publishedGuestPosts } from "@/features/households/auth/access";
+import WelcomeView, { type DashboardSummary } from "./WelcomeView";
 
-export default function Welcome() {
-  return (
-    <section className="wedding-dashboard">
-      <p className="wedding-dashboard__eyebrow">Deres bryllupsnettside</p>
-      <h1>Velkommen, Andrea &amp; Martin</h1>
-      <p>Her kan dere oppdatere nettsiden og dele nyheter med gjestene.</p>
-      <div className="wedding-dashboard__actions">
-        <Link className={adminButtonStyles()} href="/admin/collections/posts/create">Skriv et innlegg</Link>
-        <Link className={adminButtonStyles({ variant: "secondary" })} href="/admin/globals/wedding">Endre bryllupsinformasjon</Link>
-        <a className={adminButtonStyles({ variant: "secondary" })} href="/" target="_blank" rel="noopener noreferrer">Se nettsiden ↗</a>
-      </div>
-      <p className="wedding-dashboard__hint">
-        Innlegg: fyll inn tittel og beskrivelse, legg til et bilde om dere vil, og trykk Publiser endringer.
-        Lagre utkast lagrer uten å vise innlegget til gjestene.
-        Publiserte endringer vises når nettsiden åpnes eller oppdateres.
-      </p>
-    </section>
-  );
+/** Payload supplies the surrounding native admin template, navigation and auth hydration. */
+export default async function Welcome(props: AdminViewServerProps) {
+  const { req, permissions } = props.initPageResult;
+  if (req.user?.collection !== "users" || !permissions.canAccessAdmin) redirect("/admin/login");
+
+  let summary: DashboardSummary | null = null;
+  try {
+    const [households, posts] = await Promise.all([
+      getHouseholdSummaryServices(req.payload).get(),
+      req.payload.count({ collection: "posts", where: publishedGuestPosts, req, overrideAccess: false }),
+    ]);
+    summary = {
+      totalHouseholds: households.total,
+      pendingHouseholds: households.pending,
+      visiblePosts: posts.totalDocs,
+    };
+  } catch {
+    // Counts are optional presentation: keep native navigation usable during a database error.
+    req.payload.logger.error("Could not load the admin dashboard summary.");
+  }
+
+  return <Gutter><WelcomeView summary={summary} /></Gutter>;
 }

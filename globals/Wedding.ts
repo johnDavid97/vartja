@@ -66,24 +66,5 @@ export const Wedding: GlobalConfig = {
       ],
     },
     { name: "travelInformation", label: "Reiseinformasjon", type: "richText", access: { read: canReadGuestContent } },
-    {
-      name: "schedule",
-      access: { read: ({ req }) => req.user?.collection === "users" },
-      label: "Eldre tidsplan (ikke publisert)",
-      labels: { singular: "Hendelse", plural: "Hendelser" },
-      type: "array",
-      admin: { description: "Beholdt for eldre innhold. Bruk Program i menyen for dagsprogrammet som vises på nettsiden." },
-      fields: [
-        { name: "title", label: "Hendelse", type: "text", required: true },
-        {
-          name: "time",
-          label: "Tidspunkt",
-          type: "date",
-          required: true,
-          admin: { date: { pickerAppearance: "dayAndTime" } },
-        },
-        { name: "description", label: "Beskrivelse", type: "textarea" },
-      ],
-    },
   ],
 };
