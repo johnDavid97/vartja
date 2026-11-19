@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import LogoutButton from "@/components/households/LogoutButton";
 import styles from "@/components/homepage/header.module.css";
 import { weddingPath } from "@/features/wedding-site/paths";
+import { weddingBranding } from "@/features/wedding-site/branding";
 
 const weddingRoot = weddingPath();
 const primaryLinks = [
@@ -21,21 +22,8 @@ function isActive(pathname: string, href: string) {
   return href === weddingRoot ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
 }
 
-function brandFromNames(names?: string) {
-  const parts = (names || "Andrea & Martin")
-    .split(/\s*(?:&|\bog\b|\+)\s*/i)
-    .map((part) => part.trim())
-    .filter(Boolean);
-
-  if (parts.length >= 2) return `${parts[0][0]}&${parts.at(-1)?.[0]}`.toUpperCase();
-
-  const words = parts[0]?.split(/\s+/).filter(Boolean) ?? [];
-  return words.length >= 2
-    ? `${words[0][0]}&${words.at(-1)?.[0]}`.toUpperCase()
-    : "A&M";
-}
-
 export default function Header({ names, access = "anonymous" }: { names?: string; access?: "anonymous" | "pending" | "approved" | "administrator" }) {
+  const branding = weddingBranding(names);
   const canBrowse = access === "approved" || access === "administrator";
   const links = canBrowse ? primaryLinks : [primaryLinks[0], { href: weddingPath(access === "pending" ? "/waiting" : "/login"), label: access === "pending" ? "Venter på godkjenning" : "Logg inn" }];
   const accountControl = access === "administrator" ? <Link href="/admin" className={styles.link}>Administrasjon</Link> : access !== "anonymous" ? <LogoutButton /> : null;
@@ -71,8 +59,8 @@ export default function Header({ names, access = "anonymous" }: { names?: string
   return (
     <header className={styles.header}>
       <div className={styles.inner}>
-        <Link href={weddingRoot} className={styles.brand} aria-label={`${names || "Andrea og Martin"} – forside`}>
-          {brandFromNames(names)}
+        <Link href={weddingRoot} className={styles.brand} aria-label={`${branding.names} – forside`}>
+          {branding.monogram}
         </Link>
 
         <nav className={styles.desktopNav} aria-label="Hovedmeny">

@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { weddingPageMetadata } from "@/features/wedding-site/branding-server";
 import { getWebsiteViewer } from "@/features/households/auth/server";
 import { connection } from "next/server";
 import WeddingHero from "@/components/homepage/WeddingHero";
@@ -8,6 +9,8 @@ import {
   getHomepageSettings,
   getHomepageUpdates,
 } from "@/features/homepage/composition-root";
+
+export async function generateMetadata() { return weddingPageMetadata("Forside"); }
 
 async function WeddingHomepage() {
   await connection();

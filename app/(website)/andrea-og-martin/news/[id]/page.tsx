@@ -18,10 +18,12 @@ import { articleDate } from "@/lib/article-date";
 import { articleContentAfterCover } from "@/lib/article-content";
 import styles from "../news.module.css";
 import { weddingPath } from "@/features/wedding-site/paths";
+import { weddingPageMetadata } from "@/features/wedding-site/branding-server";
 
-export const metadata: Metadata = {
-  title: "Nytt fra oss — Andrea & Martin",
-};
+// Do not expose private/draft article titles through public metadata.
+export async function generateMetadata(): Promise<Metadata> {
+  return weddingPageMetadata("Innlegg");
+}
 
 export default withWebsiteAccess(ArticlePage);
 

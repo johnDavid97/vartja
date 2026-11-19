@@ -13,11 +13,14 @@ import SiteFooter from "@/components/homepage/SiteFooter";
 import { getHomepageSettings } from "@/features/homepage/composition-root";
 import styles from "./news.module.css";
 import { weddingPath } from "@/features/wedding-site/paths";
+import { weddingPageMetadata } from "@/features/wedding-site/branding-server";
 
-export const metadata: Metadata = {
-  title: "Innlegg — Andrea & Martin",
-  description: "Nyheter og oppdateringer til bryllupsgjestene.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return {
+    ...await weddingPageMetadata("Innlegg"),
+    description: "Nyheter og oppdateringer til bryllupsgjestene.",
+  };
+}
 
 export default withWebsiteAccess(PostsPage);
 

@@ -4,8 +4,11 @@ import LoginForm from "@/components/households/LoginForm";
 import { getWebsiteViewer } from "@/features/households/auth/server";
 import styles from "@/components/households/login.module.css";
 import { weddingPath } from "@/features/wedding-site/paths";
+import { weddingPageMetadata } from "@/features/wedding-site/branding-server";
 
-export const metadata = { title: "Logg inn — Andrea & Martin", robots: { index: false, follow: false } };
+export async function generateMetadata() {
+  return { ...await weddingPageMetadata("Logg inn"), robots: { index: false, follow: false } };
+}
 async function Login() {
   const viewer = await getWebsiteViewer();
   if (viewer.administrator || viewer.household?.status === "approved") redirect(weddingPath());

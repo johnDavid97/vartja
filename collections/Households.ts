@@ -18,7 +18,14 @@ type MemberData = { id?: string; memberId?: string; name?: unknown; status?: unk
 type ValidatedMemberData = Omit<MemberData, "status"> & { status: MemberStatus };
 type HouseholdData = Record<string, unknown> & { displayName?: unknown; members?: MemberData[]; status?: unknown };
 
-const trustedAdminCreationToken = Object.freeze({ purpose: "household-admin-creation" });
+// Payload may initialize from an RSC bundle before a REST bundle calls this factory.
+// Share an opaque object across bundles, not a Symbol.for value as the capability itself:
+// clients can serialize global symbols through Flight, but cannot recreate this object identity.
+const trustedAdminCreationKey = Symbol.for("vartja.households.trusted-admin-creation");
+type CreationToken = Readonly<{ purpose: "household-admin-creation" }>;
+const creationRegistry = globalThis as typeof globalThis & { [trustedAdminCreationKey]?: CreationToken };
+const trustedAdminCreationToken = creationRegistry[trustedAdminCreationKey]
+  ??= Object.freeze({ purpose: "household-admin-creation" as const });
 
 /** An identity token (not JSON data) makes this creation path available only to server code. */
 export function trustedAdminHouseholdCreationContext(): Record<string, unknown> {
