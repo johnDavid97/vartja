@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import SiteFooter from "@/components/homepage/SiteFooter";
 import { getHomepageSettings } from "@/features/homepage/composition-root";
 import styles from "./news.module.css";
+import { weddingPath } from "@/features/wedding-site/paths";
 
 export const metadata: Metadata = {
   title: "Innlegg — Andrea & Martin",
@@ -56,7 +57,7 @@ async function Posts({ searchParams }: Props) {
         </CardHeader>
         <CardContent>
           {page > 1 ? (
-            <Link href="/news" className={buttonVariants({ variant: "outline" })}>
+            <Link href={weddingPath("/news")} className={buttonVariants({ variant: "outline" })}>
               Til første side
             </Link>
           ) : (
@@ -74,13 +75,13 @@ async function Posts({ searchParams }: Props) {
       {posts.totalPages > 1 && (
         <nav aria-label="Innleggssider" className="mt-12 flex flex-wrap items-center justify-center gap-4">
           {posts.hasPrevPage && (
-            <Link href={`/news?page=${page - 1}`} className={buttonVariants({ variant: "outline" })}>
+            <Link href={`${weddingPath("/news")}?page=${page - 1}`} className={buttonVariants({ variant: "outline" })}>
               Forrige
             </Link>
           )}
           <p className="text-sm text-stone-600">Side {page} av {posts.totalPages}</p>
           {posts.hasNextPage && (
-            <Link href={`/news?page=${page + 1}`} className={buttonVariants({ variant: "outline" })}>
+            <Link href={`${weddingPath("/news")}?page=${page + 1}`} className={buttonVariants({ variant: "outline" })}>
               Neste
             </Link>
           )}

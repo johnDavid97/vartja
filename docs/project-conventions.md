@@ -8,7 +8,7 @@ Project-specific context. Read the sections relevant to the task; the general en
 - Guest flows should be straightforward across ages and levels of technical experience. This is a product constraint, not a universal engineering rule.
 - Follow the agreed PDF/screenshots and reuse the wedding site's visual identity and shared components.
 - Date/time presentation follows the existing Norwegian / Europe/Oslo conventions.
-- The current ordered backlog is [remaining-tasks.md](remaining-tasks.md). Clarify the final domain/suffix requirement before choosing a URL architecture.
+- The current ordered backlog is [remaining-tasks.md](remaining-tasks.md). The agreed wedding address is `vårtja.no/andrea-og-martin`; see the [single-wedding routing boundary](../features/wedding-site/README.md). Full multi-wedding management is deferred.
 
 ## Framework and persistence
 
@@ -24,6 +24,8 @@ Project-specific context. Read the sections relevant to the task; the general en
 - Preserve and securely back up `HOUSEHOLD_ACCESS_SECRET` alongside the database. Changing it requires a deliberate migration/recovery plan.
 
 ## Feature references
+
+- [Wedding routing and legacy URL compatibility](../features/wedding-site/README.md)
 
 - [Households](../features/households/README.md)
 - [Program](../features/program/README.md)

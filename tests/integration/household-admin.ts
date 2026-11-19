@@ -4,6 +4,7 @@ import { randomBytes, randomUUID } from "node:crypto";
 import { chromium, expect, type Browser, type APIResponse } from "@playwright/test";
 import { getPayload } from "payload";
 import config from "../../payload.config";
+import { weddingPath } from "../../features/wedding-site/paths";
 
 const databaseUrl = new URL(process.env.DATABASE_URL || "");
 assert(["localhost", "127.0.0.1"].includes(databaseUrl.hostname));
@@ -49,6 +50,7 @@ try {
   const invitation: { registrationUrl: string; qrDataUrl: string; qrSvg: string } = await invitationResponse.json();
   const registrationUrl = new URL(invitation.registrationUrl);
   assert.equal(registrationUrl.origin, baseURL);
+  assert.equal(registrationUrl.pathname, weddingPath("/register"));
   const invitationKey = new URLSearchParams(registrationUrl.hash.slice(1)).get("invitation");
   assert(invitationKey);
   assert.match(invitation.qrSvg, /^<svg\s/);
@@ -106,6 +108,7 @@ try {
   await expect(table.getByText("Avslått", { exact: true })).toBeVisible();
   await expect(page.locator('.wedding-nav a[href^="/admin/collections/households"]')).toContainText("3");
   await expect(page.getByRole("link", { name: "Administratorer", exact: true })).toHaveAttribute("href", "/admin/collections/users");
+  await expect(page.getByRole("link", { name: "Se nettsiden", exact: true })).toHaveAttribute("href", weddingPath());
   await page.screenshot({ path: "/tmp/sammen-households-overview.png", fullPage: true });
   assert.equal(summaryRequests, 1, "Sidebar and overview must share one initial request");
   await page.route("**/api/household-summary", (route) => route.fulfill({ json: { total: 6, pending: 2 } }));

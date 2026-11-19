@@ -14,6 +14,7 @@
     "test:polls": "node --env-file=.env --import tsx tests/integration/polls.ts",
     "test:admin": "node --env-file=.env --import tsx tests/integration/admin-design.ts",
     "test:dashboard": "npm run build && node --env-file=.env --import tsx tests/integration/admin-dashboard-isolated.ts",
+    "test:wedding-routing": "npm run build && node --env-file=.env --import tsx tests/integration/wedding-routing-isolated.ts",
     "test:program": "node --env-file=.env --import tsx tests/integration/program.ts",
     "test:legacy-schedule-removal": "npm run build && node --env-file=.env --import tsx tests/integration/legacy-schedule-removal-isolated.ts",
     "test:homepage": "npm run build && node --env-file=.env --import tsx tests/integration/homepage-isolated.ts",

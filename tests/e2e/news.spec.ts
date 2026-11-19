@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { weddingPath } from "../../features/wedding-site/paths";
 
 const browserErrors = new WeakMap<Page, string[]>();
 test.beforeEach(({ page }) => {
@@ -18,7 +19,7 @@ test.afterEach(async ({ page }) => {
 
 // Read-only anonymous smoke checks against a running development server.
 test("anonymous homepage shows only the hero and public login navigation", async ({ page }, testInfo) => {
-  await page.goto("/");
+  await page.goto(weddingPath());
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
   await expect(page.getByText("Logg inn for å se innlegg, program og bilder.", { exact: true })).toHaveCount(0);
   await expect(page.getByRole("main").getByRole("link", { name: /^(Logg inn|Se status)$/ })).toHaveCount(0);
@@ -37,7 +38,7 @@ test("anonymous homepage shows only the hero and public login navigation", async
 });
 
 test("skip link focuses the anonymous homepage content", async ({ page }) => {
-  await page.goto("/");
+  await page.goto(weddingPath());
   await page.keyboard.press("Tab");
   const skipLink = page.getByRole("link", { name: "Hopp til innhold", exact: true });
   await expect(skipLink).toBeFocused();
@@ -46,21 +47,21 @@ test("skip link focuses the anonymous homepage content", async ({ page }) => {
 });
 
 test("protected wedding pages redirect anonymous visitors to household login", async ({ page }) => {
-  for (const route of ["/news", "/news/not-a-valid-id", "/program", "/bilder"]) {
+  for (const route of [weddingPath("/news"), weddingPath("/news/not-a-valid-id"), weddingPath("/program"), weddingPath("/bilder")]) {
     await page.goto(route);
-    await expect(page).toHaveURL(/\/login$/);
+    await expect(page).toHaveURL(/\/andrea-og-martin\/login$/);
     await expect(page.getByRole("heading", { name: "Logg inn", level: 1 })).toBeVisible();
   }
 });
 
 test("removed wedding pages return not found", async ({ request }) => {
-  for (const route of ["/reiseplan", "/ting-a-gjore", "/wedding-party"]) {
+  for (const route of [weddingPath("/reiseplan"), weddingPath("/ting-a-gjore"), weddingPath("/wedding-party")]) {
     expect((await request.get(route)).status()).toBe(404);
   }
 });
 
 test("household login form is responsive and exposes its accessible controls", async ({ page }) => {
-  await page.goto("/login");
+  await page.goto(weddingPath("/login"));
   await expect(page.getByLabel("Husstandsnavn", { exact: true })).toBeVisible();
   await expect(page.getByLabel("Husstandskode", { exact: true })).toHaveAttribute("type", "password");
   await expect(page.getByRole("checkbox", { name: "Husk meg på denne enheten", exact: true })).toBeChecked();

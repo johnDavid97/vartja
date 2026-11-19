@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ImageIcon } from "lucide-react";
 import type { Post } from "@/payload-types";
 import styles from "@/components/news-card.module.css";
+import { weddingPath } from "@/features/wedding-site/paths";
 
 type NewsCardProps = {
   post: Post;
@@ -22,7 +23,7 @@ export default function NewsCard({
   if (variant === "homepage") {
     return (
       <article className={styles.homepageArticle} aria-labelledby={headingId}>
-        <Link href={`/news/${post.id}`} className={styles.homepageLink}>
+        <Link href={weddingPath(`/news/${post.id}`)} className={styles.homepageLink}>
           <div className={styles.homepageMedia}>
             {photo?.url ? (
               <Image
@@ -57,7 +58,7 @@ export default function NewsCard({
 
   return (
     <article className={styles.defaultArticle} aria-labelledby={headingId}>
-      <Link href={`/news/${post.id}`} className={styles.defaultLink}>
+      <Link href={weddingPath(`/news/${post.id}`)} className={styles.defaultLink}>
         <div className={styles.defaultMedia} aria-hidden={photo?.url ? undefined : "true"}>
           {photo?.url && (
             <Image

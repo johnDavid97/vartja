@@ -7,16 +7,18 @@ import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import LogoutButton from "@/components/households/LogoutButton";
 import styles from "@/components/homepage/header.module.css";
+import { weddingPath } from "@/features/wedding-site/paths";
 
+const weddingRoot = weddingPath();
 const primaryLinks = [
-  { href: "/", label: "Forside" },
-  { href: "/program", label: "Program" },
-  { href: "/news", label: "Innlegg" },
-  { href: "/bilder", label: "Bilder" },
+  { href: weddingRoot, label: "Forside" },
+  { href: weddingPath("/program"), label: "Program" },
+  { href: weddingPath("/news"), label: "Innlegg" },
+  { href: weddingPath("/bilder"), label: "Bilder" },
 ];
 
 function isActive(pathname: string, href: string) {
-  return href === "/" ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
+  return href === weddingRoot ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
 }
 
 function brandFromNames(names?: string) {
@@ -35,7 +37,7 @@ function brandFromNames(names?: string) {
 
 export default function Header({ names, access = "anonymous" }: { names?: string; access?: "anonymous" | "pending" | "approved" | "administrator" }) {
   const canBrowse = access === "approved" || access === "administrator";
-  const links = canBrowse ? primaryLinks : [primaryLinks[0], { href: access === "pending" ? "/waiting" : "/login", label: access === "pending" ? "Venter på godkjenning" : "Logg inn" }];
+  const links = canBrowse ? primaryLinks : [primaryLinks[0], { href: weddingPath(access === "pending" ? "/waiting" : "/login"), label: access === "pending" ? "Venter på godkjenning" : "Logg inn" }];
   const accountControl = access === "administrator" ? <Link href="/admin" className={styles.link}>Administrasjon</Link> : access !== "anonymous" ? <LogoutButton /> : null;
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -69,7 +71,7 @@ export default function Header({ names, access = "anonymous" }: { names?: string
   return (
     <header className={styles.header}>
       <div className={styles.inner}>
-        <Link href="/" className={styles.brand} aria-label={`${names || "Andrea og Martin"} – forside`}>
+        <Link href={weddingRoot} className={styles.brand} aria-label={`${names || "Andrea og Martin"} – forside`}>
           {brandFromNames(names)}
         </Link>
 

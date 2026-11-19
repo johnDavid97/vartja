@@ -20,7 +20,8 @@ Next.js website with a self-hosted Payload CMS and PostgreSQL.
 
 4. Open **http://localhost:3000/admin** and create the first account.
    Do this locally before exposing the app to the internet.
-5. Use the dashboard shortcuts to edit **Bryllupsinformasjon** or create an **Innlegg**.
+5. Use the admin sidebar to edit **Bryllupsinformasjon** or create an **Innlegg**.
+6. Open **http://localhost:3000/andrea-og-martin** for the wedding site. `/` temporarily redirects there until the separate VårtJa landing page is added. Admin and APIs remain at `/admin` and `/api`; see [routing and old-link compatibility](features/wedding-site/README.md).
 
 Automatic development schema pushing is disabled. Existing databases previously created
 with dev schema sync (a `dev` migration record) must be baselined before using the migration
@@ -43,7 +44,7 @@ request origin is used. Public addresses must use HTTPS; HTTP is accepted for lo
 The QR stores the complete URL: an already downloaded/printed localhost QR will not change when
 the site is deployed. Generate and download a new QR after setting the final domain.
 The invitation key is in a URL fragment rather than a query string.
-Opening `/register` without the complete link shows instructions instead of a registration form.
+New links use `/andrea-og-martin/register#invitation=…`. Old `/register#invitation=…` links redirect without changing the key. Opening registration without the complete link shows instructions instead of a registration form. Keep `PUBLIC_SITE_URL` as the origin only (e.g. `https://vårtja.no`), without the wedding path.
 
 Registration stores a pending household, automatically includes its contact as the first member,
 and shows a generated access code. Email is unverified contact information; no email is sent.
@@ -85,7 +86,7 @@ characters but does not truncate or reject older, longer descriptions.
   Earlier return/end times mean the following day. Untimed hotel/information items are supported.
   Edits, including deletions, enter the main form immediately; **Ferdig** only closes the detail panel.
   Use **Lagre utkast** or **Publiser** to persist them. Existing published content remains visible
-  while a new draft is edited. `/program` shows only the published itinerary, ordered by date/time;
+  while a new draft is edited. `/andrea-og-martin/program` shows only the published itinerary, ordered by date/time;
   equal times preserve manual order, and untimed items come last. An empty published program shows
   “Programmet kommer snart.” Version history is not exposed to editors (no Versions tab or history API);
   internal version storage remains only to support native draft/live separation. Anonymous API access is denied. Preview, comments and polls
@@ -111,7 +112,7 @@ characters but does not truncate or reject older, longer descriptions.
   when opened, without changing their stored data until saved. Old block fields are retained
   for compatibility but hidden in the editor. Once saved, the visual document is authoritative;
   deliberately clearing it does not bring old content back.
-  New drafts are not public. **Publiser endringer** shows public posts under **Nytt fra oss** and `/news`.
+  New drafts are not public. **Publiser endringer** shows public posts under **Nytt fra oss** and `/andrea-og-martin/news`.
   Saving a draft of an already-published post leaves its last published version visible.
   Set **Synlighet → Privat** and publish that change to hide it from public pages and API reads.
   Private posts remain accessible to signed-in editors in Payload (not a guest invitation system).
@@ -146,7 +147,7 @@ Comments and likes will be separate bottom-of-article features, not reorderable 
 - `globals/Wedding.ts` — editable wedding details and homepage appearance.
 - `globals/Program.ts`, `lib/program.ts` — versioned program, stable day/item IDs, server validation and public sorting.
 - `components/admin/program/` — multi-day visual editor using shared admin buttons and native Payload draft/publish controls.
-- `app/(website)/program/page.tsx` — live-only public itinerary; no draft query parameters are accepted.
+- `app/(website)/andrea-og-martin/program/page.tsx` — live-only public itinerary; no draft query parameters are accepted.
 - `migrations/20261108_220804_wedding_program.ts` — Program and Program version tables; run migrations before production deployment.
 - `collections/Posts.ts` — draft/published guest updates.
 - `blocks/postBlocks.ts` — legacy text/photo block schemas.

@@ -7,6 +7,7 @@ import { getPayload } from "payload";
 import config from "@payload-config";
 import { getHouseholdAuthServices } from "./composition-root";
 import { sessionTokenFromHeaders } from "../http/session-cookie";
+import { weddingPath } from "@/features/wedding-site/paths";
 
 /** A React render-pass cache, never a shared cross-visitor authorization cache. */
 export const getWebsiteViewer = cache(async () => {
@@ -24,7 +25,7 @@ export const getWebsiteViewer = cache(async () => {
 export async function requireApprovedViewer() {
   const viewer = await getWebsiteViewer();
   if (viewer.administrator) return viewer;
-  if (!viewer.household) redirect("/login");
-  if (viewer.household.status !== "approved") redirect("/waiting");
+  if (!viewer.household) redirect(weddingPath("/login"));
+  if (viewer.household.status !== "approved") redirect(weddingPath("/waiting"));
   return viewer;
 }

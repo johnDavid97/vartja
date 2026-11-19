@@ -1,3 +1,5 @@
+import { weddingPath } from "@/features/wedding-site/paths";
+
 export class InvalidInvitationOriginError extends Error {
   constructor() {
     super("Nettsidens offentlige adresse er ugyldig. Kontroller PUBLIC_SITE_URL.");
@@ -28,7 +30,7 @@ export function buildInvitationUrl({ requestUrl, invitationKey, publicSiteUrl }:
     throw new InvalidInvitationOriginError();
   }
 
-  const registrationUrl = new URL("/register", siteUrl.origin);
+  const registrationUrl = new URL(weddingPath("/register"), siteUrl.origin);
   registrationUrl.hash = new URLSearchParams({ invitation: invitationKey }).toString();
   return registrationUrl.toString();
 }
