@@ -20,7 +20,8 @@ test.afterEach(async ({ page }) => {
 test("anonymous homepage shows only the hero and public login navigation", async ({ page }, testInfo) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-  await expect(page.getByText("Logg inn for å se innlegg, program og bilder.", { exact: true })).toBeVisible();
+  await expect(page.getByText("Logg inn for å se innlegg, program og bilder.", { exact: true })).toHaveCount(0);
+  await expect(page.getByRole("main").getByRole("link", { name: /^(Logg inn|Se status)$/ })).toHaveCount(0);
   await expect(page.getByRole("region", { name: "Bla i oppdateringer", exact: true })).toHaveCount(0);
   await expect(page.getByText("Det er ingen oppdateringer ennå.", { exact: true })).toHaveCount(0);
 
@@ -48,7 +49,7 @@ test("protected wedding pages redirect anonymous visitors to household login", a
   for (const route of ["/news", "/news/not-a-valid-id", "/program", "/bilder"]) {
     await page.goto(route);
     await expect(page).toHaveURL(/\/login$/);
-    await expect(page.getByRole("heading", { name: "Velkommen tilbake", level: 1 })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Logg inn", level: 1 })).toBeVisible();
   }
 });
 
