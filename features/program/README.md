@@ -4,6 +4,10 @@ The existing versioned Program global remains the source for itinerary, polls an
 
 ## Editing
 
+- Program is the only timetable editor. The obsolete `Wedding.schedule` field and its stored entries are permanently removed by migration `20261119_152048_remove_legacy_schedule`, following explicit user approval. This does not migrate old entries into Program or change existing Program content/history. Back up before applying; rollback recreates the empty legacy schema only, so recovering deleted entries requires the backup.
+- `npm run test:legacy-schedule-removal` verifies removal with seeded legacy entries and unchanged retained-table fingerprints, then runs native admin and Program browser regressions in a disposable database. These checks passed, along with build, TypeScript and 310 unit tests; lint retains only the four initial-migration warnings.
+- Local application: verified private full PostgreSQL backup outside the repository; applied only the reviewed migration plus its record atomically (not generic migration replay). Every retained table-content fingerprint stayed unchanged, including Program/version history. A separate connection confirmed removal and the settings API was checked afterwards. The first preflight attempt safely stopped before writes because PostgreSQL returned migration batch numbers as strings; the guard was corrected. The initial browser run also safely refused seeded test history; only the disposable fixtures were cleaned after preservation checks before the successful rerun.
+
 - `ProgramBuilder` owns the native Payload JSON field; `ProgramDayActivity` edits each day's optional `polls` and `commentsEnabled` settings. Existing itineraries need no backfill.
 - `PollEditorFrame` is shared with the Lexical post editor. Native post fields and Program JSON retain their own persistence/validation adapters.
 - Save draft/publish semantics apply to itinerary, polls and comment settings. Closing comments leaves existing discussion visible.

@@ -826,17 +826,6 @@ export interface Wedding {
     };
     [k: string]: unknown;
   } | null;
-  /**
-   * Beholdt for eldre innhold. Bruk Program i menyen for dagsprogrammet som vises på nettsiden.
-   */
-  schedule?:
-    | {
-        title: string;
-        time: string;
-        description?: string | null;
-        id?: string | null;
-      }[]
-    | null;
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -874,14 +863,6 @@ export interface WeddingSelect<T extends boolean = true> {
   heroImage?: T;
   heroBackgroundColor?: T;
   travelInformation?: T;
-  schedule?:
-    | T
-    | {
-        title?: T;
-        time?: T;
-        description?: T;
-        id?: T;
-      };
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

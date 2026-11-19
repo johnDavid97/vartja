@@ -33,12 +33,14 @@ export default buildConfig({
     meta: { titleSuffix: "— Andrea & Martin" },
     components: {
       Nav: "/components/admin/AdminNav#default",
-      views: { polls: { Component: "/components/admin/polls/PollOverviewView#default", path: "/polls", exact: true, meta: { title: "Avstemninger" } } },
+      views: {
+        dashboard: { Component: "/components/admin/Welcome#default" },
+        polls: { Component: "/components/admin/polls/PollOverviewView#default", path: "/polls", exact: true, meta: { title: "Avstemninger" } },
+      },
       providers: [
         "/components/admin/editor/PostEditorProvider#default",
         "/components/admin/households/HouseholdSummaryProvider#default",
       ],
-      beforeDashboard: ["/components/admin/Welcome#default"],
       graphics: { Logo: "/components/admin/Logo#default" },
     },
   },
