@@ -2,6 +2,12 @@
 
 `components/comments/Comments.tsx` is the shared composer/thread UI. Its endpoint key prevents state from leaking between articles; Program keeps visited panels mounted so drafts and uncertain retries survive day switches. Nothing is persisted to browser storage. Full page reloads discard unfinished drafts.
 
+## Shared guest presentation
+
+Posts and Program use the same PDF-inspired threads and multiline composer: household initials, deterministic muted guest avatar colours, green administrator identity, indented replies and a separate moderation badge. Relative timestamps are driven by an effect-initialized client clock; a full Europe/Oslo timestamp remains available in the time tooltip. The heading count reflects loaded entries and shows `+` when more pages are available; its accessible description does not change the region name.
+
+Presentation changes do not alter endpoint keys, exact uncertain requests, hidden-root reply restrictions, pagination or persistence. See [posts presentation](../posts/README.md) for the shared visual scope.
+
 ## Boundaries
 
 - Routes derive a typed target from the URL: `/api/posts/:postId/comments` or `/api/program-days/:dayId/comments`. Client JSON cannot choose the author, target, visibility or administrator identity.
