@@ -46,6 +46,7 @@ button, input, textarea, select { font: inherit; }
 }
 .wedding-nav.nav.wedding-nav--open { transform: none; visibility: visible; }
 .wedding-nav__brand { display: flex; align-items: center; gap: 12px; padding: 0 6px; text-decoration: none; }
+.wedding-nav__brand > span:last-child { min-width: 0; overflow-wrap: anywhere; }
 .wedding-nav__brand strong { font-size: 16px; letter-spacing: -.3px; }
 .wedding-nav__brand small, .wedding-nav__account small { display: block; color: var(--wedding-muted); font-size: 13px; margin-top: 3px; }
 .wedding-monogram { display: grid; place-items: center; flex-shrink: 0; width: 40px; height: 42px; border-radius: 11px; background: var(--wedding-green); color: #fff; font-size: 16px; font-weight: 750; }
@@ -218,7 +219,8 @@ button, input, textarea, select { font: inherit; }
 .wedding-date-popup > .wedding-field-hint { font-size: 11px; margin-top: 14px; }
 
 /* Admin login identity. */
-.wedding-admin-logo { display: flex; gap: 12px; align-items: center; justify-content: center; font-size: 23px; font-weight: 750; letter-spacing: -.03em; }
+.wedding-admin-logo { display: flex; gap: 12px; align-items: center; justify-content: center; min-width: 0; max-width: 100%; font-size: 23px; font-weight: 750; letter-spacing: -.03em; }
+.wedding-admin-logo__names { min-width: 0; overflow-wrap: anywhere; }
 
 @media (min-width: 1025px) {
   .template-default__nav-toggler-wrapper, .app-header .nav-toggler { display: none; }

@@ -146,7 +146,8 @@ try {
   await page.setViewportSize({ width: 1440, height: 1200 });
   for (const [route, screenshot] of [["/admin", "dashboard"], ["/admin/collections/posts", "posts"], ["/admin/collections/media", "media"], ["/admin/collections/users", "users"], ["/admin/globals/wedding", "settings"], ["/admin/globals/program", "program"], ["/admin/account", "account"]]) {
     await page.goto(route);
-    await page.waitForLoadState("networkidle");
+    // Streamed metadata/prefetch can keep background requests open after the UI is ready.
+    await expect(page.getByRole("navigation", { name: "Administrasjon", exact: true })).toBeVisible();
     assert(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), `${route} must fit the screen`);
     if (route === "/admin/globals/wedding") {
       await expect(page.getByText("Eldre tidsplan (ikke publisert)", { exact: true })).toHaveCount(0);

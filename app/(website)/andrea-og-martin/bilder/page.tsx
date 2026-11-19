@@ -1,4 +1,7 @@
 import { withWebsiteAccess } from "@/components/households/withWebsiteAccess";
+import { weddingPageMetadata } from "@/features/wedding-site/branding-server";
+
+export async function generateMetadata() { return weddingPageMetadata("Bilder"); }
 
 export default withWebsiteAccess(Page);
 function Page() {
