@@ -10,6 +10,7 @@ import * as migration_20261118_153059_household_login from './20261118_153059_ho
 import * as migration_20261118_181836_program_day_activity from './20261118_181836_program_day_activity';
 import * as migration_20261118_194840_post_comments from './20261118_194840_post_comments';
 import * as migration_20261119_120845_household_member_rejection from './20261119_120845_household_member_rejection';
+import * as migration_20261119_152048_remove_legacy_schedule from './20261119_152048_remove_legacy_schedule';
 
 export const migrations = [
   {
@@ -70,6 +71,11 @@ export const migrations = [
   {
     up: migration_20261119_120845_household_member_rejection.up,
     down: migration_20261119_120845_household_member_rejection.down,
-    name: '20261119_120845_household_member_rejection'
+    name: '20261119_120845_household_member_rejection',
+  },
+  {
+    up: migration_20261119_152048_remove_legacy_schedule.up,
+    down: migration_20261119_152048_remove_legacy_schedule.down,
+    name: '20261119_152048_remove_legacy_schedule'
   },
 ];

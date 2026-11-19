@@ -78,7 +78,7 @@ Automatic dates are assigned when publishing. The description counter recommends
 characters but does not truncate or reject older, longer descriptions.
 
 - **Innstillinger → Bryllupsinformasjon**: names, date, place and welcome text are connected to the homepage. Under **Utseende på forsiden**, edit the two hero headings and choose **Bilde / Farge**. Select/upload an image using the existing media library, or choose a background colour. The chosen photo is retained when switching to colour. Missing photos fall back to the selected colour; text contrast adjusts automatically. Payload's existing image-editor focal point controls the responsive crop.
-  Legacy schedule and travel fields are retained but are not displayed publicly. The new Program is separate; no legacy data is deleted or silently migrated.
+  Legacy travel information is retained but is not displayed publicly. Program is the only timetable source. The obsolete schedule and its stored entries were explicitly approved for permanent removal; the removal migration leaves Program content and history unchanged.
 - **Program** (`/admin/globals/program`): create dated days and flight, train, bus, hotel,
   event or information items. Select a row to edit details; drag handles or arrow buttons reorder
   items. Dates are calendar dates and times are local `HH:mm` values (no browser timezone conversion).
@@ -143,7 +143,7 @@ Comments and likes will be separate bottom-of-article features, not reorderable 
 - `app/(payload)/` — isolated admin layout and Payload REST API.
 - `payload.config.ts` — CMS configuration and database connection.
 - `collections/Users.ts` — editor accounts and access rules.
-- `globals/Wedding.ts` — editable wedding details and retained legacy schedule.
+- `globals/Wedding.ts` — editable wedding details and homepage appearance.
 - `globals/Program.ts`, `lib/program.ts` — versioned program, stable day/item IDs, server validation and public sorting.
 - `components/admin/program/` — multi-day visual editor using shared admin buttons and native Payload draft/publish controls.
 - `app/(website)/program/page.tsx` — live-only public itinerary; no draft query parameters are accepted.
