@@ -12,7 +12,7 @@ export default function NewsCards({
 }: NewsCardsProps) {
 
   return (
-    <div className="grid items-start gap-x-8 gap-y-12 md:grid-cols-2 xl:grid-cols-3">
+    <div className="grid items-stretch gap-x-8 gap-y-12 md:grid-cols-2 xl:grid-cols-3">
       {posts.map((post) => (
         <NewsCard key={post.id} post={post} headingLevel={headingLevel} />
       ))}

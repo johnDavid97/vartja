@@ -105,6 +105,9 @@ try {
   await widget.getByRole("radio", { name: "Vegetar" }).check();
   await widget.getByRole("button", { name: "Stem", exact: true }).click();
   await expect(widget.getByText("Takk for stemmen!", { exact: true })).toBeVisible();
+  await expect(widget.getByRole("list")).toHaveCSS("list-style-type", "none");
+  const questionSize = await widget.getByRole("heading", { name: "Hva vil dere spise?", exact: true }).evaluate((heading) => Number.parseFloat(getComputedStyle(heading).fontSize));
+  assert(questionSize <= 20, "Embedded poll heading must not inherit the article's large rich-text heading style");
   await expect(widget.getByText("1 stemme", { exact: true })).toBeVisible();
   await article.reload();
   await expect(widget.getByText("1 stemme", { exact: true })).toBeVisible();

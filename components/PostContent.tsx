@@ -3,13 +3,21 @@ import type { Post } from "@/payload-types";
 import PostRichText from "@/components/PostRichText";
 import { getPostContent, splitParagraphs, type PostContentSource } from "@/lib/post-content";
 
-export default function PostContent({ post }: { post: PostContentSource & Pick<Post, "body"> & { id?: number } }) {
+type PostContentProps = {
+  post: PostContentSource & Pick<Post, "body"> & { id?: number };
+  fallbackToSummary?: boolean;
+};
+
+export default function PostContent({ post, fallbackToSummary = true }: PostContentProps) {
   // An intentionally empty visual document stays empty; only absent documents fall back.
   if (post.body != null) return <PostRichText data={post.body} postId={post.id} />;
 
+  const blocks = fallbackToSummary ? getPostContent(post) : post.content || [];
+  if (blocks.length === 0) return null;
+
   return (
     <div className="space-y-8 sm:space-y-10">
-      {getPostContent(post).map((block, index) => {
+      {blocks.map((block, index) => {
         const key = block.id || `${block.blockType}-${index}`;
 
         switch (block.blockType) {
