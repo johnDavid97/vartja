@@ -2,7 +2,7 @@ import type { PayloadRequest, Where } from "payload";
 import { HouseholdRequestError } from "@/features/households/http/requests";
 import type { PollDefinition, PollResults } from "@/lib/polls";
 import { activityDigest, publishedDay, type ActivityContext } from "./server";
-import { programTransaction } from "./transaction";
+import { guestActivityTransaction } from "@/features/guest-activity/transaction";
 
 function voterKey(context: ActivityContext, pollId: string) {
   return activityDigest(context.payload, "household-ballot", [context.dayId, pollId, context.viewer.kind, context.viewer.id]);
@@ -31,7 +31,7 @@ export async function voteProgramPoll(context: ActivityContext, pollId: string, 
   if (context.viewer.kind !== "household") throw new HouseholdRequestError(403, "Avstemningen besvares av husstandene.");
   if (!input || typeof input !== "object" || Array.isArray(input) || Object.keys(input).length !== 1 || !("optionId" in input) || typeof input.optionId !== "string") throw new HouseholdRequestError(400, "Velg et gyldig alternativ.");
   const optionId = input.optionId;
-  return programTransaction(context.payload, async (req) => {
+  return guestActivityTransaction(context.payload, async (req) => {
     const poll = await pollForDay(context, pollId, req);
     if (!poll.open) throw new HouseholdRequestError(409, "Avstemningen er avsluttet.");
     if (!poll.options.some((option) => option.id === optionId)) throw new HouseholdRequestError(400, "Velg et gyldig alternativ.");

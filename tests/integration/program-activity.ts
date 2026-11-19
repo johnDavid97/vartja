@@ -177,7 +177,7 @@ try {
   assert.equal((await guest.request.post(commentsEndpoint, { headers, data: { requestKey: randomUUID(), body: "closed", parentId: null } })).status(), 409);
   // Restore for pagination and durable-throttle checks.
   await payload.updateGlobal({ slug: "program", data: { itinerary: liveData, _status: "published" } });
-  for (let index = 0; index < 51; index++) await payload.create({ collection: "program-comments", data: { dayId: "welcome", dayLabel: "Velkomst", authorName: "Pagination fixture", body: `Comment ${index}`, status: "published", requestDigest: randomUUID(), requestFingerprint: randomUUID() } });
+  for (let index = 0; index < 51; index++) await payload.create({ collection: "program-comments", data: { source: "program-day", dayId: "welcome", dayLabel: "Velkomst", authorName: "Pagination fixture", body: `Comment ${index}`, status: "published", requestDigest: randomUUID(), requestFingerprint: randomUUID() } });
   const batch = await (await guest.request.get(commentsEndpoint)).json();
   assert.equal(batch.comments.length, 50); assert(batch.nextCursor);
   const rest = await (await guest.request.get(`${commentsEndpoint}?after=${batch.nextCursor}`)).json();
