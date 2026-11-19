@@ -2,6 +2,7 @@ import { renderToStaticMarkup } from "react-dom/server"
 import { describe, expect, it } from "vitest"
 
 import { invitationKeyFromFragment, RegistrationSuccess } from "@/components/households/RegistrationForm"
+import { weddingPath } from "@/features/wedding-site/paths"
 
 describe("household registration form presentation", () => {
   it("accepts only one long opaque invitation value in the fragment", () => {
@@ -23,7 +24,7 @@ describe("household registration form presentation", () => {
     expect(html).toContain("Kopier koden")
     expect(html).toContain("Skriv ut")
     expect(html).toContain("Bruk husstandsnavnet og koden for å logge inn")
-    expect(html).toContain('href="/login"')
+    expect(html).toContain(`href="${weddingPath("/login")}"`)
     expect(html).not.toContain("privat nettside")
   })
 })

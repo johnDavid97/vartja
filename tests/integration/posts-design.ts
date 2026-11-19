@@ -7,6 +7,7 @@ import sharp from "sharp";
 import config from "../../payload.config";
 import type { Post } from "../../payload-types";
 import { createAuthenticatedGuest } from "./authenticated-guest";
+import { weddingPath } from "../../features/wedding-site/paths";
 
 const databaseUrl = new URL(process.env.DATABASE_URL || "");
 assert(["localhost", "127.0.0.1"].includes(databaseUrl.hostname), "Local databases only");
@@ -128,11 +129,12 @@ async function contentFingerprint(): Promise<string> {
 }
 
 async function cardHrefs(cards: Locator): Promise<string[]> {
-  return cards.evaluateAll((articles) => articles.map((article) => {
-    const link = article.querySelector<HTMLAnchorElement>('a[href^="/news/"]');
+  const linkSelector = `a[href^="${weddingPath("/news/")}"]`;
+  return cards.evaluateAll((articles, selector) => articles.map((article) => {
+    const link = article.querySelector<HTMLAnchorElement>(selector);
     if (!link) throw new Error("Every post card must link to its article");
     return new URL(link.href).pathname;
-  }));
+  }), linkSelector);
 }
 
 async function assertNoHorizontalOverflow(page: Page, width: number): Promise<void> {
@@ -201,16 +203,16 @@ try {
   }
 
   // Empty overview and anonymous redirect are checked before any post fixture exists.
-  await guestPage.goto("/news");
+  await guestPage.goto(weddingPath("/news"));
   await expect(guestPage.getByRole("heading", { level: 1, name: "Innlegg", exact: true })).toBeVisible();
   await expect(guestPage.getByRole("heading", { name: "Snart kommer det nytt fra oss", exact: true })).toBeVisible();
   await expect(guestPage.getByRole("main").locator("article")).toHaveCount(0);
-  await anonymousPage.goto("/news");
-  await expect(anonymousPage).toHaveURL(/\/login(?:\?|$)/);
+  await anonymousPage.goto(weddingPath("/news"));
+  await expect(anonymousPage).toHaveURL(/\/andrea-og-martin\/login(?:\?|$)/);
 
   const errorsBeforeInvalidArticles = pageErrors.length;
   for (const invalidId of ["0", "2147483648", "9007199254740992", "non-numeric"]) {
-    await guestPage.goto(`/news/${invalidId}`);
+    await guestPage.goto(weddingPath(`/news/${invalidId}`));
     await expect(guestPage.getByRole("heading", { level: 1, name: "Fant ikke innlegget", exact: true })).toBeVisible();
   }
   assert.deepEqual(pageErrors.slice(errorsBeforeInvalidArticles), [], "Invalid article IDs must not cause browser errors");
@@ -248,13 +250,13 @@ try {
   createdPostIds.push(authored.id);
 
   // A lone article has no fabricated related content, while shared poll/comments still mount.
-  await guestPage.goto(`/news/${authored.id}`);
+  await guestPage.goto(weddingPath(`/news/${authored.id}`));
   await expect(guestPage.getByRole("heading", { level: 1, name: authoredTitle, exact: true })).toBeVisible();
   await expect(guestPage.getByRole("heading", { name: "Flere innlegg", exact: true })).toHaveCount(0);
   await expect(guestPage.getByRole("region", { name: "Tar du bussen til festen?", exact: true })).toBeVisible();
   await expect(guestPage.getByRole("region", { name: "Kommentarer", exact: true })).toBeVisible();
-  await anonymousPage.goto(`/news/${authored.id}`);
-  await expect(anonymousPage).toHaveURL(/\/login(?:\?|$)/);
+  await anonymousPage.goto(weddingPath(`/news/${authored.id}`));
+  await expect(anonymousPage).toHaveURL(/\/andrea-og-martin\/login(?:\?|$)/);
 
   const listed: ListedPost[] = [{ id: authored.id, title: authored.title, publishedAt: authored.publishedAt! }];
   const publicFixtures = [
@@ -364,39 +366,39 @@ try {
 
   const fingerprintBeforeReads = await contentFingerprint();
 
-  await guestPage.goto("/news");
+  await guestPage.goto(weddingPath("/news"));
   const overviewCards = guestPage.getByRole("main").locator("article");
   await expect(overviewCards).toHaveCount(9);
-  assert.deepEqual(await cardHrefs(overviewCards), expected.slice(0, 9).map(({ id }) => `/news/${id}`));
+  assert.deepEqual(await cardHrefs(overviewCards), expected.slice(0, 9).map(({ id }) => weddingPath(`/news/${id}`)));
   await expect(guestPage.getByText(privatePost.title, { exact: true })).toHaveCount(0);
   await expect(guestPage.getByText(draftPost.title, { exact: true })).toHaveCount(0);
   await expect(guestPage.getByText(unpublishedRevisionTitle, { exact: true })).toHaveCount(0);
   await expect(guestPage.getByText(unpublishedRevisionDescription, { exact: true })).toHaveCount(0);
-  const authoredOverviewCard = overviewCards.filter({ has: guestPage.locator(`a[href="/news/${authored.id}"]`) });
+  const authoredOverviewCard = overviewCards.filter({ has: guestPage.locator(`a[href="${weddingPath(`/news/${authored.id}`)}"]`) });
   await expect(authoredOverviewCard).toHaveCount(1);
   await expect(authoredOverviewCard.getByRole("heading", { name: authoredTitle, exact: true })).toBeVisible();
   await expect(authoredOverviewCard.getByText(authoredDescription, { exact: true })).toBeVisible();
   await expect(authoredOverviewCard.getByRole("img", { name: media.alt, exact: true })).toHaveCount(1);
   await expect(guestPage.getByRole("navigation", { name: "Innleggssider", exact: true })).toContainText("Side 1 av 2");
-  await expect(guestPage.getByRole("link", { name: "Neste", exact: true })).toHaveAttribute("href", "/news?page=2");
+  await expect(guestPage.getByRole("link", { name: "Neste", exact: true })).toHaveAttribute("href", `${weddingPath("/news")}?page=2`);
 
   const noCoverCard = overviewCards.filter({ hasText: publicFixtures[6][0] });
   await expect(noCoverCard).toHaveCount(1);
   await expect(noCoverCard.getByRole("img")).toHaveCount(0);
 
   await guestPage.getByRole("link", { name: "Neste", exact: true }).click();
-  await expect(guestPage).toHaveURL(/\/news\?page=2$/);
+  await expect(guestPage).toHaveURL(/\/andrea-og-martin\/news\?page=2$/);
   const pageTwoCards = guestPage.getByRole("main").locator("article");
   await expect(pageTwoCards).toHaveCount(3);
-  assert.deepEqual(await cardHrefs(pageTwoCards), expected.slice(9).map(({ id }) => `/news/${id}`));
-  await expect(guestPage.getByRole("link", { name: "Forrige", exact: true })).toHaveAttribute("href", "/news?page=1");
+  assert.deepEqual(await cardHrefs(pageTwoCards), expected.slice(9).map(({ id }) => weddingPath(`/news/${id}`)));
+  await expect(guestPage.getByRole("link", { name: "Forrige", exact: true })).toHaveAttribute("href", `${weddingPath("/news")}?page=1`);
 
   // Native administrators see the same guest-visible overview and cannot bypass article boundaries.
-  await adminPage.goto("/news");
+  await adminPage.goto(weddingPath("/news"));
   const adminCards = adminPage.getByRole("main").locator("article");
   await expect(adminCards).toHaveCount(9);
-  assert.deepEqual(await cardHrefs(adminCards), expected.slice(0, 9).map(({ id }) => `/news/${id}`));
-  await adminPage.goto(`/news/${authored.id}`);
+  assert.deepEqual(await cardHrefs(adminCards), expected.slice(0, 9).map(({ id }) => weddingPath(`/news/${id}`)));
+  await adminPage.goto(weddingPath(`/news/${authored.id}`));
   const administratorArticle = adminPage.getByRole("article", { name: authoredTitle, exact: true });
   await expect(administratorArticle.getByText(authoredDescription, { exact: true })).toHaveCount(1);
   await expect(administratorArticle.getByRole("img", { name: media.alt, exact: true })).toHaveCount(3);
@@ -404,13 +406,13 @@ try {
   await expect(adminPage.getByText(unpublishedRevisionDescription, { exact: true })).toHaveCount(0);
   for (const hidden of [privatePost, draftPost]) {
     for (const page of [guestPage, adminPage]) {
-      await page.goto(`/news/${hidden.id}`);
+      await page.goto(weddingPath(`/news/${hidden.id}`));
       await expect(page.getByRole("heading", { level: 1, name: "Fant ikke innlegget", exact: true })).toBeVisible();
       await expect(page.getByText(hidden.title, { exact: true })).toHaveCount(0);
     }
   }
 
-  await guestPage.goto(`/news/${authored.id}`);
+  await guestPage.goto(weddingPath(`/news/${authored.id}`));
   const authoredArticle = guestPage.getByRole("article", { name: authoredTitle });
   await expect(authoredArticle).toBeVisible();
   await expect(authoredArticle.getByText(authoredDescription, { exact: true })).toHaveCount(1);
@@ -432,7 +434,7 @@ try {
   const relatedCards = related.locator("article");
   await expect(relatedCards).toHaveCount(3);
   const expectedRelated = expected.filter(({ id }) => id !== authored.id).slice(0, 3);
-  assert.deepEqual(await cardHrefs(relatedCards), expectedRelated.map(({ id }) => `/news/${id}`));
+  assert.deepEqual(await cardHrefs(relatedCards), expectedRelated.map(({ id }) => weddingPath(`/news/${id}`)));
   assert(!expectedRelated.some(({ id }) => id === privatePost.id || id === draftPost.id));
   await expect(related.getByText(authoredTitle, { exact: true })).toHaveCount(0);
   await expect(related.getByText(unpublishedRevisionTitle, { exact: true })).toHaveCount(0);
@@ -442,11 +444,11 @@ try {
   await expect(footer).toContainText("Testparet & Venner");
   await expect(footer).toContainText("2. august 2028");
 
-  await guestPage.goto(`/news/${expected[1].id}`);
+  await guestPage.goto(weddingPath(`/news/${expected[1].id}`));
   const authoredRelatedCard = guestPage
     .getByRole("region", { name: "Flere innlegg", exact: true })
     .locator("article")
-    .filter({ has: guestPage.locator(`a[href="/news/${authored.id}"]`) });
+    .filter({ has: guestPage.locator(`a[href="${weddingPath(`/news/${authored.id}`)}"]`) });
   await expect(authoredRelatedCard).toHaveCount(1);
   await expect(authoredRelatedCard.getByRole("heading", { name: authoredTitle, exact: true })).toBeVisible();
   await expect(authoredRelatedCard.getByText(authoredDescription, { exact: true })).toBeVisible();
@@ -454,14 +456,14 @@ try {
   await expect(guestPage.getByText(unpublishedRevisionTitle, { exact: true })).toHaveCount(0);
   await expect(guestPage.getByText(unpublishedRevisionDescription, { exact: true })).toHaveCount(0);
 
-  await guestPage.goto(`/news/${legacy.id}`);
+  await guestPage.goto(weddingPath(`/news/${legacy.id}`));
   const legacyArticle = guestPage.getByRole("article", { name: legacy.title });
   await expect(legacyArticle.getByText(legacyDescription, { exact: true })).toHaveCount(1);
   await expect(legacyArticle.getByRole("img", { name: media.alt, exact: true })).toHaveCount(1);
   await expect(legacyArticle.getByRole("img", { name: media.alt, exact: true })).toHaveCSS("object-position", "17% 73%");
   await expect(legacyArticle.getByRole("region", { name: "Artikkelinnhold", exact: true })).toHaveCount(0);
 
-  await guestPage.goto(`/news/${repeatedCoverPost.id}`);
+  await guestPage.goto(weddingPath(`/news/${repeatedCoverPost.id}`));
   const repeatedCoverArticle = guestPage.getByRole("article", { name: repeatedCoverPost.title, exact: true });
   // One header cover + two intentionally captioned body images; no extra leading duplicate.
   await expect(repeatedCoverArticle.getByRole("img", { name: media.alt, exact: true })).toHaveCount(3);
@@ -473,14 +475,14 @@ try {
   for (const width of [320, 390, 768, 1440]) {
     const height = width <= 390 ? 844 : 1000;
     await guestPage.setViewportSize({ width, height });
-    await guestPage.goto("/news");
+    await guestPage.goto(weddingPath("/news"));
     const cards = guestPage.getByRole("main").locator("article");
     await expect(cards).toHaveCount(9);
     await assertNoHorizontalOverflow(guestPage, width);
     await assertOverviewColumns(cards, width);
     await guestPage.screenshot({ path: `/tmp/sammen-posts-design-overview-${width}.png`, fullPage: true });
 
-    await guestPage.goto(`/news/${authored.id}`);
+    await guestPage.goto(weddingPath(`/news/${authored.id}`));
     await expect(guestPage.getByRole("region", { name: "Flere innlegg", exact: true }).locator("article")).toHaveCount(3);
     await assertNoHorizontalOverflow(guestPage, width);
     await guestPage.screenshot({ path: `/tmp/sammen-posts-design-article-${width}.png`, fullPage: true });

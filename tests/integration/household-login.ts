@@ -7,6 +7,7 @@ import sharp from "sharp";
 import config from "../../payload.config";
 import { getHouseholdAdminServices, getHouseholdRegistrationServices } from "../../features/households/composition-root";
 import { HOUSEHOLD_SESSION_COOKIE } from "../../features/households/http/session-cookie";
+import { weddingPath } from "../../features/wedding-site/paths";
 
 const databaseUrl = new URL(process.env.DATABASE_URL || "");
 assert(["localhost", "127.0.0.1"].includes(databaseUrl.hostname));
@@ -61,16 +62,16 @@ try {
   const page = await anonymous.newPage();
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
-  await page.goto("/");
+  await page.goto(weddingPath());
   await expect(page.getByText("Public welcome")).toBeVisible();
   await expect(page.getByText(post.title)).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Program", exact: true })).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Logg inn", exact: true }).first()).toBeVisible();
-  for (const path of ["/news", `/news/${post.id}`, "/program", "/bilder"]) {
+  for (const path of [weddingPath("/news"), weddingPath(`/news/${post.id}`), weddingPath("/program"), weddingPath("/bilder")]) {
     const response = await anonymous.request.get(path);
     const text = await response.text();
     assert(!text.includes(post.title) && !text.includes("Guest-only meeting place"), `No SSR/RSC leak at ${path}`);
-    await page.goto(path); await expect(page).toHaveURL(/\/login$/);
+    await page.goto(path); await expect(page).toHaveURL(/\/andrea-og-martin\/login$/);
   }
   assert.equal((await anonymous.request.get("/api/posts")).status(), 403);
   assert.equal((await anonymous.request.get(`/api/posts/${post.id}`)).status(), 403);
@@ -83,7 +84,7 @@ try {
   assert.equal(wrongName.status(), 401); assert.equal(wrongCode.status(), 401);
   assert.deepEqual(await wrongName.json(), await wrongCode.json());
   assert.equal((await guest.request.post("/api/household-login", { headers: { Origin: "https://evil.invalid" }, data: {} })).status(), 403);
-  await page.goto("/login");
+  await page.goto(weddingPath("/login"));
   await expect(page.getByRole("heading", { name: "Logg inn" })).toBeVisible();
   await expect(page.getByLabel("Husstandsnavn", { exact: true })).toBeVisible();
   for (const width of [1440, 768, 390, 320]) {
@@ -96,7 +97,7 @@ try {
   await page.getByRole("button", { name: "Vis kode", exact: true }).click();
   await expect(page.getByLabel("Husstandskode", { exact: true })).toHaveAttribute("type", "text");
   await page.getByRole("button", { name: "Logg inn", exact: true }).click();
-  await expect(page).toHaveURL(baseURL + "/");
+  await expect(page).toHaveURL(baseURL + weddingPath());
   await expect(page.getByText(post.title)).toBeVisible();
   const cookie = (await anonymous.cookies()).find((item) => item.name === HOUSEHOLD_SESSION_COOKIE);
   assert(cookie?.httpOnly && cookie.sameSite === "Lax");
@@ -113,7 +114,7 @@ try {
   assert.equal((await guest.request.get("/api/households")).status(), 403);
   assert.equal((await guest.request.get("/api/household-sessions")).status(), 403);
   assert.equal((await admin.request.get("/api/household-sessions")).status(), 403);
-  await page.goto("/program"); await expect(page.getByText("Guest-only meeting place")).toBeVisible();
+  await page.goto(weddingPath("/program")); await expect(page.getByText("Guest-only meeting place")).toBeVisible();
   const savedState = await guest.storageState();
   const remembered = await browser.newContext({ baseURL, storageState: savedState });
   assert.equal((await session(remembered)).householdId, first.householdId);
@@ -128,7 +129,7 @@ try {
   const pending = await pendingResponse.json();
   assert((await login(otherDevice, pending.accessCode, "Venterfamilien")).ok());
   const pendingPage = await otherDevice.newPage();
-  await pendingPage.goto("/program"); await expect(pendingPage).toHaveURL(/\/waiting$/);
+  await pendingPage.goto(weddingPath("/program")); await expect(pendingPage).toHaveURL(/\/andrea-og-martin\/waiting$/);
   await expect(pendingPage.getByRole("heading", { name: "Venter på godkjenning" })).toBeVisible();
   for (const width of [1440, 390, 320]) {
     await pendingPage.setViewportSize({ width, height: 950 });
@@ -140,7 +141,7 @@ try {
   const pendingBeforeApproval = await payload.findByID({ collection: "households", id: pending.householdId });
   const approvedPendingHousehold = await setMemberStatuses(pending.householdId, pendingBeforeApproval.members.map(() => "approved"));
   assert.equal(approvedPendingHousehold.status, "approved");
-  await pendingPage.getByRole("button", { name: "Sjekk godkjenning" }).click(); await expect(pendingPage).toHaveURL(baseURL + "/");
+  await pendingPage.getByRole("button", { name: "Sjekk godkjenning" }).click(); await expect(pendingPage).toHaveURL(baseURL + weddingPath());
   assert((await otherDevice.request.get("/api/posts")).ok());
 
   // Hold a native edit after originalDoc is read. Rotation must wait on the same row lock.

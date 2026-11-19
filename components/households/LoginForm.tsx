@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import styles from "./login.module.css";
+import { weddingPath } from "@/features/wedding-site/paths";
 
 export default function LoginForm() {
   const [showCode, setShowCode] = useState(false);
@@ -27,7 +28,7 @@ export default function LoginForm() {
       // No tokens or codes in browser storage or URLs. Reset authenticated route caches.
       const household = result && typeof result === "object" && "household" in result ? result.household : null;
       if (!household || typeof household !== "object" || !("status" in household) || !["pending", "approved"].includes(String(household.status))) throw new Error("Invalid response");
-      window.location.assign(household.status === "pending" ? "/waiting" : "/");
+      window.location.assign(household.status === "pending" ? weddingPath("/waiting") : weddingPath());
     } catch {
       setError("Kunne ikke koble til. Sjekk forbindelsen og prøv igjen.");
       setPending(false);

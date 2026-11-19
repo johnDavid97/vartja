@@ -6,6 +6,7 @@ import { sql } from "@payloadcms/db-postgres";
 import config from "../../payload.config";
 import { HouseholdCredentialProtection } from "../../features/households/infrastructure/HouseholdCredentialProtection";
 import { PayloadHouseholdRepository } from "../../features/households/infrastructure/PayloadHouseholdRepository";
+import { weddingPath } from "../../features/wedding-site/paths";
 
 const databaseUrl = new URL(process.env.DATABASE_URL || "");
 assert(["localhost", "127.0.0.1"].includes(databaseUrl.hostname));
@@ -33,6 +34,7 @@ try {
   assert.match(invitation.qrSvg, /^<svg\s/);
   const registrationUrl = new URL(invitation.registrationUrl);
   assert.equal(registrationUrl.origin, baseURL, "Never navigate a fixture to a hosted website");
+  assert.equal(registrationUrl.pathname, weddingPath("/register"));
   assert.equal(registrationUrl.search, "");
   const invitationKey = new URLSearchParams(registrationUrl.hash.slice(1)).get("invitation");
   assert(invitationKey);
@@ -40,7 +42,7 @@ try {
   const page = await guest.newPage();
   const browserErrors: string[] = [];
   page.on("pageerror", (error) => browserErrors.push(error.message));
-  await page.goto("/register");
+  await page.goto(weddingPath("/register"));
   await expect(page.getByText("Åpne lenken fra invitasjonen", { exact: true })).toBeVisible();
   await page.goto(invitation.registrationUrl);
   await expect(page.locator("form")).toHaveCSS("display", "grid");

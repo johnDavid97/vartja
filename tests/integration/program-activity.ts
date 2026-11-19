@@ -7,6 +7,7 @@ import config from "../../payload.config";
 import { createAuthenticatedGuest } from "./authenticated-guest";
 import { getHouseholdRegistrationServices } from "../../features/households/composition-root";
 import type { ProgramData } from "../../lib/program";
+import { weddingPath } from "../../features/wedding-site/paths";
 
 assert(["localhost", "127.0.0.1"].includes(new URL(process.env.DATABASE_URL || "").hostname));
 assert(new URL(process.env.DATABASE_URL!).pathname.includes("program_activity"), "Only run in the disposable activity database");
@@ -53,7 +54,7 @@ try {
     const saved = await response; assert(saved.ok(), await saved.text());
   }
   await save("Lagre utkast");
-  await page.goto("/program");
+  await page.goto(weddingPath("/program"));
   await expect(page.getByRole("heading", { name: "Tar dere bussen på mandag?" })).toHaveCount(0);
   await save("Publiser endringer");
   await page.reload();
@@ -135,7 +136,7 @@ try {
   assert.equal(afterRetry.comments.filter((comment: { body: string }) => comment.body === "Kommentar med tapt svar").length, 1);
   await page.unroute("**/api/program-days/welcome/comments", loseFirstCommentResponse);
   const adminPage = await admin.newPage();
-  await adminPage.goto("/program");
+  await adminPage.goto(weddingPath("/program"));
   const comments = adminPage.getByRole("region", { name: "Kommentarer", exact: true });
   await comments.getByRole("button", { name: "Svar", exact: true }).first().click();
   await comments.getByLabel("Skriv et svar", { exact: true }).fill("Bussen stopper ved hotellet.");

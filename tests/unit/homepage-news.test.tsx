@@ -4,6 +4,7 @@ import LatestUpdates from "@/components/homepage/LatestUpdates";
 import NewsCard from "@/components/NewsCard";
 import NewsCards from "@/components/NewsCards";
 import type { Post } from "@/payload-types";
+import { weddingPath } from "@/features/wedding-site/paths";
 
 function post(overrides: Partial<Post> = {}): Post {
   return {
@@ -32,7 +33,7 @@ describe("homepage news", () => {
   it("renders linked homepage cards and no useless controls for one post", () => {
     const html = renderToStaticMarkup(<LatestUpdates posts={[post()]} />);
 
-    expect(html).toContain('href="/news/1"');
+    expect(html).toContain(`href="${weddingPath("/news/1")}"`);
     expect(html).toContain("Velkommen til bryllupssiden");
     expect(html).toContain("Praktisk info");
     expect(html).toContain("Les mer");
@@ -69,8 +70,8 @@ describe("homepage news", () => {
       <NewsCards posts={[post(), post({ id: 2, title: "Overnatting" })]} />,
     );
 
-    expect(html).toContain('href="/news/1"');
-    expect(html).toContain('href="/news/2"');
+    expect(html).toContain(`href="${weddingPath("/news/1")}"`);
+    expect(html).toContain(`href="${weddingPath("/news/2")}"`);
     expect(html).toContain("Overnatting");
   });
 });

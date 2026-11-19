@@ -4,9 +4,10 @@ import {
   parseHouseholdInvitationDetails,
   presentHouseholdInvitation,
 } from "@/lib/household-invitation-presentation"
+import { weddingPath } from "@/features/wedding-site/paths"
 
 const validResponse = {
-  registrationUrl: "https://preview.example/register#invitation=inv_test-only-token&source=card",
+  registrationUrl: `https://preview.example${weddingPath("/register")}#invitation=inv_test-only-token&source=card`,
   qrDataUrl: "data:image/png;base64,iVBORw0KGgo=",
   qrSvg: '<svg xmlns="http://www.w3.org/2000/svg"><path d="M0 0"/></svg>',
 }
@@ -16,14 +17,14 @@ describe("household invitation presentation", () => {
     const details = parseHouseholdInvitationDetails(validResponse)
     expect(details?.registrationUrl).toBe(validResponse.registrationUrl)
     expect(presentHouseholdInvitation(validResponse.registrationUrl).maskedUrl).toBe(
-      `https://preview.example/register#invitation=${"•".repeat(12)}&source=card`,
+      `https://preview.example${weddingPath("/register")}#invitation=${"•".repeat(12)}&source=card`,
     )
   })
 
   it.each([
-    "http://localhost:3000/register#invitation=test",
-    "http://127.24.0.1:3000/register#invitation=test",
-    "http://[::1]:3000/register#invitation=test",
+    `http://localhost:3000${weddingPath("/register")}#invitation=test`,
+    `http://127.24.0.1:3000${weddingPath("/register")}#invitation=test`,
+    `http://[::1]:3000${weddingPath("/register")}#invitation=test`,
   ])("warns for an actual local or loopback hostname: %s", (registrationUrl) => {
     expect(presentHouseholdInvitation(registrationUrl).isLocal).toBe(true)
   })

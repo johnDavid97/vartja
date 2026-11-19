@@ -10,6 +10,7 @@ import { HouseholdNameField } from "@/components/households/HouseholdNameField"
 import { MemberListFields, type MemberFormRow } from "@/components/households/MemberListFields"
 import { normalizeHouseholdName } from "@/features/households/domain/household-name"
 import { MAX_MEMBERS } from "@/features/households/domain/validation"
+import { weddingPath } from "@/features/wedding-site/paths"
 
 import styles from "./registration.module.css"
 
@@ -122,7 +123,7 @@ export function RegistrationSuccess({ accessCode, displayName }: { accessCode: s
         {copyMessage ? <p className={styles.copyMessage} aria-live="polite">{copyMessage}</p> : null}
         <p>Lagre, skriv ned eller skriv ut koden nå. Av sikkerhetsgrunner vises den ikke automatisk igjen.</p>
         <p>Bruk husstandsnavnet og koden for å logge inn. Innholdet åpnes når brudeparet har godkjent dere.</p>
-        <Link href="/login" className={buttonVariants({ variant: "outline" })}>Gå til innlogging</Link>
+        <Link href={weddingPath("/login")} className={buttonVariants({ variant: "outline" })}>Gå til innlogging</Link>
       </CardContent>
     </Card>
   )

@@ -17,6 +17,7 @@ import { getHomepageSettings } from "@/features/homepage/composition-root";
 import { articleDate } from "@/lib/article-date";
 import { articleContentAfterCover } from "@/lib/article-content";
 import styles from "../news.module.css";
+import { weddingPath } from "@/features/wedding-site/paths";
 
 export const metadata: Metadata = {
   title: "Nytt fra oss — Andrea & Martin",
@@ -76,7 +77,7 @@ async function Article({ params }: Props) {
         <div className="mx-auto max-w-7xl">
           <div className="mx-auto max-w-4xl">
             <div className="mx-auto max-w-3xl">
-              <Link href="/news" className={buttonVariants({ variant: "ghost", className: "mb-8" })}>
+              <Link href={weddingPath("/news")} className={buttonVariants({ variant: "ghost", className: "mb-8" })}>
                 ← Alle innlegg
               </Link>
             </div>

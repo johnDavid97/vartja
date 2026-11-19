@@ -4,6 +4,7 @@ import NewsCard from "@/components/NewsCard";
 import PostContent from "@/components/PostContent";
 import { articleDate } from "@/lib/article-date";
 import type { Media, Post } from "@/payload-types";
+import { weddingPath } from "@/features/wedding-site/paths";
 
 const image: Media = {
   id: 7,
@@ -33,7 +34,7 @@ function post(overrides: Partial<Post> = {}): Post {
 describe("article presentation", () => {
   it("keeps a media area on default cards without inventing an image", () => {
     const html = renderToStaticMarkup(<NewsCard post={post()} />);
-    expect(html).toContain('href="/news/1"');
+    expect(html).toContain(`href="${weddingPath("/news/1")}"`);
     expect(html).toContain("Les mer");
     expect(html).not.toContain("<img");
   });
