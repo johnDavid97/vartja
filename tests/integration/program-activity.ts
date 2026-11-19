@@ -184,7 +184,10 @@ try {
   assert(rest.comments.length > 0); assert.equal(rest.nextCursor, null);
   await payload.db.drizzle.execute(sql`UPDATE program_activity_limits SET attempts = 20, window_start = date_trunc('minute', now())`);
   assert.equal((await guest.request.post(commentsEndpoint, { headers, data: { requestKey: randomUUID(), body: "limited", parentId: null } })).status(), 429);
-  await payload.update({ collection: "households", id: household.id, data: { status: "pending" } });
+  const beforeWithdrawal = await payload.findByID({ collection: "households", id: household.id });
+  await payload.update({ collection: "households", id: household.id, data: {
+    members: beforeWithdrawal.members.map((member) => ({ ...member, status: "pending" as const })),
+  } });
   assert.equal((await guest.request.get(commentsEndpoint)).status(), 403);
   assert.deepEqual(errors, []);
   console.log("PASS: per-day poll editing/publication, household voting across devices, duplicate/replay safety, frozen voted definitions, comments/replies, author integrity, moderation, pagination, durable quota, privacy and responsive layouts.");

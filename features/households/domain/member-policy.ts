@@ -1,5 +1,5 @@
 import { HouseholdError } from "./errors";
-import type { HouseholdMember, HouseholdStatus, MemberInput } from "./models";
+import type { HouseholdMember, HouseholdStatus, MemberInput, MemberStatus } from "./models";
 import { validateMemberId, validateMemberInput } from "./validation";
 
 export type MemberUpdate = HouseholdMember;
@@ -68,6 +68,15 @@ export function reconcileMembers(
     .map((member) => member.id);
 
   return { updates, additions, removals };
+}
+
+export function deriveHouseholdStatus(
+  members: readonly { status: MemberStatus }[],
+): HouseholdStatus {
+  if (members.length === 0) throw new HouseholdError("INVALID_MEMBERS");
+  if (members.some((member) => member.status === "approved")) return "approved";
+  if (members.some((member) => member.status === "pending")) return "pending";
+  return "revoked";
 }
 
 export function hasApprovedHouseholdAccess(status: HouseholdStatus): boolean {

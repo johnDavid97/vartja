@@ -15,6 +15,7 @@ Project-specific context. Read the sections relevant to the task; the general en
 - Keep native Payload permissions, validation, form state, drafts and publication unless a specific approved requirement needs something different.
 - Read the relevant installed Next.js documentation before framework changes; this project's version may differ from remembered APIs.
 - Preserve existing households, credentials, Program content/version history, posts, comments and votes. Use the disposable integration runners for data-writing tests.
+- The populated local database has a legacy `dev` migration marker instead of records for the initial schema migrations. **Do not run a generic `payload migrate` against it:** that would try to replay existing initial tables. After backup, apply only the specifically reviewed outstanding migration and its migration record in one transaction. Fresh disposable databases use the full normal migration chain.
 
 ## Identity and privacy
 

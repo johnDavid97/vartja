@@ -139,7 +139,8 @@ try {
   const article = await guest.newPage();
   await article.goto(`/news/${postId}`);
   await expect(article.getByRole("heading", { name: "Original heading" })).toBeVisible();
-  const headings = await article.locator("article h2").allTextContents();
+  // Comments have their own heading; assert only the saved rich-text body.
+  const headings = await article.locator("article > header + div h2").allTextContents();
   assert.deepEqual(headings, ["Original heading"]);
   await expect(article.getByRole("heading", { name: "Original heading" }).locator('span[style*="font-size"]')).toHaveCSS("font-size", "22px");
   await expect(article.getByRole("img", { name: "Temporary editor photo" })).toBeVisible();

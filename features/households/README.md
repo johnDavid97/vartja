@@ -14,6 +14,12 @@ Migration `20261118_153059_household_login` adds sessions, login quotas and hous
 
 Run `npm run test:household-login` for disposable-database migration, Program and login/privacy browser checks.
 
+## Member approval
+
+Members can be pending, approved or rejected. Household status is derived: any approved member grants household approval; otherwise any pending member keeps it pending; all rejected means revoked. The admin editor's **Godkjenn alle** includes rejected members and stays unsaved until **Lagre**. Native status-only updates no longer act as approval commands. Removing the last approved member revokes existing access; name corrections preserve individual decisions.
+
+Migration `20261119_120845_household_member_rejection` preserves household access and backfills legacy household rejection to member rejection. It refuses inconsistent legacy approvals and destructive rollback of rejected decisions. See [editor details and migration safety](../../docs/household-editor.md). Run `npm run test:household-members` for the combined disposable regressions.
+
 ## Start here
 
 1. **`domain/models.ts`** — describes a household and its members.
@@ -28,7 +34,7 @@ Run `npm run test:household-login` for disposable-database migration, Program an
 
 Administrator creation uses `application/CreateApprovedHousehold.ts`, sharing strict initial validation and credential provisioning with guest registration. Only the administrator use case creates approved households; guest registration stays pending. `GetHouseholdSummary.ts` provides pending-household counts, read in one database snapshot without requiring the credential secret.
 
-The admin workspace lives in `components/admin/households/HouseholdWorkspace.tsx` and reuses `AdminList`/`AdminTable`. See [admin UI scope and verification](../../docs/household-admin-ui.md). The individual household editor retains native Payload persistence and fields with a matching card layout, explicit approval choices and separate code controls. See [editor refinement](../../docs/household-editor.md).
+The admin workspace lives in `components/admin/households/HouseholdWorkspace.tsx` and reuses `AdminList`/`AdminTable`. See [admin UI scope and verification](../../docs/household-admin-ui.md). The individual household editor retains native Payload persistence and fields with the supplied PDF layout, individual approval/rejection, derived household status and separate code controls. See [editor refinement](../../docs/household-editor.md).
 
 The reusable React fields live in `components/households/`. They display and edit form values, but do not log anybody in, save records or approve guests.
 
