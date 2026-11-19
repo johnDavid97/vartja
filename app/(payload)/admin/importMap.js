@@ -3,6 +3,7 @@ import { default as default_97c46a597f3e8b4db92ba571cd7acb34 } from '../../../co
 import { Visibility as Visibility_008009b24e2dc72f814377d0317ca6d4 } from '../../../components/admin/fields/Visibility'
 import { PublicationCell as PublicationCell_fd632f21ba984e4333d52fc06b4e62be } from '../../../components/admin/tables/Cells'
 import { PublicationDate as PublicationDate_073b301bda9c44f77b023b22aa2b50f6 } from '../../../components/admin/fields/PublicationDate'
+import { default as default_41cd6d13bfcade74f18fd6e3b2069f4e } from '../../../components/admin/fields/PostCommentsDescription'
 import { PostSidebar as PostSidebar_2b9a24be4824c1b42edd03e79beb22f2 } from '../../../components/admin/editor/PostSidebar'
 import { PostDescription as PostDescription_e98180dc4cb6030d8c3bd48ccd323775 } from '../../../components/admin/fields/PostDescription'
 import { CoverImage as CoverImage_e62dafae6689b697554ff7cdc8fdce2f } from '../../../components/admin/fields/CoverImage'
@@ -67,6 +68,7 @@ export const importMap = {
   "/components/admin/fields/Visibility#Visibility": Visibility_008009b24e2dc72f814377d0317ca6d4,
   "/components/admin/tables/Cells#PublicationCell": PublicationCell_fd632f21ba984e4333d52fc06b4e62be,
   "/components/admin/fields/PublicationDate#PublicationDate": PublicationDate_073b301bda9c44f77b023b22aa2b50f6,
+  "/components/admin/fields/PostCommentsDescription#default": default_41cd6d13bfcade74f18fd6e3b2069f4e,
   "/components/admin/editor/PostSidebar#PostSidebar": PostSidebar_2b9a24be4824c1b42edd03e79beb22f2,
   "/components/admin/fields/PostDescription#PostDescription": PostDescription_e98180dc4cb6030d8c3bd48ccd323775,
   "/components/admin/fields/CoverImage#CoverImage": CoverImage_e62dafae6689b697554ff7cdc8fdce2f,

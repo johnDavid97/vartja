@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { programError, type ProgramData } from "@/lib/program";
-import { parseCommentInput } from "@/features/program/activity/validation";
+import { parseCommentInput } from "@/features/comments/validation";
 import { buildPollOverview } from "@/features/polls/overview";
 import type { PollDefinition } from "@/lib/polls";
 

@@ -1,10 +1,10 @@
 import { ValidationError, type GlobalBeforeChangeHook } from "payload";
 import { parsePoll, samePollChoices } from "@/lib/polls";
 import { programError, type ProgramData } from "@/lib/program";
-import { lockProgramActivity } from "./transaction";
+import { lockGuestActivity } from "@/features/guest-activity/transaction";
 
 export const validateProgramPolls: GlobalBeforeChangeHook = async ({ data, originalDoc, req }) => {
-  await lockProgramActivity(req);
+  await lockGuestActivity(req);
   const itinerary = data.itinerary ?? originalDoc?.itinerary;
   const invalid = programError(itinerary, (data._status ?? originalDoc?._status) === "published");
   const fail = (message: string): never => { throw new ValidationError({ errors: [{ path: "itinerary", message }] }); };
