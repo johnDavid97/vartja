@@ -16,4 +16,62 @@
 .error { margin: 0; color: #922e2a; font-size: 14px; line-height: 1.5; }
 .help { margin: 0; border-top: 1px solid #e1e5df; padding-top: 20px; font-size: 14px; color: #626970; line-height: 1.6; }
 .actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 24px; }
+
+.loginPage {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: calc(100dvh - 5.4rem);
+  padding: clamp(40px, 8vh, 80px) 20px;
+  background: #f7f8f6;
+}
+.loginCard { width: min(100%, 480px); color: #252a28; }
+.loginCard h1 { margin: 0 0 28px; font-size: clamp(28px, 4vw, 32px); font-weight: 600; line-height: 1.2; letter-spacing: -0.025em; }
+.loginCard .form { gap: 24px; }
+.loginCard .fields { gap: 0; }
+.loginCard .fields > label { margin-bottom: 8px; color: #34473f; font-size: 15px; font-weight: 600; }
+.loginCard .fields input:not([type="checkbox"]) {
+  min-height: 48px;
+  border-color: #cfd4cd;
+  border-radius: 10px;
+  padding: 12px 14px;
+  color: #252a28;
+}
+.loginCard .fields input:not([type="checkbox"])::placeholder { color: #8a8f8c; opacity: 1; }
+.loginCard .fields input:focus-visible,
+.loginCard .codeRow button:focus-visible,
+.loginCard .submit:focus-visible {
+  border-color: #82a99a;
+  outline: 2px solid #2f5e52;
+  outline-offset: 2px;
+  box-shadow: none;
+}
+.loginCard .codeRow { gap: 10px; }
+.loginCard .codeRow button {
+  min-height: 48px;
+  border-color: #cfd4cd;
+  border-radius: 10px;
+  background: transparent;
+  padding-inline: 14px;
+  color: #34473f;
+}
+.loginCard .codeRow button:hover { border-color: #82a99a; background: #edf2ef; color: #234a40; }
+.loginCard .hint { margin: 8px 0 22px; color: #62686e; }
+.loginCard .remember { margin: 0; color: #34473f; }
+.loginCard .remember input { accent-color: #2f5e52; }
+.loginCard .submit {
+  min-height: 48px;
+  border-radius: 10px;
+  background: #2f5e52;
+  color: white;
+}
+.loginCard .submit:hover { background: #234a40; }
+.loginCard .error { color: #922e2a; }
+.loginCard .help { border-color: #d9ddd7; color: #62686e; font-size: 12px; }
+
+@media (max-width: 767px) {
+  .loginPage { min-height: calc(100dvh - 4.6rem); padding: 36px 20px 48px; }
+}
 @media (max-width: 420px) { .card { padding: 22px 18px; } .codeRow { flex-wrap: wrap; } .codeRow input { flex: 1 1 100%; } }

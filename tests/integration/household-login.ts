@@ -75,7 +75,7 @@ try {
   assert.deepEqual(await wrongName.json(), await wrongCode.json());
   assert.equal((await guest.request.post("/api/household-login", { headers: { Origin: "https://evil.invalid" }, data: {} })).status(), 403);
   await page.goto("/login");
-  await expect(page.getByRole("heading", { name: "Velkommen tilbake" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Logg inn" })).toBeVisible();
   await expect(page.getByLabel("Husstandsnavn", { exact: true })).toBeVisible();
   for (const width of [1440, 768, 390, 320]) {
     await page.setViewportSize({ width, height: 950 });

@@ -33,7 +33,8 @@ try {
   await page.goto("/");
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Andrea & Martin");
   await expect(page.getByText("27. juli 2027", { exact: true }).first()).toBeVisible();
-  await expect(page.getByText("Logg inn for å se innlegg, program og bilder.", { exact: true })).toBeVisible();
+  await expect(page.getByText("Logg inn for å se innlegg, program og bilder.", { exact: true })).toHaveCount(0);
+  await expect(page.getByRole("main").getByRole("link", { name: /^(Logg inn|Se status)$/ })).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Logg inn", exact: true }).first()).toBeVisible();
   await expect(page.getByRole("link", { name: "Program", exact: true })).toHaveCount(0);
   await expect(page.getByRole("region", { name: "Bla i oppdateringer", exact: true })).toHaveCount(0);
@@ -147,7 +148,8 @@ try {
   const anonymousImagePage = await anonymousImageContext.newPage();
   await anonymousImagePage.goto("/");
   await expect(anonymousImagePage.getByRole("img", { name: "Testbilde av brudeparet" })).toBeVisible();
-  await expect(anonymousImagePage.getByText("Logg inn for å se innlegg, program og bilder.", { exact: true })).toBeVisible();
+  await expect(anonymousImagePage.getByText("Logg inn for å se innlegg, program og bilder.", { exact: true })).toHaveCount(0);
+  await expect(anonymousImagePage.getByRole("main").getByRole("link", { name: /^(Logg inn|Se status)$/ })).toHaveCount(0);
   await anonymousImageContext.close();
   await expect(heroImage).toHaveCSS("object-position", "25% 75%");
   await expect.poll(() => heroImage.evaluate((image) => (image as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
