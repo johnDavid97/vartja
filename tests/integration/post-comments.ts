@@ -4,6 +4,7 @@ import { chromium, expect, type Browser, type Route } from "@playwright/test";
 import { getPayload, type CollectionBeforeChangeHook } from "payload";
 import { sql } from "@payloadcms/db-postgres";
 import config from "../../payload.config";
+import { weddingPath } from "../../features/wedding-site/paths";
 import { createAuthenticatedGuest } from "./authenticated-guest";
 
 assert(["localhost", "127.0.0.1"].includes(new URL(process.env.DATABASE_URL || "").hostname));
@@ -42,7 +43,7 @@ try {
     assert.equal((await admin.request.post(`/api/posts/${id}/comments`, { headers, data: input("No") })).status(), 404);
   }
   assert.equal((await guest.request.get("/api/posts/2147483648/comments")).status(), 404);
-  await page.goto(`/news/${post.id}`);
+  await page.goto(weddingPath(`/news/${post.id}`));
   const comments = page.getByRole("region", { name: "Kommentarer", exact: true });
   await comments.getByLabel("Legg til en kommentar", { exact: true }).fill("Kan vi ta med barna?");
   await comments.getByRole("button", { name: "Kommenter", exact: true }).click();
@@ -67,7 +68,7 @@ try {
   assert.equal((await repeated[0].json()).id, (await repeated[1].json()).id);
   assert.equal((await guest.request.post(secondEndpoint, { headers, data: replay })).status(), 409);
   assert.equal((await guest.request.post(dayEndpoint, { headers, data: replay })).status(), 409);
-  await editor.goto(`/news/${post.id}`);
+  await editor.goto(weddingPath(`/news/${post.id}`));
   const adminComments = editor.getByRole("region", { name: "Kommentarer", exact: true });
   await adminComments.getByRole("article").filter({ hasText: "Kan vi ta med barna?" }).getByRole("button", { name: "Svar", exact: true }).click();
   await adminComments.getByLabel("Skriv et svar", { exact: true }).fill("Ja, barna er også invitert!");

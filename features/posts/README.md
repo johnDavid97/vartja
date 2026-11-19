@@ -4,8 +4,8 @@ Design reference: `Nettside-innlegg.pdf`. The approved scope covers the individu
 
 ## Routes and shared components
 
-- `app/(website)/news/page.tsx`: nine-card paginated overview, newest publication date first with descending ID as a stable tie-break. Invalid page inputs fall back to page one; empty and out-of-range pages retain useful navigation.
-- `app/(website)/news/[id]/page.tsx`: category/date, wedding-font title, description, optional focal-point cover, authored content, shared comments, then up to three newest other posts. No related section is fabricated when there are no other eligible posts. Invalid/out-of-range numeric IDs return not found.
+- `app/(website)/andrea-og-martin/news/page.tsx`: nine-card paginated overview, newest publication date first with descending ID as a stable tie-break. Invalid page inputs fall back to page one; empty and out-of-range pages retain useful navigation.
+- `app/(website)/andrea-og-martin/news/[id]/page.tsx`: category/date, wedding-font title, description, optional focal-point cover, authored content, shared comments, then up to three newest other posts. No related section is fabricated when there are no other eligible posts. Invalid/out-of-range numeric IDs return not found.
 - `components/NewsCard.tsx` / `NewsCards.tsx`: shared default cards for the overview and related section. Missing covers retain a muted decorative media area; article pages omit missing covers. The existing homepage variant/carousel is not redesigned.
 - `news.module.css`: route-local wedding-font headings; it does not change global or authored typography.
 - `lib/article-date.ts`: Norwegian/Oslo display dates, with creation date as a display fallback for absent/invalid legacy publication dates. Query ordering remains publication date, then ID, as on the intended publishing flow; this is not a new scheduled-publishing feature.

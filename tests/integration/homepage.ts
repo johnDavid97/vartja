@@ -6,6 +6,7 @@ import { getPayload } from "payload";
 import sharp from "sharp";
 import config from "../../payload.config";
 import { createAuthenticatedGuest } from "./authenticated-guest";
+import { weddingPath } from "../../features/wedding-site/paths";
 
 const databaseUrl = new URL(process.env.DATABASE_URL || "");
 assert(["localhost", "127.0.0.1"].includes(databaseUrl.hostname));
@@ -30,7 +31,7 @@ try {
   const page = await guest.newPage();
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
-  await page.goto("/");
+  await page.goto(weddingPath());
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Andrea & Martin");
   await expect(page.getByText("27. juli 2027", { exact: true }).first()).toBeVisible();
   await expect(page.getByText("Logg inn for å se innlegg, program og bilder.", { exact: true })).toHaveCount(0);
@@ -146,7 +147,7 @@ try {
   await expect(heroImage).toBeVisible();
   const anonymousImageContext = await browser.newContext({ baseURL, viewport: { width: 390, height: 844 } });
   const anonymousImagePage = await anonymousImageContext.newPage();
-  await anonymousImagePage.goto("/");
+  await anonymousImagePage.goto(weddingPath());
   await expect(anonymousImagePage.getByRole("img", { name: "Testbilde av brudeparet" })).toBeVisible();
   await expect(anonymousImagePage.getByText("Logg inn for å se innlegg, program og bilder.", { exact: true })).toHaveCount(0);
   await expect(anonymousImagePage.getByRole("main").getByRole("link", { name: /^(Logg inn|Se status)$/ })).toHaveCount(0);

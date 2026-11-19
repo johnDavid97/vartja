@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 import { withPayload } from "@payloadcms/next/withPayload";
+import { weddingRedirects } from "./features/wedding-site/paths";
 
 const nextConfig: NextConfig = {
   /* config options here */
@@ -11,7 +12,8 @@ const nextConfig: NextConfig = {
   // break instanceof checks and strip field-validation details in production.
   serverExternalPackages: ["payload"],
   async redirects() {
-    return [{ source: "/tidsplan", destination: "/news", permanent: true }];
+    // Page compatibility and the wedding's admin shortcut; native admin/API paths stay rooted.
+    return weddingRedirects();
   },
   experimental: {
     agentFeedback: false,
