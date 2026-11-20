@@ -19,11 +19,18 @@ import { ProgramPollVotes } from "./collections/ProgramPollVotes";
 import { ProgramComments } from "./collections/ProgramComments";
 import { ProgramActivityLimits } from "./collections/ProgramActivityLimits";
 import { nb } from "@payloadcms/translations/languages/nb";
+import { resolveAdminSiteSecurity } from "./features/admin-security/site-origin";
 
 const directory = path.dirname(fileURLToPath(import.meta.url));
+const adminSiteSecurity = resolveAdminSiteSecurity(process.env.PUBLIC_SITE_URL, process.env.NODE_ENV);
 
 export default buildConfig({
   secret: process.env.PAYLOAD_SECRET || "",
+  // Payload adds serverURL to its CSRF list during sanitization. Pinning serverURL also
+  // prevents request Host headers from becoming the source for security-sensitive URLs.
+  serverURL: adminSiteSecurity.origin,
+  csrf: [],
+  cors: [adminSiteSecurity.origin],
   i18n: { supportedLanguages: { nb }, fallbackLanguage: "nb" },
   admin: {
     theme: "light",

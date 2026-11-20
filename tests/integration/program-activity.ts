@@ -30,7 +30,7 @@ try {
   const guest = await browser.newContext({ baseURL });
   const phone = await browser.newContext({ baseURL });
   const anonymous = await browser.newContext({ baseURL });
-  assert((await admin.request.post("/api/users/login", { data: { email, password } })).ok());
+  assert((await admin.request.post("/api/users/login", { headers, data: { email, password } })).ok());
   const fixture = await createAuthenticatedGuest({ payload, context: guest, administratorId: administrator.id, baseURL });
   const household = await payload.findByID({ collection: "households", id: fixture.householdId });
   const accessCode = await getHouseholdRegistrationServices(payload).codes.reveal(household.id, administrator.id);

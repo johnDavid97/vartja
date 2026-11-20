@@ -24,7 +24,7 @@ try {
   const admin = await browser.newContext({ baseURL, viewport: { width: 1440, height: 1100 } });
   const guest = await browser.newContext({ baseURL, viewport: { width: 390, height: 844 } });
   const headers = { Origin: baseURL };
-  assert((await admin.request.post("/api/users/login", { data: { email, password } })).ok());
+  assert((await admin.request.post("/api/users/login", { headers, data: { email, password } })).ok());
   assert.equal((await guest.request.post("/api/household-invitation", { headers, data: {} })).status(), 403);
   assert.equal((await admin.request.post("/api/household-invitation", { headers: { Origin: "https://elsewhere.invalid" }, data: {} })).status(), 403);
   const invitationResponse = await admin.request.post("/api/household-invitation", { headers, data: {} });
@@ -71,7 +71,7 @@ try {
   assert(!household.accessCodeEncrypted.includes(receipt.accessCode));
   assert.equal(new Set(household.members.map((member) => member.memberId)).size, 2);
   assert.equal((await guest.request.get(`/api/households/${household.id}`)).status(), 403);
-  const ordinaryAdminRead = await (await admin.request.get(`/api/households/${household.id}`)).json();
+  const ordinaryAdminRead = await (await admin.request.get(`/api/households/${household.id}`, { headers })).json();
   for (const key of ["publicId", "accessCodeDigest", "accessCodeEncrypted", "registrationRequestDigest", "registrationRequestFingerprint", "credentialVersion"]) {
     assert(!Object.hasOwn(ordinaryAdminRead, key), `${key} must not leak through native API reads`);
   }

@@ -157,7 +157,7 @@ try {
   });
   const anonymousContext = await browser.newContext({ baseURL, viewport: { width: 390, height: 844 }, locale: "nb-NO" });
   const guestContext = await browser.newContext({ baseURL, viewport: { width: 390, height: 844 }, locale: "nb-NO" });
-  assert((await adminContext.request.post("/api/users/login", { data: { email, password } })).ok(), "Native admin login failed");
+  assert((await adminContext.request.post("/api/users/login", { headers: { Origin: new URL(baseURL).origin }, data: { email, password } })).ok(), "Native admin login failed");
 
   const adminPage = await adminContext.newPage();
   const pageErrors: string[] = [];

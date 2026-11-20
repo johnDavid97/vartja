@@ -124,16 +124,36 @@ async function assertRoute(baseUrl: string, route: string): Promise<void> {
 }
 
 async function verifyLegacyPasswordCompatibility(baseUrl: string): Promise<void> {
-  const registerResponse = await fetch(`${baseUrl}/api/users/first-register`, {
+  const publicRegisterResponse = await fetch(`${baseUrl}/api/users/first-register`, {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ email: legacyEmail, name: "Synthetic legacy administrator", password: legacyPassword }),
     signal: AbortSignal.timeout(15_000),
   });
-  assert.equal(registerResponse.status, 200, "Native first-user API should create the bounded synthetic fixture");
-  const registered = await registerResponse.json() as { user?: { id?: number | string } };
-  const userId = String(registered.user?.id || "");
-  assert(userId, "Native first-user API should return the synthetic identity");
+  assert.equal(publicRegisterResponse.status, 403, "Public first-user registration must remain permanently disabled");
+
+  const bootstrapInput = `${JSON.stringify({
+    email: legacyEmail,
+    name: "Synthetic legacy administrator",
+    password: legacyPassword,
+  })}\n`;
+  const bootstrapOutput = docker([
+    "exec", "-i", "--user", "node", appContainer,
+    "node", "--import", "tsx", "scripts/bootstrap-admin.ts",
+  ], false, bootstrapInput);
+  assert.equal(bootstrapOutput.includes(legacyPassword), false, "Bootstrap CLI output must not expose its stdin password");
+
+  const initialLoginResponse = await fetch(`${baseUrl}/api/users/login`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ email: legacyEmail, password: legacyPassword }),
+    signal: AbortSignal.timeout(15_000),
+  });
+  assert.equal(initialLoginResponse.status, 200, "CLI-created administrator must authenticate through native login");
+  const initiallyLoggedIn = await initialLoginResponse.json() as { user?: { id?: number | string } };
+  const userId = String(initiallyLoggedIn.user?.id || "");
+  assert(userId, "Native login should return the CLI-created synthetic identity");
+  assert(initialLoginResponse.headers.get("set-cookie"), "Native login should establish a session cookie");
 
   const update = databaseCommand([
     "-v", `fixture_id=${userId}`,
@@ -201,6 +221,7 @@ async function main(): Promise<void> {
 
   const firstSnapshot = migrationSnapshot();
   assert(firstSnapshot.length > 0, "Fresh database should contain completed migration records");
+  await verifyLegacyPasswordCompatibility(baseUrl);
   await Promise.all([
     assertRoute(baseUrl, "/"),
     assertRoute(baseUrl, "/andrea-og-martin"),
@@ -208,7 +229,6 @@ async function main(): Promise<void> {
     assertRoute(baseUrl, "/admin"),
     assertRoute(baseUrl, "/api/globals/wedding"),
   ]);
-  await verifyLegacyPasswordCompatibility(baseUrl);
 
   assert.equal(docker(["exec", appContainer, "sh", "-c", "awk '/^Uid:/{print $2}' /proc/1/status"]), "1000", "Server PID 1 must run as the non-root node user");
   // TypeScript is intentionally retained: Lexical declares it as an optional production peer.

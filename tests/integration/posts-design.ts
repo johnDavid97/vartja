@@ -191,7 +191,7 @@ try {
   });
   const adminContext = await browser.newContext({ baseURL, viewport: { width: 1440, height: 1000 }, locale: "nb-NO" });
   const anonymousContext = await browser.newContext({ baseURL, viewport: { width: 390, height: 844 }, locale: "nb-NO" });
-  assert((await adminContext.request.post("/api/users/login", { data: { email, password } })).ok(), "Native admin login failed");
+  assert((await adminContext.request.post("/api/users/login", { headers: { Origin: new URL(baseURL).origin }, data: { email, password } })).ok(), "Native admin login failed");
   guestCleanup = (await createAuthenticatedGuest({ payload, context: guestContext, administratorId: administrator.id, baseURL })).cleanup;
 
   const guestPage = await guestContext.newPage();
@@ -347,7 +347,7 @@ try {
 
   // Ordinary API reads retain the legacy editor adapter; the article query alone requests raw null body.
   for (const context of [guestContext, adminContext]) {
-    const response = await context.request.get(`/api/posts/${legacy.id}`);
+    const response = await context.request.get(`/api/posts/${legacy.id}`, { headers: { Origin: new URL(baseURL).origin } });
     assert(response.ok(), `Legacy API read failed with ${response.status()}`);
     const document = await response.json();
     assert(document.body?.root?.children?.length > 0, "Ordinary API legacy conversion must remain enabled");

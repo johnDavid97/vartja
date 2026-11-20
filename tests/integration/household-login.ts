@@ -33,8 +33,8 @@ try {
   const guest = await browser.newContext({ baseURL, viewport: { width: 1440, height: 1000 } });
   const otherDevice = await browser.newContext({ baseURL });
   const admin = await browser.newContext({ baseURL });
-  assert((await admin.request.post("/api/users/login", { data: { email, password } })).ok());
   const headers = { Origin: baseURL };
+  assert((await admin.request.post("/api/users/login", { headers, data: { email, password } })).ok());
   async function login(context: BrowserContext, accessCode = firstCode, householdName = initial.displayName, remember = true) {
     return context.request.post("/api/household-login", { headers, data: { householdName, accessCode, remember } });
   }
@@ -113,7 +113,7 @@ try {
   assert(!(await guest.request.get(`/api/posts/${privatePost.id}`)).ok());
   assert.equal((await guest.request.get("/api/households")).status(), 403);
   assert.equal((await guest.request.get("/api/household-sessions")).status(), 403);
-  assert.equal((await admin.request.get("/api/household-sessions")).status(), 403);
+  assert.equal((await admin.request.get("/api/household-sessions", { headers })).status(), 403);
   await page.goto(weddingPath("/program")); await expect(page.getByText("Guest-only meeting place")).toBeVisible();
   const savedState = await guest.storageState();
   const remembered = await browser.newContext({ baseURL, storageState: savedState });
