@@ -11,7 +11,7 @@ One active wedding is served at `/andrea-og-martin`. This is a URL namespace, **
 - `/andrea-og-martin/admin` and its subpages temporarily redirect (307) to the existing `/admin` equivalents, preserving queries. This is an explicitly requested convenience alias only: the browser ends at `/admin`, with unchanged login/permissions, not wedding-specific administrator isolation. Other wedding slugs do not get this alias.
 - Old `/news`, `/news/:id`, `/program`, `/bilder`, `/login`, `/waiting` and `/register` URLs permanently redirect to their canonical wedding equivalents. `/tidsplan` retains its existing meaning as an alias for the posts overview.
 - Query strings pass through. Browser fragment inheritance preserves `#invitation=…` in old QR links without sending the key in a GET URL to the server.
-- `/` redirects **temporarily** to the wedding homepage for this first step. A separate VårtJa landing page will replace that redirect later; internal wedding links already point directly to the wedding root.
+- `/` serves the separate static VårtJa landing page. The earlier temporary root redirect has been removed; wedding links point directly to `/andrea-og-martin`. Old registration/QR aliases remain unchanged.
 - Unknown wedding slugs and removed pages (`/reiseplan`, `/ting-a-gjore`, `/wedding-party`) remain not found. There is no catch-all that shows this couple's data under arbitrary names.
 
 ## Invitations, sessions and deployment
@@ -32,7 +32,7 @@ One active wedding is served at `/andrea-og-martin`. This is a URL namespace, **
 - Saved names appear on fresh requests/reloads without restarting. Unsaved form edits are not public branding. This is not a realtime cross-tab subscription.
 - Branding changes do not change the wedding slug, invitation keys/QR images, credentials, sessions, authors, votes or Program. There are no schema changes or data migrations.
 - Wedding, registration and admin metadata use the configured monogram SVG at `/andrea-og-martin/brand-icon`. The endpoint reads only public initials, escapes SVG text, ignores query text and sends `no-store`; a monogram-based URL version also prevents stale icons after name changes. The old Next.js favicon was removed.
-- `public/vartja-icon.svg` and the fallback `public/favicon.ico` carry the separate VJ platform mark. `vartjaIcons` is ready for the future landing page; the root still redirects to the wedding for now. These are tab icons, not additional home-screen/app icons.
+- `public/vartja-icon.svg` and the fallback `public/favicon.ico` carry the separate VJ platform mark. `vartjaIcons` is used by the separate marketing root layout. These are tab icons, not additional home-screen/app icons.
 - `npm run test:wedding-branding` exercises branding, saved/unsaved name changes, privacy, retained identity/content and long-name mobile layouts in a disposable database with fresh test secrets. Its icon checks verify exactly one icon on guest/admin/registration pages, SVG responses and updated URLs after saving names.
 - Favicon follow-up verified with 336 units across 47 files, build/types, disposable branding browser tests, lint (only the four old warnings), independent source review and 16/32/64px visual inspection. Local wedding metadata also verified with exactly one configured icon.
 
@@ -46,7 +46,7 @@ Preservation checks hash complete households, posts and versions, comments and a
 
 ## Future work
 
-- Next step: the separate generic VårtJa landing page.
+- The separate generic [VårtJa landing page](../../docs/vartja-landing.md) is implemented. Enquiries, pricing, signup and deployment remain separate decisions.
 - Before adding a second wedding, introduce actual wedding ownership and isolation for content, households, credentials, sessions, invitations, media, activity and administrator permissions. A second slug alone is **not** sufficient, and this implementation must not be advertised as tenant isolation.
 - Legacy aliases and printed invitation links must remain bound to the original couple, never reassigned to whichever wedding becomes a future default.
 - The explicit single-wedding route boundary and central link helper provide a clear replacement point for a future validated wedding registry. They intentionally avoid introducing pretend multi-tenant routing now.

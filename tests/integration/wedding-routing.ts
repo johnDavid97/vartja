@@ -52,7 +52,9 @@ try {
   const headers = { Origin: baseURL };
   assert((await admin.request.post("/api/users/login", { data: { email, password } })).ok());
 
-  await expectRedirect(await anonymous.request.get("/", { maxRedirects: 0 }), 307, weddingPath());
+  const landing = await anonymous.request.get("/", { maxRedirects: 0 });
+  assert.equal(landing.status(), 200);
+  assert((await landing.text()).includes("VårtJa"));
   await expectRedirect(await anonymous.request.get(weddingPath("/admin"), { maxRedirects: 0 }), 307, "/admin");
   await expectRedirect(
     await anonymous.request.get(`${weddingPath("/admin/collections/posts")}?page=2`, { maxRedirects: 0 }),
@@ -138,6 +140,13 @@ try {
   assert(approvedLogin.ok());
   const sessionCookieBeforeNavigation = (await approvedGuest.cookies()).find(({ name }) => name === HOUSEHOLD_SESSION_COOKIE);
   assert(sessionCookieBeforeNavigation?.value, "Approved login must issue a household session cookie");
+  // Real authenticated sessions must see the same static platform page, not private wedding data.
+  for (const context of [approvedGuest, admin]) {
+    const signedInLanding = await context.request.get("/", { maxRedirects: 0 });
+    assert.equal(signedInLanding.status(), 200);
+    assert.equal(await signedInLanding.text(), await landing.text());
+    assert.equal(signedInLanding.headers()["set-cookie"], undefined, "Landing must not alter authentication cookies");
+  }
   await approvedPage.goto("/program");
   await expect(approvedPage).toHaveURL(new RegExp(`${weddingPath("/program")}$`));
   await expect(approvedPage.getByRole("heading", { name: "Programmet", exact: true })).toBeVisible();

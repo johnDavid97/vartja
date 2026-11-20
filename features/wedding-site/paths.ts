@@ -9,8 +9,6 @@ export function weddingPath(path: `/${string}` = "/"): string {
 /** Explicit compatibility aliases; never redirect arbitrary slugs to this wedding. */
 export function weddingRedirects() {
   return [
-    // Temporary: a separate VårtJa landing page will replace this root redirect.
-    { source: "/", destination: weddingPath(), permanent: false },
     // Convenience alias only, not tenant-scoped administration. Keep reversible.
     { source: weddingPath("/admin/:path*"), destination: "/admin/:path*", permanent: false },
     ...(["/news", "/program", "/bilder", "/login", "/waiting", "/register"] as const).map((path) => ({

@@ -35,9 +35,29 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
+# Local secrets; the example contains placeholders only.
 .env*
 !.env.example
+*.key
+*.p12
+*.pfx
+*.dump
+*.backup
+*.sql.gz
+/backups/
+/.backups/
+
+# Local assistant/editor configuration is not project source.
+AGENTS.md
+CLAUDE.md
+GEMINI.md
+.claude/
+.codex/
+.cursor/
+.pi/
+.mcp.json
+.github/copilot-instructions.md
+.github/instructions/
 
 # vercel
 .vercel
