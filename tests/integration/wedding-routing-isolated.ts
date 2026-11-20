@@ -12,7 +12,10 @@ try {
     name: "wedding_routing",
     port: 3114,
     migration: "20261119_152048_remove_legacy_schedule",
-    testFile: "tests/integration/wedding-routing.ts",
+    testFile: [
+      "tests/integration/wedding-routing.ts",
+      "tests/integration/vartja-landing.ts",
+    ],
     async verifyRollback(database) {
       const migration = await database.query(
         "SELECT 1 FROM payload_migrations WHERE name = $1",

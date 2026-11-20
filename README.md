@@ -4,7 +4,7 @@ Next.js website with a self-hosted Payload CMS and PostgreSQL.
 
 ## Local development
 
-1. Install dependencies: `npm ci`.
+1. Use Node **22.23.5** (`fnm use`, or your version manager) and npm **11.19.0**, then install dependencies with `npm ci`. See [dependency/container security](docs/dependency-security.md) for pinned versions, temporary overrides and verification commands.
 2. Create `.env` using `.env.example` if it does not already exist.
    Generate separate random values for the database password, Payload secret and `HOUSEHOLD_ACCESS_SECRET`
    with `openssl rand -hex 32`. Use the same database password in `DATABASE_URL`.
@@ -21,7 +21,7 @@ Next.js website with a self-hosted Payload CMS and PostgreSQL.
 4. Open **http://localhost:3000/admin** and create the first account.
    Do this locally before exposing the app to the internet.
 5. Use the admin sidebar to edit **Bryllupsinformasjon** or create an **Innlegg**.
-6. Open **http://localhost:3000/andrea-og-martin** for the wedding site. `/` temporarily redirects there until the separate VårtJa landing page is added. Admin and APIs remain at `/admin` and `/api`; see [routing and old-link compatibility](features/wedding-site/README.md).
+6. Open **http://localhost:3000/** for the VårtJa introduction, or **http://localhost:3000/andrea-og-martin** for the wedding site. Admin and APIs remain at `/admin` and `/api`; see [routing and old-link compatibility](features/wedding-site/README.md) and [landing-page scope](docs/vartja-landing.md).
 
 Automatic development schema pushing is disabled. Existing databases previously created
 with dev schema sync (a `dev` migration record) must be baselined before using the migration
@@ -33,7 +33,7 @@ The first account is created through Payload's first-user setup. After that,
 only signed-in editors can create accounts. All accounts are trusted editors
 with the same permissions; do not create guest accounts here.
 
-## Household registration (first usable slice)
+## Household registration and access
 
 Open `/admin/collections/households` through **Brukere og admin**. Select **Vis invitasjonslenke**,
 then **Åpne registreringsskjema**. The same link/QR can be given to every household; use the final
@@ -48,10 +48,10 @@ New links use `/andrea-og-martin/register#invitation=…`. Old `/register#invita
 
 Registration stores a pending household, automatically includes its contact as the first member,
 and shows a generated access code. Email is unverified contact information; no email is sent.
-The couple can set **Status → Godkjent** and save, approving the initial members. Later additions
-can be reviewed separately. **Administratorer** opens the separate admin-user collection.
-Native household creation is disabled; the couple can use the same registration form on behalf
-of a family and then approve it.
+The couple approves or rejects individual members in the household editor; household status is
+derived from those decisions. **Godkjenn alle** changes the form and requires saving.
+**Administratorer** opens the separate admin-user collection. Native generic household creation
+is disabled; the dedicated **Ny husstand** flow creates approved households for administrators.
 
 Household details are admin-only. Code ciphertext/digests are excluded from normal API responses;
 explicit admin code reveal/replacement is audited. Replacement and its audit write use one database
@@ -63,16 +63,16 @@ Back up `HOUSEHOLD_ACCESS_SECRET` securely along with the database. Changing it 
 invitation links and makes existing encrypted codes unrecoverable; rotation requires a deliberate
 migration, not simply changing the environment variable. Never commit this secret.
 
-**Not yet implemented:** guest code login, sessions, private wedding pages/media, household self-service,
-RSVP and household-based voting. Approval currently records the couple's decision; it does not yet
-provide guest login. Existing wedding pages/uploads remain public. Do not launch this as a private
-invitation website until those remaining access controls are complete.
+Guests log in with their household name and code. Approval controls access to guest pages,
+APIs and media; the public homepage and its selected hero image are deliberate exceptions.
+Program ballots use household identity. Household self-service, RSVP and real email delivery/recovery
+remain deferred. See [household access](features/households/README.md) for session and privacy rules.
 
 ## Editing the website
 
 The admin uses a Norwegian, light green-and-white design with a responsive sidebar.
-Poll overview and comment overview entries remain disabled **Kommer** placeholders;
-existing post poll blocks still work. **Program** is now an active multi-day itinerary editor. Preview is likewise marked as not yet available.
+Poll and comment overviews are active, alongside the multi-day **Program** editor.
+Preview remains marked as not yet available.
 Publishing remains immediate: the date picker changes the displayed date, not scheduling.
 It uses Europe/Oslo time, supports quick dates, cancellation and **Sett automatisk**.
 Automatic dates are assigned when publishing. The description counter recommends 160
@@ -89,8 +89,8 @@ characters but does not truncate or reject older, longer descriptions.
   while a new draft is edited. `/andrea-og-martin/program` shows only the published itinerary, ordered by date/time;
   equal times preserve manual order, and untimed items come last. An empty published program shows
   “Programmet kommer snart.” Version history is not exposed to editors (no Versions tab or history API);
-  internal version storage remains only to support native draft/live separation. Anonymous API access is denied. Preview, comments and polls
-  inside Program are intentionally deferred; shared comments/polls come on a separate branch.
+  internal version storage remains only to support native draft/live separation. Anonymous API access is denied.
+  Published days support household polls and moderated comments; preview remains deferred.
 - **Innlegg**: enter a title, short description and optional cover photo for the cards.
   Write the article in the single **Artikkel** visual editor. Select text and use the fixed
   toolbar for bold, italic, lists, alignment, headings and **Liten / Normal / Stor** text sizes.
