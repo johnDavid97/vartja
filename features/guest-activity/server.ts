@@ -1,18 +1,14 @@
-import { createHmac } from "node:crypto";
-import { sql } from "@payloadcms/db-postgres";
 import { getPayload, type Payload } from "payload";
 import config from "@payload-config";
 import { getHouseholdAuthServices } from "@/features/households/auth/composition-root";
 import { sessionTokenFromHeaders } from "@/features/households/http/session-cookie";
 import { HouseholdRequestError, householdResponse } from "@/features/households/http/requests";
+import { ActivityRateLimitExceededError, consumeActivityAttempt } from "./rate-limit";
+
+export { activityDigest } from "./digest";
 
 export type ActivityViewer = { kind: "household" | "administrator"; id: number; name: string };
 export interface GuestActivityContext { payload: Payload; viewer: ActivityViewer }
-
-export function activityDigest(payload: Payload, purpose: string, value: unknown): string {
-  // Preserve the original namespace so existing ballot keys and uncertain comment retries remain valid.
-  return createHmac("sha256", payload.config.secret).update(JSON.stringify(["program-activity-v1", purpose, value])).digest("hex");
-}
 
 export async function activityViewer(payload: Payload, headers: Headers): Promise<ActivityViewer> {
   const { user } = await payload.auth({ headers });
@@ -24,18 +20,14 @@ export async function activityViewer(payload: Payload, headers: Headers): Promis
 
 /** Durable per-author write quota. Consumed outside the content transaction, including failed attempts. */
 export async function limitActivity(context: GuestActivityContext): Promise<void> {
-  const bucket = activityDigest(context.payload, "write-quota", [context.viewer.kind, context.viewer.id]);
-  const result = await context.payload.db.drizzle.execute(sql`
-    INSERT INTO program_activity_limits (bucket_digest, window_start, attempts, created_at, updated_at)
-    VALUES (${bucket}, date_trunc('minute', now()), 1, now(), now())
-    ON CONFLICT (bucket_digest) DO UPDATE SET
-      window_start = EXCLUDED.window_start,
-      attempts = CASE WHEN program_activity_limits.window_start < EXCLUDED.window_start THEN 1 ELSE program_activity_limits.attempts + 1 END,
-      updated_at = now()
-    WHERE program_activity_limits.window_start < EXCLUDED.window_start OR program_activity_limits.attempts < 20
-    RETURNING id
-  `);
-  if (!result.rows.length) throw new HouseholdRequestError(429, "Du har sendt mange svar. Vent litt og prøv igjen.");
+  try {
+    await consumeActivityAttempt(context.payload, context.viewer);
+  } catch (error) {
+    if (error instanceof ActivityRateLimitExceededError) {
+      throw new HouseholdRequestError(429, "Du har sendt mange svar. Vent litt og prøv igjen.");
+    }
+    throw error;
+  }
 }
 
 export async function guestActivityResponse(request: Request, action: (context: GuestActivityContext) => Promise<unknown>) {

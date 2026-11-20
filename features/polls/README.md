@@ -26,6 +26,16 @@ The scaling follow-up is tracked in [Future considerations](../../docs/future-co
 
 No migration is required. Nothing modifies existing posts or ballots while viewing the overview.
 
+## Legacy post-poll write quota
+
+Legacy `POST /api/posts/:postId/polls/:pollId` voting has a durable, shared-Postgres rate guard for new browser ballots. After all existing authentication, publication/privacy, poll-state, body and option checks, an approved household may make 20 new-ballot attempts per database-clock minute across all legacy post polls. The actor is the server-resolved approved household ID; request bodies, IP headers, browser voter IDs and raw session tokens never select the bucket. Native administrators remain exempt.
+
+The guard reuses `program_activity_limits` without a schema change, but derives buckets under the separate HMAC purpose `legacy-post-poll-write-quota`. Existing Program/comment `write-quota` rows are therefore unchanged. The update is one conditional atomic upsert rather than a read followed by a write. A database failure fails closed before ballot insertion.
+
+This is intentionally an **attempt** quota, not a lifetime vote cap or an exactly-once quota. A retry whose signed browser ballot is already persisted bypasses the quota so that ballot/results remain accessible. Concurrent requests for one new browser voter can consume multiple attempt slots, while the existing unique native `voteKey` still permits only one ballot. Existing ballot keys, signed voter cookies, result counts and stored definition snapshots are unchanged.
+
+This rate-only control limits bursts, but cannot prevent slow ballot stuffing by repeatedly resetting browser cookies. A household lifetime cap or identity-model change requires an explicit owner decision and is not implemented here.
+
 ## Shared guest poll presentation
 
 `components/Poll.tsx` and `components/poll.module.css` now match `Nettside-innlegg.pdf` on both posts and Program: compact question/icon header, pale result fills inside answer rows, counts/percentages and mobile stacking. Voting remains native radio selection followed by **Stem**. Loading/retry, pending, selected-answer, closed and administrator read-only states are retained.
