@@ -50,7 +50,7 @@ try {
   const anonymous = await browser.newContext({ baseURL });
   const approvedGuest = await browser.newContext({ baseURL });
   const headers = { Origin: baseURL };
-  assert((await admin.request.post("/api/users/login", { data: { email, password } })).ok());
+  assert((await admin.request.post("/api/users/login", { headers, data: { email, password } })).ok());
 
   const landing = await anonymous.request.get("/", { maxRedirects: 0 });
   assert.equal(landing.status(), 200);

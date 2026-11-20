@@ -23,7 +23,7 @@ try {
   userId = administrator.id;
   browser = await chromium.launch();
   const admin = await browser.newContext({ baseURL, viewport: { width: 1440, height: 1000 } });
-  assert((await admin.request.post("/api/users/login", { data: { email, password } })).ok());
+  assert((await admin.request.post("/api/users/login", { headers: { Origin: new URL(baseURL).origin }, data: { email, password } })).ok());
   const guest = await browser.newContext({ baseURL });
   const page = await admin.newPage();
   const errors: string[] = [];

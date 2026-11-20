@@ -228,7 +228,7 @@ try {
   const anonymousContext = await browser.newContext({ baseURL, viewport: { width: 1440, height: 1000 }, locale: "nb-NO", reducedMotion: "reduce" });
   const guestContext = await browser.newContext({ baseURL, viewport: { width: 1440, height: 1000 }, locale: "nb-NO", reducedMotion: "reduce" });
   const pendingContext = await browser.newContext({ baseURL, viewport: { width: 390, height: 844 }, locale: "nb-NO", reducedMotion: "reduce" });
-  assert((await adminContext.request.post("/api/users/login", { data: { email, password } })).ok(), "Native admin login failed");
+  assert((await adminContext.request.post("/api/users/login", { headers, data: { email, password } })).ok(), "Native admin login failed");
   await loginHousehold(guestContext, "Godkjent brandinghusstand", approvedCode);
   await loginHousehold(pendingContext, "Ventende brandinghusstand", pending.accessCode);
   const commentResponse = await guestContext.request.post(`/api/posts/${publicPost.id}/comments`, {

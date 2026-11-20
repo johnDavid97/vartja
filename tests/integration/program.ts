@@ -27,7 +27,7 @@ try {
   userId = (await payload.create({ collection: "users", data: { name: "Program test", email, password } })).id;
   browser = await chromium.launch();
   const context = await browser.newContext({ baseURL, viewport: { width: 1440, height: 1100 }, locale: "nb-NO", timezoneId: "America/New_York" });
-  assert((await context.request.post("/api/users/login", { data: { email, password } })).ok());
+  assert((await context.request.post("/api/users/login", { headers: { Origin: new URL(baseURL).origin }, data: { email, password } })).ok());
   const page = await context.newPage();
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
@@ -53,7 +53,7 @@ try {
   await expect(builder).toBeVisible();
   await expect(page.getByRole("heading", { name: "Program", exact: true })).toBeVisible();
   await expect(page.getByRole("link", { name: /Versjoner/ })).toHaveCount(0);
-  assert.equal((await context.request.get("/api/globals/program/versions")).status(), 403);
+  assert.equal((await context.request.get("/api/globals/program/versions", { headers: { Origin: new URL(baseURL).origin } })).status(), 403);
   await builder.getByRole("button", { name: "Ny dag", exact: true }).click();
   const invalidPublish = page.waitForResponse((res) => res.url().includes("/api/globals/program") && res.request().method() === "POST");
   await page.getByRole("button", { name: "Publiser endringer", exact: true }).click();
@@ -144,7 +144,7 @@ try {
   await expect(publicPage.getByRole("heading", { name: busTitle, exact: true })).toBeVisible();
   const invalid = structuredClone(draftData);
   invalid.days[0].date = "2027-02-30";
-  assert.equal((await context.request.post("/api/globals/program", { data: { itinerary: invalid, _status: "published" } })).status(), 400);
+  assert.equal((await context.request.post("/api/globals/program", { headers: { Origin: new URL(baseURL).origin }, data: { itinerary: invalid, _status: "published" } })).status(), 400);
   await page.setViewportSize({ width: 390, height: 844 });
   assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
   await dateTrigger.click();

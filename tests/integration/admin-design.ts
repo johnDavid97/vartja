@@ -24,8 +24,10 @@ try {
   postId = (await payload.create({ collection: "posts", draft: true, data: { title: "Design test", description: "En liten oppdatering til gjestene.", theme: searchTheme } })).id;
   draftId = (await payload.create({ collection: "posts", draft: true, data: { title: "Test av tabellutkast", description: "Et upublisert testinnlegg.", theme: "Praktisk info" } })).id;
   browser = await chromium.launch();
-  const context = await browser.newContext({ baseURL: process.env.TEST_BASE_URL || "http://localhost:3000", viewport: { width: 1440, height: 1200 }, locale: "nb-NO", timezoneId: "America/New_York" });
-  assert((await context.request.post("/api/users/login", { data: { email, password } })).ok());
+  const baseURL = process.env.TEST_BASE_URL || "http://localhost:3000";
+  const context = await browser.newContext({ baseURL, viewport: { width: 1440, height: 1200 }, locale: "nb-NO", timezoneId: "America/New_York" });
+  const trustedHeaders = { Origin: new URL(baseURL).origin };
+  assert((await context.request.post("/api/users/login", { headers: trustedHeaders, data: { email, password } })).ok());
   const page = await context.newPage();
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
@@ -156,12 +158,12 @@ try {
       await expect(page.getByRole("link", { name: /Versjoner/ })).toHaveCount(0);
       await expect(page.getByRole("button", { name: "Lagre utkast", exact: true })).toBeVisible();
       await expect(page.getByRole("button", { name: "Publiser endringer", exact: true })).toBeVisible();
-      assert.equal((await context.request.get("/api/globals/program/versions")).status(), 403);
+      assert.equal((await context.request.get("/api/globals/program/versions", { headers: trustedHeaders })).status(), 403);
     }
     if (route.includes("/collections/")) {
       await expect(page.locator(".admin-list .admin-table table")).toBeVisible();
       const slug = route.split("/").at(-1);
-      const result = await context.request.get(`/api/${slug}?limit=1`);
+      const result = await context.request.get(`/api/${slug}?limit=1`, { headers: trustedHeaders });
       const total = (await result.json()).totalDocs;
       await expect(page.locator(".admin-list__count")).toContainText(String(total));
       const header = await page.locator(".list-header").boundingBox();

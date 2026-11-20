@@ -150,6 +150,7 @@ export interface UserAuthOperations {
 export interface User {
   id: number;
   name: string;
+  password?: string | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -167,7 +168,6 @@ export interface User {
         expiresAt: string;
       }[]
     | null;
-  password?: string | null;
   collection: 'users';
 }
 /**
@@ -533,6 +533,7 @@ export interface PayloadMigration {
  */
 export interface UsersSelect<T extends boolean = true> {
   name?: T;
+  password?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;

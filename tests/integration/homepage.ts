@@ -111,7 +111,8 @@ try {
   }
 
   const admin = await browser.newContext({ baseURL, viewport: { width: 1440, height: 1100 } });
-  assert((await admin.request.post("/api/users/login", { data: { email, password } })).ok());
+  const adminHeaders = { Origin: new URL(baseURL).origin };
+  assert((await admin.request.post("/api/users/login", { headers: adminHeaders, data: { email, password } })).ok());
   const adminPage = await admin.newPage();
   adminPage.on("pageerror", (error) => errors.push(error.message));
   await adminPage.goto("/admin/globals/wedding");
@@ -124,7 +125,7 @@ try {
   const hero = page.locator("main > section").first();
   await expect(hero).toHaveCSS("background-color", "rgb(255, 255, 255)");
   assert.notEqual(await hero.evaluate((element) => getComputedStyle(element).color), "rgb(255, 255, 255)", "Light backgrounds need dark text");
-  const invalid = await admin.request.post("/api/globals/wedding", { data: { heroBackgroundColor: "url(https://invalid.example)" } });
+  const invalid = await admin.request.post("/api/globals/wedding", { headers: adminHeaders, data: { heroBackgroundColor: "url(https://invalid.example)" } });
   assert.equal(invalid.status(), 400);
 
   const imageBuffer = await sharp({ create: { width: 1200, height: 800, channels: 3, background: "#728c7d" } }).png().toBuffer();
@@ -167,7 +168,7 @@ try {
   await adminPage.setViewportSize({ width: 390, height: 844 });
   await expect.poll(() => adminPage.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await adminPage.screenshot({ path: "/tmp/sammen-homepage-settings-mobile.png", fullPage: true });
-  assert((await admin.request.post("/api/globals/wedding", { data: { heroImage: null } })).ok());
+  assert((await admin.request.post("/api/globals/wedding", { headers: adminHeaders, data: { heroImage: null } })).ok());
   await page.reload();
   await expect(page.getByRole("img", { name: "Testbilde av brudeparet" })).toHaveCount(0);
   await expect(hero).toHaveCSS("background-color", "rgb(255, 255, 255)");

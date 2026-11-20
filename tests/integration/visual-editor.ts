@@ -45,7 +45,7 @@ try {
   postId = post.id;
   browser = await chromium.launch();
   const context = await browser.newContext({ baseURL, viewport: { width: 1440, height: 1200 } });
-  const login = await context.request.post("/api/users/login", { data: { email, password } });
+  const login = await context.request.post("/api/users/login", { headers: { Origin: new URL(baseURL).origin }, data: { email, password } });
   assert(login.ok(), "Temporary editor must be able to sign in");
   const page = await context.newPage();
   const pageErrors: string[] = [];
@@ -159,11 +159,12 @@ try {
   await page.getByRole("button", { name: "Legg til skillelinje", exact: true }).click();
   await expect(editor.locator("hr")).toHaveCount(2);
   const makePrivate = await context.request.patch(`/api/posts/${postId}`, {
+    headers: { Origin: new URL(baseURL).origin },
     data: { visibility: "private", _status: "published" },
   });
   assert(makePrivate.ok(), "Visibility update must save");
   assert.equal((await guest.request.get(`/api/posts/${postId}`)).status(), 404, "Private posts must not be readable by approved households");
-  assert((await context.request.get(`/api/posts/${postId}`)).ok(), "Editors can still read private posts");
+  assert((await context.request.get(`/api/posts/${postId}`, { headers: { Origin: new URL(baseURL).origin } })).ok(), "Editors can still read private posts");
   const publicList = await guest.request.get(`/api/posts?where[id][equals]=${postId}`);
   assert.equal((await publicList.json()).docs.length, 0, "Private posts must be excluded from public listings");
   await article.reload();
