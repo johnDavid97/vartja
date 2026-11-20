@@ -8,6 +8,8 @@ import {
   REST_PUT,
 } from "@payloadcms/next/routes";
 
+import { withPayloadBodyLimit } from "../../../../features/request-security/body-limit";
+
 const payloadGet = REST_GET(config);
 export async function GET(...args: Parameters<typeof payloadGet>) {
   const response = await payloadGet(...args);
@@ -17,8 +19,8 @@ export async function GET(...args: Parameters<typeof payloadGet>) {
   response.headers.set("Vary", vary ? `${vary}, Cookie` : "Cookie");
   return response;
 }
-export const POST = REST_POST(config);
-export const DELETE = REST_DELETE(config);
-export const PATCH = REST_PATCH(config);
-export const PUT = REST_PUT(config);
+export const POST = withPayloadBodyLimit(REST_POST(config));
+export const DELETE = withPayloadBodyLimit(REST_DELETE(config));
+export const PATCH = withPayloadBodyLimit(REST_PATCH(config));
+export const PUT = withPayloadBodyLimit(REST_PUT(config));
 export const OPTIONS = REST_OPTIONS(config);

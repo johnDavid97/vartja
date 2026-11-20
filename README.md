@@ -182,6 +182,7 @@ Comments and likes will be separate bottom-of-article features, not reorderable 
 npm run db:up                 # Start PostgreSQL
 npm run db:down               # Stop PostgreSQL without deleting its data
 npm run admin:bootstrap       # Initial administrator; bounded JSON stdin only
+npm run test:request-security # Disposable HTTP body-limit/upload regressions after a build
 npm run generate:types       # After changing the CMS schema
 npm run generate:importmap   # After adding custom admin components
 npm run lint
@@ -247,7 +248,7 @@ Local development data and uploaded photos are not transferred automatically.
 4. Add a persistent volume on the app service at `/app/media` **before uploading
    photos**, and use only one app replica. The entrypoint makes the mounted
    directory writable by the Node user. Back up both the volume and Postgres.
-5. Deploy, then use Railway SSH (or `docker exec` for a private container) to run `npm run admin:bootstrap` with bounded JSON stdin. Runtime database/secrets must already be available to the process. Do not pass a password as an argument or environment variable and do not store permanent bootstrap credentials. The command is not run by the entrypoint. Public `/api/users/first-register` always returns 403. After bootstrap, open `/admin` and sign in. Railway provides HTTPS for its public domain.
+5. Deploy, then use Railway SSH (or `docker exec` for a private container) to run `npm run admin:bootstrap` with bounded JSON stdin. Runtime database/secrets must already be available to the process. Do not pass a password as an argument or environment variable and do not store permanent bootstrap credentials. The command is not run by the entrypoint. Public first-user registration is permanently denied (403 for ordinary requests; oversized or malformed bodies may be rejected earlier). After bootstrap, open `/admin` and sign in. Railway provides HTTPS for its public domain.
 
 The container runs `payload migrate` before starting the server, and stops if
 migration fails. Completed migrations are skipped on subsequent restarts. After
