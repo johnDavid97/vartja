@@ -46,3 +46,10 @@ General principles for contributors. Project-specific requirements belong in sep
 - Check the staged diff too: untracked files are not covered by an unstaged `git diff --check`.
 - Report what actually passed, failed or timed out. Distinguish existing warnings from new issues. Incomplete reviews are not successful reviews.
 - After an approved delivery, confirm branch state and working-tree cleanliness. Do not bundle unrelated user changes.
+
+## Parallel work and review
+
+- Define scope, file ownership and acceptance criteria before parallel implementation.
+- Parallelise independent tasks only; coordinate shared files and dependencies.
+- Review source and independently verify tests before integration. Incomplete reviews are not successful reviews.
+- Keep durable technical decisions in project documentation.

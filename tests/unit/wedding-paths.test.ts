@@ -10,7 +10,6 @@ describe("wedding website paths", () => {
 
   it("defines narrow compatibility aliases with the intended permanence", () => {
     expect(weddingRedirects()).toEqual([
-      { source: "/", destination: weddingPath(), permanent: false },
       { source: weddingPath("/admin/:path*"), destination: "/admin/:path*", permanent: false },
       { source: "/news", destination: weddingPath("/news"), permanent: true },
       { source: "/program", destination: weddingPath("/program"), permanent: true },
@@ -25,6 +24,7 @@ describe("wedding website paths", () => {
 
   it("does not create broad slug, API, admin or removed-page redirects", () => {
     const sources = weddingRedirects().map(({ source }) => source);
+    expect(sources).not.toContain("/");
     expect(sources).not.toContain("/:slug");
     expect(sources).not.toContain("/:path*");
     expect(sources).not.toContain("/api/:path*");
