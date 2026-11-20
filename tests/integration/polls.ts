@@ -23,7 +23,7 @@ try {
   postId = (await payload.create({ collection: "posts", draft: true, data: { title: "Temporary poll test", description: "Introduction" } })).id;
   browser = await chromium.launch();
   const admin = await browser.newContext({ baseURL, viewport: { width: 1440, height: 1200 } });
-  assert((await admin.request.post("/api/users/login", { data: { email, password } })).ok());
+  assert((await admin.request.post("/api/users/login", { headers: { Origin: new URL(baseURL).origin }, data: { email, password } })).ok());
   const page = await admin.newPage();
   const browserErrors: string[] = [];
   page.on("pageerror", (error) => browserErrors.push(error.message));
@@ -132,7 +132,7 @@ try {
   const pollNode = changed.root.children.find((node) => node.type === "block")!;
   const fields = pollNode.fields as Record<string, unknown>;
   fields.question = "Changed meaning";
-  const edit = await admin.request.patch(`/api/posts/${postId}`, { data: { body: changed, _status: "published" } });
+  const edit = await admin.request.patch(`/api/posts/${postId}`, { headers: { Origin: new URL(baseURL).origin }, data: { body: changed, _status: "published" } });
   assert(!edit.ok(), "Questions with votes must not be editable");
   await page.reload();
   await settings.click();

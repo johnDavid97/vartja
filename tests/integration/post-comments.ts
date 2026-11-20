@@ -27,7 +27,7 @@ try {
   const admin = await browser.newContext({ baseURL });
   const guest = await browser.newContext({ baseURL });
   const anonymous = await browser.newContext({ baseURL });
-  assert((await admin.request.post("/api/users/login", { data: { email, password } })).ok());
+  assert((await admin.request.post("/api/users/login", { headers, data: { email, password } })).ok());
   const household = await createAuthenticatedGuest({ payload, context: guest, administratorId: user.id, baseURL });
   const page = await guest.newPage();
   const editor = await admin.newPage();
@@ -50,7 +50,7 @@ try {
   await expect(comments.getByRole("status")).toHaveText("Kommentaren er lagt til.");
   const first = (await (await guest.request.get(endpoint)).json()).comments[0];
   assert.equal(first.body, "Kan vi ta med barna?");
-  const tamper = await admin.request.patch(`/api/program-comments/${first.id}`, { data: { body: "Rewritten", authorName: "Impersonated", source: "program-day", dayId: String(post.id), postId: second.id } });
+  const tamper = await admin.request.patch(`/api/program-comments/${first.id}`, { headers, data: { body: "Rewritten", authorName: "Impersonated", source: "program-day", dayId: String(post.id), postId: second.id } });
   assert(tamper.ok(), await tamper.text());
   const unchanged = await payload.findByID({ collection: "program-comments", id: first.id });
   assert.equal(unchanged.body, first.body); assert.equal(unchanged.authorName, first.authorName);

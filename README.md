@@ -18,9 +18,15 @@ Next.js website with a self-hosted Payload CMS and PostgreSQL.
    npm run dev
    ```
 
-4. Open **http://localhost:3000/admin** and create the first account.
-   Do this locally before exposing the app to the internet.
-5. Use the admin sidebar to edit **Bryllupsinformasjon** or create an **Innlegg**.
+4. Bootstrap the first administrator privately (the command does not load `.env` implicitly):
+
+   ```bash
+   node --env-file=.env --import tsx scripts/bootstrap-admin.ts \
+     < /secure/path/.env.bootstrap-admin.json
+   ```
+
+   Prepare the JSON file (`name`, `email`, `password`) outside the repository with permissions `0600`, using a password manager and secure editor—not a shell command containing credentials. Remove it afterward. The command accepts bounded JSON stdin only; see [administrator security](docs/admin-security.md).
+5. Open **http://localhost:3000/admin**, sign in, and use the sidebar to edit **Bryllupsinformasjon** or create an **Innlegg**.
 6. Open **http://localhost:3000/** for the VårtJa introduction, or **http://localhost:3000/andrea-og-martin** for the wedding site. Admin and APIs remain at `/admin` and `/api`; see [routing and old-link compatibility](features/wedding-site/README.md) and [landing-page scope](docs/vartja-landing.md).
 
 Automatic development schema pushing is disabled. Existing databases previously created
@@ -29,9 +35,7 @@ command; do not replay the initial migration or reset a populated database. The 
 registration tables were checked without resetting data. New migrations are verified against
 a disposable database by `npm run test:households`.
 
-The first account is created through Payload's first-user setup. After that,
-only signed-in editors can create accounts. All accounts are trusted editors
-with the same permissions; do not create guest accounts here.
+Payload's public first-user setup is permanently denied, including on an empty database or after deletion of the last account. The initial account is created only with the private operator bootstrap command. After that, only signed-in editors can create accounts. All accounts are trusted editors with the same permissions; do not create guest accounts here.
 
 ## Household registration and access
 
@@ -177,6 +181,7 @@ Comments and likes will be separate bottom-of-article features, not reorderable 
 ```bash
 npm run db:up                 # Start PostgreSQL
 npm run db:down               # Stop PostgreSQL without deleting its data
+npm run admin:bootstrap       # Initial administrator; bounded JSON stdin only
 npm run generate:types       # After changing the CMS schema
 npm run generate:importmap   # After adding custom admin components
 npm run lint
@@ -242,9 +247,7 @@ Local development data and uploaded photos are not transferred automatically.
 4. Add a persistent volume on the app service at `/app/media` **before uploading
    photos**, and use only one app replica. The entrypoint makes the mounted
    directory writable by the Node user. Back up both the volume and Postgres.
-5. Deploy, generate a Railway public domain, and open `/admin` to create the
-   first editor account promptly. Anyone reaching the first-user setup before
-   you can create that account. Railway provides HTTPS for its public domain.
+5. Deploy, then use Railway SSH (or `docker exec` for a private container) to run `npm run admin:bootstrap` with bounded JSON stdin. Runtime database/secrets must already be available to the process. Do not pass a password as an argument or environment variable and do not store permanent bootstrap credentials. The command is not run by the entrypoint. Public `/api/users/first-register` always returns 403. After bootstrap, open `/admin` and sign in. Railway provides HTTPS for its public domain.
 
 The container runs `payload migrate` before starting the server, and stops if
 migration fails. Completed migrations are skipped on subsequent restarts. After
