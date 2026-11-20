@@ -37,7 +37,7 @@ The Docker smoke harness is `tests/integration/container-smoke-isolated.ts`; it 
 
 ## Required work/access before deployment
 
-1. Finish native API request-size and abuse controls, implement protected staging and the approved release pipeline, and verify backups and recovery.
+1. Establish and verify trusted-ingress login protection, implement protected staging and the approved release pipeline, and verify backups and recovery. Native REST body limits and durable legacy poll write-rate limits are implemented locally; see [request security](request-security.md) and [polls](../features/polls/README.md). They do not replace ingress request-rate/concurrency controls or prove individual voter identity.
 2. Renew Railway CLI authentication with `railway login`.
 3. Browser tooling is installed outside the repository, with telemetry disabled. Chrome access requires enabling remote debugging at `chrome://inspect/#remote-debugging` and granting connection permission. Login/MFA must be completed directly by the owner.
 4. Inspect existing DNS, especially mail records, before applying Railway-provided domain targets. Do not guess apex records or change nameservers unnecessarily.

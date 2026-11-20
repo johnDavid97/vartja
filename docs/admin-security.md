@@ -72,4 +72,4 @@ Run `npm run test:admin-bootstrap` and `npm run test:admin-security` after a pro
 
 Verified: 368 unit tests across 51 files, build, TypeScript, lint (four existing migration warnings), the dedicated bootstrap and security suites, existing household/admin/editor/poll/branding/routing/homepage/comment/Program regressions, and Linux/amd64 container migration/startup/restart/media/legacy-login checks. No real wedding records or credentials were modified.
 
-Public first-user bootstrap is closed; native API body limits and legacy post-poll identity/throttling remain separate tasks. This document is not a declaration that hosting is ready.
+Public first-user bootstrap is closed. Native REST bodies are now bounded before Payload runs; see [request security](request-security.md). Oversized or malformed requests may be rejected at that boundary before the bootstrap endpoint's 403 response. Legacy post polls now have a separate durable household write-rate limit without changing ballot identity; see [polls](../features/polls/README.md). Trusted-ingress login protection remains a deployment task. This document is not a declaration that hosting is ready.

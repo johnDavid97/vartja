@@ -3,9 +3,11 @@ import { getPolls, type PollDefinition, type PollResults } from "./polls";
 import { pollVoter, pollVoteKey } from "./poll-voter";
 import { canReadGuestContent } from "../features/households/auth/access";
 import { HouseholdRequestError, readHouseholdRequest } from "../features/households/http/requests";
+import { ActivityRateLimitExceededError } from "../features/guest-activity/rate-limit";
+import { limitNewLegacyPostPollBallot } from "../features/polls/rate-limit";
 
-function reply(data: unknown, status = 200, cookie?: string | null) {
-  const headers = new Headers({ "Cache-Control": "private, no-store", Vary: "Cookie" });
+function reply(data: unknown, status = 200, cookie?: string | null, extraHeaders?: Record<string, string>) {
+  const headers = new Headers({ "Cache-Control": "private, no-store", Vary: "Cookie", ...extraHeaders });
   if (cookie) headers.set("Set-Cookie", cookie);
   return Response.json(data, { status, headers });
 }
@@ -69,9 +71,17 @@ function handler(voting: boolean): Endpoint["handler"] {
       const existing = await req.payload.count({ collection: "poll-votes", where: { voteKey: { equals: voteKey } }, overrideAccess: true });
       if (!existing.totalDocs) {
         try {
+          await limitNewLegacyPostPollBallot(req);
+        } catch (error) {
+          if (error instanceof ActivityRateLimitExceededError) {
+            return reply({ error: "For mange forespørsler. Vent litt og prøv igjen." }, 429, voter.cookie, { "Retry-After": "60" });
+          }
+          return reply({ error: "Kunne ikke fullføre forespørselen. Prøv igjen." }, 503, voter.cookie);
+        }
+        try {
           await req.payload.create({ collection: "poll-votes", overrideAccess: true, data: { post: postId, pollId, optionId, voteKey, definition: poll } });
         } catch (error) {
-          // The unique index handles simultaneous votes from the same browser.
+          // Concurrent new attempts may consume several quota slots; the unique key still stores one ballot.
           const duplicate = await req.payload.count({ collection: "poll-votes", where: { voteKey: { equals: voteKey } }, overrideAccess: true });
           if (!duplicate.totalDocs) throw error;
         }
