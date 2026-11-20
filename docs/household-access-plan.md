@@ -91,9 +91,9 @@ Avoid creating classes around trivial pure functions or React components. Do not
 - [ ] Typecheck, lint, unit tests, production build and existing feature regressions.
 - [ ] Documentation for secrets, backup/recovery, invitation printing and deployment. No production secrets or personal guest records in test fixtures.
 
-## Agent work and review gates
+## Review gates
 
-The main assistant is architect, integration owner and reviewer. Delegate bounded file ownership, not overlapping edits. Agents must not migrate the development database, change secrets, commit, merge, push or launch nested agents. Review contracts before adapters, inspect every diff, then run independent verification. Read-only security/UI reviews can run concurrently. Do not claim implementation or tests completed based only on an agent's summary.
+Define file ownership before parallel work. Review contracts before adapters, inspect every diff, then run independent verification. Database migrations, secret changes and releases require explicit approval. Read-only security/UI reviews can run concurrently.
 
 ## Decisions still needing clarification
 
@@ -103,7 +103,7 @@ The main assistant is architect, integration owner and reviewer. Delegate bounde
 
 ## Current status
 
-First work package implemented: pure domain, constructor-injected update-details use case, composition root with fake adapters, and reusable controlled field components. Domain and presentation implementation agents completed their bounded work; independent security and code reviews completed. Architect reviewed source and fixed error classification, sparse input handling, controlled row identity and UI/domain limit consistency. See `household-access-architecture.md` for security findings and release gates.
+First work package implemented: pure domain, constructor-injected update-details use case, composition root with fake adapters, and reusable controlled field components. Domain and presentation implementation and independent security/code reviews completed. Source review corrected error classification, sparse input handling, controlled row identity and UI/domain limit consistency. See `household-access-architecture.md` for security findings and release gates.
 
 Registration slice is now implemented: `/register` with invitation fragment; persisted pending households; shared link/QR under `/admin/collections/households`; native approval/member editing; encrypted code receipt, admin reveal and transactional rotation/auditing. A real production-server Playwright test covers registration, initial member approval, new pending members, protected-field tampering, retries/races, code replacement, audit rollback, global throttling and mobile layout. Fresh migrations/rollback/reapply are tested in a disposable database. Local admin link/form were also verified without submitting a real household.
 

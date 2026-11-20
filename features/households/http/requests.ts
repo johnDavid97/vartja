@@ -1,3 +1,4 @@
+import { unstable_rethrow } from "next/navigation";
 import { InvalidInvitationOriginError } from "../domain/invitation-url";
 import { HouseholdRegistrationError } from "../application/HouseholdRegistration";
 
@@ -60,6 +61,9 @@ export function householdResponse(data: unknown, status = 200): Response {
 }
 
 export function householdErrorResponse(error: unknown): Response {
+  // Next uses thrown control-flow signals to defer request-only work during prerendering.
+  // They must reach the framework, not become logged application failures or HTTP 500s.
+  unstable_rethrow(error);
   if (error instanceof InvalidInvitationOriginError) {
     return householdResponse({ error: error.message }, 503);
   }

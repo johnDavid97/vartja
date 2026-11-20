@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { DynamicServerError } from "next/dist/client/components/hooks-server-context";
 import { HouseholdRegistrationError } from "../../features/households/application/HouseholdRegistration";
 import { householdErrorResponse, householdResponse, readHouseholdRequest } from "../../features/households/http/requests";
 
@@ -33,6 +34,15 @@ describe("household HTTP boundary", () => {
     const response = householdResponse({ accessCode: "test-only" });
     expect(response.headers.get("cache-control")).toBe("private, no-store");
     expect(response.headers.get("referrer-policy")).toBe("no-referrer");
+  });
+
+  it("returns framework prerender signals to Next without logging or serializing them", () => {
+    const signal = new DynamicServerError("Synthetic request-only API read");
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      expect(() => householdErrorResponse(signal)).toThrow(signal);
+      expect(log).not.toHaveBeenCalled();
+    } finally { log.mockRestore(); }
   });
 
   it("serializes known safe errors but never infrastructure messages", async () => {

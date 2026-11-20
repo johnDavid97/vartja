@@ -12,7 +12,7 @@ const nextConfig: NextConfig = {
   // break instanceof checks and strip field-validation details in production.
   serverExternalPackages: ["payload"],
   async redirects() {
-    // Page compatibility and the wedding's admin shortcut; native admin/API paths stay rooted.
+    // Legacy wedding links and admin shortcut only; / belongs to the VårtJa landing page.
     return weddingRedirects();
   },
   experimental: {
