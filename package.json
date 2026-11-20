@@ -15,6 +15,8 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:e2e": "playwright test",
+    "test:post-poll-rate-limit": "node --env-file=.env --import tsx tests/integration/post-poll-rate-limit-isolated.ts",
+    "test:request-security": "node --env-file=.env --import tsx tests/integration/request-security-isolated.ts",
     "test:admin-bootstrap": "node --env-file=.env --import tsx tests/integration/admin-bootstrap-isolated.ts",
     "test:admin-security": "node --env-file=.env --import tsx tests/integration/admin-security-isolated.ts",
     "test:dependency-compatibility": "vitest run tests/unit/dependency-compatibility.test.ts && node --import tsx tests/integration/dependency-browser.ts",
