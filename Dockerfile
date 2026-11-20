@@ -30,6 +30,8 @@ COPY --from=build --chown=node:node /app/components ./components
 COPY --from=build --chown=node:node /app/features ./features
 COPY --from=build --chown=node:node /app/lib ./lib
 COPY --from=build --chown=node:node /app/migrations ./migrations
+# Operator-invoked bootstrap CLI; it is never called by the image entrypoint.
+COPY --from=build --chown=node:node /app/scripts ./scripts
 COPY --from=build --chown=node:node /app/.next/standalone ./
 # Tracing used the build tree, which includes development peers. Replace that tree
 # wholesale with the complete production install instead of pruning package names.

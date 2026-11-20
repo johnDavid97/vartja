@@ -27,7 +27,7 @@ try {
   const admin = await browser.newContext({ baseURL, viewport: { width: 1440, height: 1100 }, locale: "nb-NO" });
   const guest = await browser.newContext({ baseURL });
   const headers = { Origin: baseURL };
-  assert((await admin.request.post("/api/users/login", { data: { email, password } })).ok());
+  assert((await admin.request.post("/api/users/login", { headers, data: { email, password } })).ok());
   async function setEveryMemberStatus(householdId: number, status: "pending" | "approved" | "revoked") {
     const current = await payload.findByID({ collection: "households", id: householdId });
     const response = await admin.request.patch(`/api/households/${householdId}`, {
@@ -43,7 +43,7 @@ try {
   assert.equal((await admin.request.post("/api/household-admin", { headers: { Origin: "https://elsewhere.invalid" }, data: sample })).status(), 403);
   assert.equal((await admin.request.post("/api/household-admin", { headers, data: { ...sample, status: "approved" } })).status(), 400);
   assert.equal((await admin.request.post("/api/households", { headers, data: { ...sample, context: { householdTrustedAdminCreation: true } } })).status(), 403);
-  assert.deepEqual(await (await admin.request.get("/api/household-summary")).json(), { total: 0, pending: 0 });
+  assert.deepEqual(await (await admin.request.get("/api/household-summary", { headers })).json(), { total: 0, pending: 0 });
 
   const invitationResponse = await admin.request.post("/api/household-invitation", { headers, data: {} });
   assert.equal(invitationResponse.status(), 200);
@@ -92,7 +92,7 @@ try {
   assert.deepEqual(afterIgnoredStatusPatch.members, beforeIgnoredStatusPatch.members, "A status-only PATCH must not change members");
   const rejectedApprovedFixture = await setEveryMemberStatus(approvedIds[2], "revoked");
   assert.equal(rejectedApprovedFixture.status, "revoked");
-  assert.deepEqual(await (await admin.request.get("/api/household-summary")).json(), { total: 6, pending: 3 });
+  assert.deepEqual(await (await admin.request.get("/api/household-summary", { headers })).json(), { total: 6, pending: 3 });
 
   const page = await admin.newPage();
   await page.clock.install();
@@ -160,7 +160,7 @@ try {
   // A pending member in an approved household is not a pending household.
   const approved = await payload.findByID({ collection: "households", id: approvedIds[0] });
   assert((await admin.request.patch(`/api/households/${approved.id}`, { headers, data: { members: [...approved.members, { name: "Ny person", status: "pending" }] } })).ok());
-  assert.deepEqual(await (await admin.request.get("/api/household-summary")).json(), { total: 6, pending: 3 });
+  assert.deepEqual(await (await admin.request.get("/api/household-summary", { headers })).json(), { total: 6, pending: 3 });
 
   await page.goto("/admin/collections/households?tab=invitation");
   await expect(page.getByRole("heading", { name: "Felles invitasjon", exact: true })).toBeVisible();
@@ -279,7 +279,7 @@ try {
   const guestSameKey = await guest.request.post("/api/household-registration", { headers, data: { ...retryData, invitationKey } });
   assert.equal(guestSameKey.status(), 201, await guestSameKey.text());
   assert.notEqual((await guestSameKey.json()).householdId, retryId, "Guest and admin request keys must be isolated");
-  const ordinaryRead = await (await admin.request.get(`/api/households/${manualId}`)).json();
+  const ordinaryRead = await (await admin.request.get(`/api/households/${manualId}`, { headers })).json();
   for (const field of ["accessCodeDigest", "accessCodeEncrypted", "registrationRequestDigest", "registrationRequestFingerprint", "credentialVersion", "publicId"]) assert(!Object.hasOwn(ordinaryRead, field));
   assert.deepEqual(errors, []);
   console.log("PASS: household tabs/shared list, search/filter/selection, invitation PNG/SVG, responsive form, approved admin creation, member-derived rejection and status-only PATCH isolation, pending-only counts, private credentials and concurrent namespaced retries.");
