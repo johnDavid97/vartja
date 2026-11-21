@@ -1,6 +1,8 @@
 # Deployment readiness
 
-No Railway services or GoDaddy DNS records have been changed. Local preparation and administrator hardening do not deploy the application or authorize DNS changes.
+The cleaned source is public at `johnDavid97/vartja`; the original `johnDavid97/sammen` repository remains private. Railway has the VårtJa project, isolated staging/production environments, and an empty staging `web` service. The staging CNAME is configured; Railway ownership TXT verification and valid HTTPS still need completion. No application or database has been deployed.
+
+GitHub Actions workflows, pinned-image promotion checks and the two-account staging gateway are implemented locally; see [CI/CD and staging](cicd.md). They are not yet pushed, configured or executed on GitHub/Railway. Production ingress and backup/restore verification remain separate readiness requirements.
 
 ## Completed local preparation
 
@@ -23,7 +25,7 @@ The Docker smoke harness is `tests/integration/container-smoke-isolated.ts`; it 
 
 ## Repository audit
 
-- GitHub repository visibility confirmed PRIVATE.
+- Canonical GitHub repository `johnDavid97/vartja` is PUBLIC with reviewed, cleaned history. The original repository and original-history backup remain PRIVATE. Public GHCR package visibility must be configured separately before Railway Hobby can pull images.
 - Gitleaks scanned reachable Git history and current nonignored files. Four findings were deliberate unit-test dummy values; no live secrets were identified.
 - Exact comparisons of current application secrets and the configured database URL against 757 reachable historical blobs found no matches. Values were not printed.
 - These checks are evidence, not a guarantee that no unknown vulnerability or secret exists. Recheck before release.
@@ -33,14 +35,14 @@ The Docker smoke harness is `tests/integration/container-smoke-isolated.ts`; it 
 - Keep local development separate from hosted staging and production, with distinct databases, uploads, credentials and secrets.
 - Production starts empty: do not transfer local administrators, test households or wedding content. Bootstrap its initial administrator privately.
 - Staging stays online, restricted to the two designated testers, with persistent fictional data and an explicit reset procedure. Never copy production guest data into staging.
-- Main will deploy to staging after automated checks. A versioned release and explicit approval from either designated approver will promote the same tested image to production. The pipeline and staging access gateway are not implemented yet.
+- Main will deploy to staging after automated checks. A version tag and a successful staging run identify the exact tested image; GitHub's production environment requires explicit approval by a designated reviewer. The workflows and staging access gateway are implemented locally, with hosted configuration/verification still pending. Production deployment is disabled until its independent safeguards are verified.
 
 ## Required work/access before deployment
 
 1. Establish and verify trusted-ingress login protection, implement protected staging and the approved release pipeline, and verify backups and recovery. Native REST body limits and durable legacy poll write-rate limits are implemented locally; see [request security](request-security.md) and [polls](../features/polls/README.md). They do not replace ingress request-rate/concurrency controls or prove individual voter identity.
-2. Renew Railway CLI authentication with `railway login`.
-3. Browser tooling is installed outside the repository, with telemetry disabled. Chrome access requires enabling remote debugging at `chrome://inspect/#remote-debugging` and granting connection permission. Login/MFA must be completed directly by the owner.
-4. Inspect existing DNS, especially mail records, before applying Railway-provided domain targets. Do not guess apex records or change nameservers unnecessarily.
+2. Provision the fresh staging database, private app service and persistent media volume. Configure independent runtime secrets, gateway accounts and environment-scoped deployment tokens without logging values. Operator authentication/MFA remains owner-controlled.
+3. Configure GitHub environments, protected main checks, public package visibility and the designated production reviewers. Complete private administrator bootstrap only through a verified non-echoing operator transport.
+4. Complete the Railway-provided staging TXT ownership record and verify TLS. Existing root, email and nameserver records must remain untouched. Production DNS is a separate approved step.
 
 ## Data/deployment safeguards
 

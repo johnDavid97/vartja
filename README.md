@@ -227,28 +227,34 @@ wedding content is replaced by these tests.
 Database data persists in the `sammen_postgres_data` Docker volume.
 **Do not run `docker compose down -v` unless you intend to delete the database.**
 
-## Deploy to Railway (Docker)
+## Deploy to Railway with GitHub Actions
 
-The Docker image serves both the Next.js site and the Payload admin/API. Use a
-**separate Railway PostgreSQL service**; the local `compose.yaml` is not used on
-Railway. An initial migration in `migrations/` sets up a **fresh** production DB.
-Local development data and uploaded photos are not transferred automatically.
+See [CI/CD and protected staging](docs/cicd.md) for the complete provisioning,
+secret handling, release and recovery procedures, and [deployment readiness](docs/deployment-readiness.md)
+for what is actually live. Workflow files alone do not configure or deploy the services.
 
-1. Push the project (including `Dockerfile`, `docker-entrypoint.sh` and
-   `migrations/`) to a repo, preferably private. Do not commit `.env` or `media/`.
-2. In Railway, add PostgreSQL and add an app service from the repo. Select the
-   **Dockerfile** builder (not Railpack). Do not override the image start command.
-3. Set app service variables `DATABASE_URL=${{Postgres.DATABASE_URL}}` (adjust
-   `Postgres` if you renamed the database service) and `PAYLOAD_SECRET` to a
-   stable random value generated with `openssl rand -hex 32`. Do not use the
-   local `127.0.0.1` database URL. Do not set `NODE_ENV=development`.
-   Also set a separate stable `HOUSEHOLD_ACCESS_SECRET` (generate with `openssl rand -hex 32`).
-   Set `PUBLIC_SITE_URL` to the final HTTPS website origin, e.g. `https://your-domain.example`,
-   before downloading/printing invitation QR codes. These are server runtime variables, not build-time browser variables.
-4. Add a persistent volume on the app service at `/app/media` **before uploading
-   photos**, and use only one app replica. The entrypoint makes the mounted
-   directory writable by the Node user. Back up both the volume and Postgres.
-5. Deploy, then use Railway SSH (or `docker exec` for a private container) to run `npm run admin:bootstrap` with bounded JSON stdin. Runtime database/secrets must already be available to the process. Do not pass a password as an argument or environment variable and do not store permanent bootstrap credentials. The command is not run by the entrypoint. Public first-user registration is permanently denied (403 for ordinary requests; oversized or malformed bodies may be rejected earlier). After bootstrap, open `/admin` and sign in. Railway provides HTTPS for its public domain.
+The canonical repository is **johnDavid97/vartja**. Pull requests run automated
+checks against disposable data. After configuration, main publishes tested public
+GHCR images and deploys their immutable digests to staging. Production promotion
+requires a matching version tag, a successful staging artifact and explicit
+GitHub environment approval; the app image is not rebuilt.
+
+Staging uses a two-account access gateway (`web`), a **private-only** app service
+(`app`) and a separate private PostgreSQL service. Do not expose the app directly
+or enable Railway repository autodeploys: that would bypass the release/access
+boundaries. Public GHCR package visibility is a separate setting from public source.
+
+Use fresh environment-specific database credentials, `PAYLOAD_SECRET` and
+`HOUSEHOLD_ACCESS_SECRET`, plus the exact HTTPS `PUBLIC_SITE_URL`. Mount persistent
+media storage at `/app/media` and keep one app replica. Back up the database,
+media and encryption secrets, and verify recovery before production. Local data
+and uploaded photos are not transferred automatically.
+
+Bootstrap administrators privately with `admin:bootstrap` and bounded JSON stdin
+through a verified non-TTY, non-echoing operator transport. Never put the password
+in arguments, environment variables or public logs. Bootstrap is not automatic;
+public first-user registration remains permanently closed. See [administrator
+security](docs/admin-security.md) for the command contract.
 
 The container runs `payload migrate` before starting the server, and stops if
 migration fails. Completed migrations are skipped on subsequent restarts. After
