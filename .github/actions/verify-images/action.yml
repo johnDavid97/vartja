@@ -1,0 +1,22 @@
+name: Verify deployment images
+description: Build once and exercise the actual application and gateway images with disposable resources.
+runs:
+  using: composite
+  steps:
+    - name: Build Linux/amd64 images
+      shell: bash
+      run: |
+        set -euo pipefail
+        docker build --platform linux/amd64 --label "org.opencontainers.image.source=https://github.com/johnDavid97/vartja" --label "org.opencontainers.image.revision=$GITHUB_SHA" -t "vartja-app:$GITHUB_SHA" .
+        docker build --platform linux/amd64 --label "org.opencontainers.image.source=https://github.com/johnDavid97/vartja" --label "org.opencontainers.image.revision=$GITHUB_SHA" -t "vartja-gateway:$GITHUB_SHA" infra/staging-gateway
+    - name: Test application container
+      shell: bash
+      env:
+        CONTAINER_SMOKE_IMAGE: vartja-app:${{ github.sha }}
+        CONTAINER_SMOKE_GATEWAY_IMAGE: vartja-gateway:${{ github.sha }}
+      run: node --experimental-strip-types tests/integration/container-smoke-isolated.ts
+    - name: Test staging gateway
+      shell: bash
+      env:
+        GATEWAY_TEST_IMAGE: vartja-gateway:${{ github.sha }}
+      run: node tests/integration/staging-gateway.mjs

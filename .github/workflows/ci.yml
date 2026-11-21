@@ -1,0 +1,126 @@
+name: CI and staging
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22.23.5'
+          cache: npm
+      - run: npm install --global npm@11.19.0
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      - run: npm run test:deployment
+      - run: npm audit --audit-level=moderate
+      - run: npm run build
+      - run: npx tsc --noEmit
+      - run: npx playwright install --with-deps chromium
+      - name: Disposable database security and regression suites
+        run: npm run test:ci-integrations
+
+  container-check:
+    if: github.event_name == 'pull_request'
+    needs: checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22.23.5'
+      - uses: ./.github/actions/verify-images
+
+  staging:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.repository == 'johnDavid97/vartja' && vars.CD_ENABLED == 'true'
+    needs: checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    environment:
+      name: staging
+      url: https://staging.xn--vrtja-mra.no
+    concurrency:
+      group: deployment-staging
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22.23.5'
+      - uses: ./.github/actions/verify-images
+      - uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publish the tested images
+        id: images
+        shell: bash
+        run: |
+          set -euo pipefail
+          app="ghcr.io/johndavid97/vartja:$GITHUB_SHA"
+          gateway="ghcr.io/johndavid97/vartja-staging-gateway:$GITHUB_SHA"
+          docker tag "vartja-app:$GITHUB_SHA" "$app"
+          docker tag "vartja-gateway:$GITHUB_SHA" "$gateway"
+          docker push "$app"
+          docker push "$gateway"
+          app_digest=$(docker image inspect "$app" --format '{{index .RepoDigests 0}}')
+          gateway_digest=$(docker image inspect "$gateway" --format '{{index .RepoDigests 0}}')
+          printf 'app_image=%s\ngateway_image=%s\n' "$app_digest" "$gateway_digest" >> "$GITHUB_OUTPUT"
+      - name: Refuse stale staging deployments
+        if: vars.STAGING_DEPLOY_ENABLED == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: test "$(gh api repos/johnDavid97/vartja/git/ref/heads/main --jq '.object.sha')" = "$GITHUB_SHA"
+      - name: Deploy pinned images to staging
+        if: vars.STAGING_DEPLOY_ENABLED == 'true'
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_APP_SERVICE_ID: ${{ vars.RAILWAY_APP_SERVICE_ID }}
+          RAILWAY_GATEWAY_SERVICE_ID: ${{ vars.RAILWAY_GATEWAY_SERVICE_ID }}
+          APP_IMAGE: ${{ steps.images.outputs.app_image }}
+          GATEWAY_IMAGE: ${{ steps.images.outputs.gateway_image }}
+        run: node scripts/deployment/railway.mjs staging
+      - name: Verify hosted access boundaries and TLS
+        if: vars.STAGING_DEPLOY_ENABLED == 'true'
+        env:
+          STAGING_SMOKE_USER: ${{ secrets.STAGING_SMOKE_USER }}
+          STAGING_SMOKE_PASSWORD: ${{ secrets.STAGING_SMOKE_PASSWORD }}
+        run: node scripts/deployment/staging-smoke.mjs
+      - name: Record successful staging provenance
+        if: vars.STAGING_DEPLOY_ENABLED == 'true'
+        env:
+          APP_IMAGE: ${{ steps.images.outputs.app_image }}
+          GATEWAY_IMAGE: ${{ steps.images.outputs.gateway_image }}
+        run: |
+          node --input-type=module -e '
+            import { writeFileSync } from "node:fs";
+            import { imageReference } from "./scripts/deployment/railway.mjs";
+            writeFileSync("release.json", JSON.stringify({schema:1,repository:process.env.GITHUB_REPOSITORY,commit:process.env.GITHUB_SHA,runId:process.env.GITHUB_RUN_ID,appImage:imageReference(process.env.APP_IMAGE),gatewayImage:imageReference(process.env.GATEWAY_IMAGE,true)}));
+          '
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: vars.STAGING_DEPLOY_ENABLED == 'true'
+        with:
+          name: staging-release
+          path: release.json
+          if-no-files-found: error
+          retention-days: 90

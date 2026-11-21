@@ -3,14 +3,18 @@ import { pbkdf2Sync, randomBytes } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import { appendFileSync, chmodSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { createServer } from "node:net";
+import { request } from "node:http";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
 const image = process.env.CONTAINER_SMOKE_IMAGE || "samen-railway-check";
+const gatewayImage = process.env.CONTAINER_SMOKE_GATEWAY_IMAGE;
 const runId = randomBytes(6).toString("hex");
 const prefix = `sammen-smoke-${runId}`;
-const resourcePattern = /^sammen-smoke-[a-f0-9]{12}-(app|db|failed|media|network)$/;
+const resourcePattern = /^sammen-smoke-[a-f0-9]{12}-(app|db|failed|media|network|gateway)$/;
 const appContainer = `${prefix}-app`;
+const gatewayContainer = `${prefix}-gateway`;
+const gatewayEnvironmentFile = path.join(tmpdir(), `${prefix}-gateway.env`);
 const databaseContainer = `${prefix}-db`;
 const failedContainer = `${prefix}-failed`;
 const mediaVolume = `${prefix}-media`;
@@ -30,7 +34,7 @@ const outputDirectory = "/tmp/sammen-release-workers";
 const logFile = path.join(outputDirectory, "final-container-smoke.log");
 const secrets = [databasePassword, payloadSecret, householdSecret, legacyPassword, legacySalt, legacyHash];
 
-for (const resource of [appContainer, databaseContainer, failedContainer, mediaVolume, network]) {
+for (const resource of [appContainer, databaseContainer, failedContainer, gatewayContainer, mediaVolume, network]) {
   assert(resourcePattern.test(resource), `Refusing unsafe disposable resource name: ${resource}`);
 }
 
@@ -110,7 +114,7 @@ async function waitForApplication(baseUrl: string): Promise<void> {
 function startApplication(port: number): void {
   docker([
     "run", "-d", "--name", appContainer,
-    "--network", network,
+    "--network", network, "--network-alias", "app.railway.internal",
     "--env-file", environmentFile,
     "-p", `127.0.0.1:${port}:3000`,
     "-v", `${mediaVolume}:/app/media`,
@@ -189,6 +193,59 @@ async function verifyLegacyPasswordCompatibility(baseUrl: string): Promise<void>
   assert.notEqual(databaseUserValue(userId, "salt"), legacySalt, "Opportunistic rehash should rotate the salt");
 }
 
+async function verifyGatewayNativeCookies(baseUrl: string): Promise<void> {
+  if (!gatewayImage) return;
+  const passwords = [randomBytes(24).toString("base64url"), randomBytes(24).toString("base64url")];
+  const hashes = passwords.map((password) => docker(["run", "--rm", "-i", "--entrypoint", "caddy", gatewayImage, "hash-password"], false, `${password}\n`));
+  const authorization = `Basic ${Buffer.from(`tester-one:${passwords[0]}`).toString("base64")}`;
+  secrets.push(...passwords, ...hashes, authorization);
+  writeFileSync(gatewayEnvironmentFile, [
+    "PUBLIC_HOST=staging.example.test", "GATE_USER_ONE=tester-one", "GATE_USER_TWO=tester-two",
+    `GATE_HASH_ONE=${hashes[0]}`, `GATE_HASH_TWO=${hashes[1]}`,
+  ].join("\n") + "\n", { mode: 0o600 });
+  const port = await unusedPort();
+  docker(["run", "-d", "--name", gatewayContainer, "--network", network, "--env-file", gatewayEnvironmentFile, "-p", `127.0.0.1:${port}:3000`, gatewayImage]);
+  type Options = { method?: string; headers?: Record<string, string>; body?: string };
+  const call = (route: string, options: Options = {}): Promise<Response> => new Promise((resolve, reject) => {
+    const req = request(`http://127.0.0.1:${port}${route}`, {
+      method: options.method || "GET", signal: AbortSignal.timeout(20_000),
+      headers: { host: "staging.example.test", origin: baseUrl, ...options.headers },
+    }, (res) => {
+      const chunks: Buffer[] = [];
+      res.on("data", (chunk: Buffer) => chunks.push(chunk));
+      res.on("end", () => {
+        const headers = new Headers();
+        for (const [name, values] of Object.entries(res.headers)) {
+          for (const value of Array.isArray(values) ? values : values ? [values] : []) headers.append(name, value);
+        }
+        resolve(new Response(new Uint8Array(Buffer.concat(chunks)), { status: res.statusCode, headers }));
+      });
+      res.on("error", reject);
+    });
+    req.on("error", reject); req.end(options.body);
+  });
+  let ready = false;
+  for (let i = 0; i < 60; i++) {
+    try { if ((await call("/__gateway_health")).status === 200) { ready = true; break; } } catch { /* Starting. */ }
+    await delay(250);
+  }
+  assert(ready, "Real application gateway did not become ready");
+  assert.equal((await call("/api/users/login")).status, 401);
+  const login = await call("/api/users/login", {
+    method: "POST", headers: { authorization, "content-type": "application/json" },
+    body: JSON.stringify({ email: legacyEmail, password: legacyPassword }),
+  });
+  assert.equal(login.status, 200, "Native administrator must log in through the gateway");
+  const cookie = (login.headers.get("set-cookie") || "").split(";")[0];
+  assert(cookie.startsWith("payload-token="), "Native login must return its own session cookie");
+  secrets.push(cookie);
+  assert.equal((await call("/api/household-summary", { headers: { authorization } })).status, 403, "Gate account is not an administrator");
+  assert.equal((await call("/api/household-summary", { headers: { authorization, cookie } })).status, 200, "Native cookie authentication must survive the gateway");
+  assert.equal((await call("/api/household-summary", { headers: { authorization, cookie, origin: "https://untrusted.example" } })).status, 403, "Gateway must not launder an untrusted Origin");
+  assert.equal((await call("/api/users/first-register", { method: "POST", headers: { authorization, "content-type": "application/json" }, body: "{}" })).status, 403);
+  console.log("PASS: real gateway preserves native login/cookie auth and Origin rejection; gate accounts do not gain administrator permissions.");
+}
+
 async function main(): Promise<void> {
   const port = await unusedPort();
   const baseUrl = `http://127.0.0.1:${port}`;
@@ -222,6 +279,7 @@ async function main(): Promise<void> {
   const firstSnapshot = migrationSnapshot();
   assert(firstSnapshot.length > 0, "Fresh database should contain completed migration records");
   await verifyLegacyPasswordCompatibility(baseUrl);
+  await verifyGatewayNativeCookies(baseUrl);
   await Promise.all([
     assertRoute(baseUrl, "/"),
     assertRoute(baseUrl, "/andrea-og-martin"),
@@ -270,8 +328,16 @@ async function main(): Promise<void> {
 
 try {
   await main();
+} catch (error) {
+  for (const container of [appContainer, gatewayContainer, databaseContainer]) {
+    try {
+      appendFileSync(logFile, `\n${container}: ${docker(["inspect", "--format", "status={{.State.Status}} oom={{.State.OOMKilled}} exit={{.State.ExitCode}}", container])}\n`, { mode: 0o600 });
+      saveLogs("failure diagnostics", container);
+    } catch { /* Preserve the original failure if a container never started. */ }
+  }
+  throw error;
 } finally {
-  for (const container of [appContainer, failedContainer, databaseContainer]) {
+  for (const container of [gatewayContainer, appContainer, failedContainer, databaseContainer]) {
     assert(resourcePattern.test(container));
     docker(["rm", "-f", container], true);
   }
@@ -280,4 +346,5 @@ try {
   assert(resourcePattern.test(network));
   docker(["network", "rm", network], true);
   rmSync(environmentFile, { force: true });
+  rmSync(gatewayEnvironmentFile, { force: true });
 }
